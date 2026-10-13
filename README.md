@@ -19,4 +19,24 @@ El sistema se desarrollará inicialmente con las siguientes tecnologías:
 - Flujo de trabajo: GitFlow.
 - Control de cambios: Jira Service Management.
 - Contenedores: Docker y Docker Compose.
-- 
+
+## Estructura actual
+
+El proyecto se encuentra organizado inicialmente en los siguientes componentes:
+
+- `backend/EcuaRutas.Api/`: API REST desarrollada con .NET.
+- `frontend/`: aplicación web desarrollada con Angular.
+- `database/`: scripts para la creación y actualización de PostgreSQL/PostGIS.
+
+La estructura podrá ampliarse conforme se desarrollen los distintos módulos del sistema.
+
+## Ejecución local
+
+### Backend
+
+Desde la raíz del proyecto:
+
+```bash
+dotnet restore backend/EcuaRutas.Api
+dotnet build backend/EcuaRutas.Api
+dotnet run --project backend/EcuaRutas.Api
