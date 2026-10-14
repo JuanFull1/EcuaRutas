@@ -1,0 +1,133 @@
+<div class="app-shell">
+
+  <aside
+    class="sidebar"
+    [class.sidebar-open]="menuAbierto()"
+  >
+
+    <div
+      class="d-flex align-items-center gap-3 px-3 py-4"
+    >
+
+      <div class="sidebar-logo">
+        <i class="bi bi-bus-front-fill"></i>
+      </div>
+
+      <div>
+
+        <strong class="d-block">
+          EcuaRutas
+        </strong>
+
+        <small class="text-white-50">
+          Panel de gestión
+        </small>
+
+      </div>
+
+    </div>
+
+    <nav class="nav flex-column px-2">
+
+      <a
+        class="nav-link"
+        routerLink="/admin/inicio"
+        routerLinkActive="active"
+        (click)="cerrarMenu()"
+      >
+        <i class="bi bi-grid me-2"></i>
+        Inicio
+      </a>
+
+      <div class="menu-title">
+        Gestión
+      </div>
+
+      <span class="nav-link disabled-item">
+        <i class="bi bi-building me-2"></i>
+        Cooperativas
+      </span>
+
+      <span class="nav-link disabled-item">
+        <i class="bi bi-bus-front me-2"></i>
+        Buses
+      </span>
+
+      <span class="nav-link disabled-item">
+        <i class="bi bi-signpost-2 me-2"></i>
+        Rutas
+      </span>
+
+      <span class="nav-link disabled-item">
+        <i class="bi bi-clock me-2"></i>
+        Frecuencias
+      </span>
+
+      <span class="nav-link disabled-item">
+        <i class="bi bi-map me-2"></i>
+        Viajes
+      </span>
+
+    </nav>
+
+  </aside>
+
+  <div
+    *ngIf="menuAbierto()"
+    class="sidebar-overlay"
+    (click)="cerrarMenu()"
+  ></div>
+
+  <section class="main-content">
+
+    <header
+      class="navbar bg-white border-bottom px-3 px-md-4"
+    >
+
+      <button
+        type="button"
+        class="btn btn-light d-lg-none"
+        (click)="toggleMenu()"
+      >
+        <i class="bi bi-list fs-4"></i>
+      </button>
+
+      <div class="ms-auto d-flex align-items-center gap-3">
+
+        <div class="text-end d-none d-sm-block">
+
+          <strong class="d-block small">
+            {{ usuario()?.nombres }}
+            {{ usuario()?.apellidos }}
+          </strong>
+
+          <span class="text-secondary small">
+            {{ usuario()?.rol }}
+          </span>
+
+        </div>
+
+        <div class="user-avatar">
+          <i class="bi bi-person-fill"></i>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          (click)="cerrarSesion()"
+        >
+          <i class="bi bi-box-arrow-right me-1"></i>
+          Salir
+        </button>
+
+      </div>
+
+    </header>
+
+    <main class="p-3 p-md-4">
+      <router-outlet />
+    </main>
+
+  </section>
+
+</div>

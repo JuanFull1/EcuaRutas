@@ -1,0 +1,96 @@
+.login-page {
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    linear-gradient(
+      135deg,
+      #eef4fb,
+      #f7f9fc
+    );
+}
+
+.login-container {
+  max-width: 1000px;
+  min-height: 570px;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.login-brand {
+  align-items: center;
+  padding: 64px;
+  color: white;
+  background:
+    linear-gradient(
+      135deg,
+      #102b4e,
+      #1769aa
+    );
+}
+
+.login-brand p {
+  max-width: 400px;
+  opacity: 0.9;
+}
+
+.brand-icon {
+  width: 64px;
+  height: 64px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  background: white;
+  color: #1769aa;
+
+  font-size: 28px;
+}
+
+.brand-icon.mobile {
+  background: #1769aa;
+  color: white;
+}
+
+.login-form {
+  max-width: 420px;
+  margin: auto;
+  padding: 70px 45px;
+}
+
+.form-control,
+.input-group-text {
+  min-height: 46px;
+}
+
+@media (max-width: 991px) {
+
+  .login-container {
+    max-width: 520px;
+    min-height: auto;
+  }
+
+}
+
+@media (max-width: 576px) {
+
+  .login-page {
+    padding: 0;
+  }
+
+  .container {
+    padding: 0;
+  }
+
+  .login-container {
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .login-form {
+    padding: 45px 24px;
+  }
+
+}
