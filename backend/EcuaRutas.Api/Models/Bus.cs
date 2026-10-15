@@ -11,6 +11,12 @@ public class Bus
     [Column("cooperativa_id")]
     public long CooperativaId { get; set; }
 
+    [Column("grupo_bus_id")]
+    public long? GrupoBusId { get; set; }
+
+    [Column("plantilla_id")]
+    public long? PlantillaId { get; set; }
+
     [Column("numero_interno")]
     public string NumeroInterno { get; set; } = string.Empty;
 
