@@ -31,4 +31,23 @@ public class Bus
 
     [Column("anio")]
     public int? Anio { get; set; }
+
+    [Column("pisos")]
+    public int Pisos { get; set; } = 1;
+
+    [Column("capacidad")]
+    public int Capacidad { get; set; } 
+
+    [Column("tiene_banio")]
+    public bool TieneBanio { get; set; } 
+
+    [Column("foto_url")]
+    public string? FotoUrl { get; set; } 
+
+    [Column("estado")]
+    public string Estado { get; set; } = "ACTIVO";
+
+    [Column("creado_en")]
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+
 }
