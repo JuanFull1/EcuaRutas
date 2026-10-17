@@ -84,6 +84,11 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+await DevelopmentSeeder.SeedAsync(
+    app.Services,
+    app.Configuration,
+    app.Environment
+);
 
 if (app.Environment.IsDevelopment())
 {
