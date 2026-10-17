@@ -1,59 +1,55 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
 namespace EcuaRutas.Api.Models;
 
-[Table("buses")]
-public class Bus
+public partial class Bus
 {
-    [Column("id")]
     public long Id { get; set; }
 
-    [Column("cooperativa_id")]
     public long CooperativaId { get; set; }
 
-    [Column("grupo_bus_id")]
     public long? GrupoBusId { get; set; }
 
-    [Column("plantilla_id")]
     public long? PlantillaId { get; set; }
 
-    [Column("numero_interno")]
-    public string NumeroInterno { get; set; } = string.Empty;
+    public string NumeroInterno { get; set; } = null!;
 
-    [Column("placa")]
-    public string Placa { get; set; } = string.Empty;
+    public string Placa { get; set; } = null!;
 
-    [Column("color")]
     public string? Color { get; set; }
 
-    [Column("marca_chasis")]
     public string? MarcaChasis { get; set; }
 
-    [Column("marca_carroceria")]
     public string? MarcaCarroceria { get; set; }
 
-    [Column("modelo")]
     public string? Modelo { get; set; }
 
-    [Column("anio")]
-    public int? Anio { get; set; }
+    public short? Anio { get; set; }
 
-    [Column("pisos")]
-    public int Pisos { get; set; } = 1;
+    public short Pisos { get; set; }
 
-    [Column("capacidad")]
-    public int Capacidad { get; set; } 
+    public short Capacidad { get; set; }
 
-    [Column("tiene_banio")]
-    public bool TieneBanio { get; set; } 
+    public bool TieneBanio { get; set; }
 
-    [Column("foto_url")]
-    public string? FotoUrl { get; set; } 
+    public string? FotoUrl { get; set; }
 
-    [Column("estado")]
-    public string Estado { get; set; } = "ACTIVO";
+    public string Estado { get; set; } = null!;
 
-    [Column("creado_en")]
-    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+    public DateTime CreadoEn { get; set; }
 
+    public virtual ICollection<AsientosBu> AsientosBus { get; set; } = new List<AsientosBu>();
+
+    public virtual Cooperativa Cooperativa { get; set; } = null!;
+
+    public virtual GruposBuse? GrupoBus { get; set; }
+
+    public virtual ICollection<HojaRutaDetalle> HojaRutaDetalles { get; set; } = new List<HojaRutaDetalle>();
+
+    public virtual PlantillasBu? Plantilla { get; set; }
+
+    public virtual ICollection<PosicionesBu> PosicionesBus { get; set; } = new List<PosicionesBu>();
+
+    public virtual ICollection<Viaje> Viajes { get; set; } = new List<Viaje>();
 }
