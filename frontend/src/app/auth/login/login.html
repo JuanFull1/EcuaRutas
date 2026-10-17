@@ -35,7 +35,9 @@
 
         <div class="login-form">
 
-          <div class="d-lg-none text-center mb-4">
+          <div
+            class="d-lg-none text-center mb-4"
+          >
 
             <div
               class="brand-icon mobile mx-auto mb-2"
@@ -60,12 +62,16 @@
           <div
             *ngIf="error"
             class="alert alert-danger"
+            role="alert"
+            aria-live="polite"
           >
+
             <i
               class="bi bi-exclamation-circle me-2"
             ></i>
 
             {{ error }}
+
           </div>
 
           <form
@@ -94,6 +100,7 @@
                   class="form-control"
                   formControlName="correo"
                   placeholder="usuario@ecuarutas.com"
+                  autocomplete="email"
                 >
 
               </div>
@@ -127,11 +134,38 @@
 
                 <input
                   id="password"
-                  type="password"
+                  [type]="
+                    mostrarPassword
+                      ? 'text'
+                      : 'password'
+                  "
                   class="form-control"
                   formControlName="password"
                   placeholder="Contraseña"
+                  autocomplete="current-password"
                 >
+
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary password-toggle"
+                  (click)="alternarPassword()"
+                  [attr.aria-label]="
+                    mostrarPassword
+                      ? 'Ocultar contraseña'
+                      : 'Mostrar contraseña'
+                  "
+                >
+
+                  <i
+                    class="bi"
+                    [ngClass]="
+                      mostrarPassword
+                        ? 'bi-eye-slash'
+                        : 'bi-eye'
+                    "
+                  ></i>
+
+                </button>
 
               </div>
 
@@ -150,33 +184,24 @@
             <button
               type="submit"
               class="btn btn-primary w-100 py-2"
+              [disabled]="cargando"
             >
+
+              <span
+                *ngIf="cargando"
+                class="spinner-border spinner-border-sm me-2"
+              ></span>
+
               <i
+                *ngIf="!cargando"
                 class="bi bi-box-arrow-in-right me-2"
               ></i>
 
-              Ingresar
+              {{ cargando ? 'Ingresando...' : 'Ingresar' }}
+
             </button>
 
           </form>
-
-          <div
-            class="alert alert-light border mt-4 mb-0"
-          >
-
-            <strong class="d-block mb-1">
-              Usuario temporal
-            </strong>
-
-            <small class="d-block">
-              admin@ecuarutas.local
-            </small>
-
-            <small>
-              Admin123*
-            </small>
-
-          </div>
 
         </div>
 
