@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace EcuaRutas.Api.DTOs.Rutas;
 
 // Representa una actualizacion completa; el identificador se recibira por la ruta HTTP.
-public class ActualizarRutaDto
+public class ActualizarRutaDto : IValidatableObject
 {
     [Required]
     [StringLength(200)]
@@ -21,4 +21,14 @@ public class ActualizarRutaDto
     public string TipoViaje { get; set; } = string.Empty;
 
     public required bool Activa { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (OrigenLugarId == DestinoLugarId)
+        {
+            yield return new ValidationResult(
+                "El origen y el destino deben ser lugares distintos.",
+                new[] { nameof(OrigenLugarId), nameof(DestinoLugarId) });
+        }
+    }
 }
