@@ -18,3 +18,23 @@ export interface Bus {
   fotoUrl: string | null;
   estado: EstadoBus;
 }
+
+
+export interface CrearBusRequest {
+  cooperativaId: number;
+  numeroInterno: string;
+  placa: string;
+  color?: string;
+  marcaChasis?: string;
+  marcaCarroceria?: string;
+  modelo?: string;
+  anio?: number;
+  pisos: number;
+  capacidad: number;
+  tieneBanio: boolean;
+  fotoUrl?: string;
+}
+
+export type ActualizarBusRequest = Omit<CrearBusRequest, 'cooperativaId'> & {
+  estado: EstadoBus;
+};
