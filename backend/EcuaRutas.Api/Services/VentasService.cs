@@ -368,4 +368,83 @@ public async Task CancelarReservaAsync(long ventaId)
 
     await _context.SaveChangesAsync();
 }
+
+public async Task<ReservaResponse> ConfirmarVentaAsync(long ventaId)
+{
+    var venta = await _context.Ventas
+        .Include(v => v.VentaAsientos)
+            .ThenInclude(va => va.AsientoBus)
+        .FirstOrDefaultAsync(v => v.Id == ventaId);
+
+    if (venta == null)
+    {
+        throw new ArgumentException("La venta no existe.");
+    }
+
+    if (venta.Estado != "RESERVADA")
+    {
+        throw new InvalidOperationException(
+            $"La venta no puede confirmarse porque su estado actual es {venta.Estado}.");
+    }
+
+    if (venta.ExpiraEn.HasValue &&
+        venta.ExpiraEn.Value <= DateTime.UtcNow)
+    {
+        venta.Estado = "EXPIRADA";
+        venta.ActualizadoEn = DateTime.UtcNow;
+
+        foreach (var asiento in venta.VentaAsientos)
+        {
+            if (asiento.EstadoAsiento == "RETENIDO")
+            {
+                asiento.EstadoAsiento = "EXPIRADO";
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        throw new InvalidOperationException(
+            "La reserva ya expiró y no puede confirmarse.");
+    }
+
+    venta.Estado = "PAGADA";
+    venta.ActualizadoEn = DateTime.UtcNow;
+
+    foreach (var asiento in venta.VentaAsientos)
+    {
+        if (asiento.EstadoAsiento == "RETENIDO")
+        {
+            asiento.EstadoAsiento = "CONFIRMADO";
+        }
+    }
+
+    await _context.SaveChangesAsync();
+
+    return new ReservaResponse
+    {
+        VentaId = venta.Id,
+        Codigo = venta.Codigo,
+        ViajeId = venta.ViajeId,
+        Canal = venta.Canal,
+        Estado = venta.Estado,
+        Subtotal = venta.Subtotal,
+        DescuentoTotal = venta.DescuentoTotal,
+        Total = venta.Total,
+        ExpiraEn = venta.ExpiraEn ?? DateTime.UtcNow,
+        Asientos = venta.VentaAsientos.Select(va => new ReservaAsientoResponse
+        {
+            VentaAsientoId = va.Id,
+            PasajeroId = va.PasajeroId,
+            AsientoBusId = va.AsientoBusId,
+            NumeroAsiento = va.AsientoBus.Numero,
+            PrecioBase = va.PrecioBase,
+            RecargoAsiento = va.RecargoAsiento,
+            TipoDescuento = va.TipoDescuento,
+            PorcentajeDescuento = va.PorcentajeDescuento,
+            ValorDescuento = va.ValorDescuento,
+            PrecioFinal = va.PrecioFinal,
+            EstadoAsiento = va.EstadoAsiento
+        }).ToList()
+    };
+}
 }

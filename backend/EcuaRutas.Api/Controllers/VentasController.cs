@@ -82,4 +82,30 @@ public async Task<IActionResult> CancelarReserva(long ventaId)
         });
     }
 }
+
+[HttpPost("{ventaId}/confirmar")]
+public async Task<IActionResult> ConfirmarVenta(long ventaId)
+{
+    try
+    {
+        var resultado =
+            await _service.ConfirmarVentaAsync(ventaId);
+
+        return Ok(resultado);
+    }
+    catch (ArgumentException ex)
+    {
+        return NotFound(new
+        {
+            mensaje = ex.Message
+        });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Conflict(new
+        {
+            mensaje = ex.Message
+        });
+    }
+}
 }
