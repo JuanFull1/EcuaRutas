@@ -48,6 +48,10 @@ public class BusesController : ControllerBase
         {
             return NotFound(new { mensaje = ex.Message });
         }
+        catch (ConflictoException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
     }
 
     [HttpPut("{id:long}")]
@@ -65,8 +69,12 @@ public class BusesController : ControllerBase
         {
             return NotFound(new { mensaje = ex.Message });
         }
+        catch (ConflictoException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
     }
-
+    
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> DarDeBaja(long id, CancellationToken ct)
     {

@@ -49,14 +49,17 @@ public class BusService : IBusService
     public async Task<BusDto> CrearAsync(CrearBusRequest request, CancellationToken ct = default)
     {
         await ValidarReferenciasAsync(request.CooperativaId, request.GrupoBusId, request.PlantillaId, ct);
+        var numeroInterno = request.NumeroInterno.Trim();
+        var placa = request.Placa.Trim().ToUpperInvariant();
+        await ValidarDuplicadosAsync(request.CooperativaId, numeroInterno, placa, null, ct);
+        
         var bus = new Bus
         {
             CooperativaId = request.CooperativaId,
             GrupoBusId = request.GrupoBusId,
             PlantillaId = request.PlantillaId,
-            NumeroInterno = request.NumeroInterno.Trim(),
-            Placa = request.Placa.Trim().ToUpperInvariant(),
-            Color = request.Color,
+            NumeroInterno = numeroInterno,
+            Placa = placa,
             MarcaChasis = request.MarcaChasis,
             MarcaCarroceria = request.MarcaCarroceria,
             Modelo = request.Modelo,
@@ -80,12 +83,15 @@ public class BusService : IBusService
         var bus = await _db.Buses.FirstOrDefaultAsync(b => b.Id == id, ct);
         if (bus is null)
             return null;
-            await ValidarReferenciasAsync(bus.CooperativaId, request.GrupoBusId, request.PlantillaId, ct);
+        await ValidarReferenciasAsync(bus.CooperativaId, request.GrupoBusId, request.PlantillaId, ct);
+        var numeroInterno = request.NumeroInterno.Trim();
+        var placa = request.Placa.Trim().ToUpperInvariant();
+        await ValidarDuplicadosAsync(bus.CooperativaId, numeroInterno, placa, id, ct);
 
         bus.GrupoBusId = request.GrupoBusId;
         bus.PlantillaId = request.PlantillaId;
-        bus.NumeroInterno = request.NumeroInterno.Trim();
-        bus.Placa = request.Placa.Trim().ToUpperInvariant();
+        bus.NumeroInterno = numeroInterno;
+        bus.Placa = placa;
         bus.Color = request.Color;
         bus.MarcaChasis = request.MarcaChasis;
         bus.MarcaCarroceria = request.MarcaCarroceria;
@@ -139,6 +145,25 @@ public class BusService : IBusService
             if (!existePlantilla)
                 throw new RecursoNoEncontradoException($"No existe la plantilla con id {plantillaId.Value}.");
         }
+    }
+
+        private async Task ValidarDuplicadosAsync(
+        long cooperativaId,
+        string numeroInterno,
+        string placa,
+        long? idActual,
+        CancellationToken ct)
+    {
+        var placaRepetida = await _db.Buses.AnyAsync(
+            b => b.Placa == placa && b.Id != idActual, ct);
+        if (placaRepetida)
+            throw new ConflictoException($"Ya existe un bus con la placa '{placa}'.");
+
+        var numeroRepetido = await _db.Buses.AnyAsync(
+            b => b.CooperativaId == cooperativaId && b.NumeroInterno == numeroInterno && b.Id != idActual, ct);
+        if (numeroRepetido)
+            throw new ConflictoException(
+                $"Ya existe un bus con el número interno '{numeroInterno}' en esta cooperativa.");
     }
 
     private static BusDto Mapear(Bus bus) => new()
