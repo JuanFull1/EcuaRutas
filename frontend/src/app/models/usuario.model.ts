@@ -1,8 +1,21 @@
+export type RolUsuario =
+  | 'ADMIN'
+  | 'COOPERATIVA'
+  | 'OFICINISTA'
+  | 'CLIENTE'
+  | 'BUS';
+
 export interface Usuario {
   id: number;
   nombres: string;
   apellidos: string;
   correo: string;
-  password: string;
-  rol: 'ADMIN' | 'COOPERATIVA' | 'OFICINISTA' | 'CLIENTE' | 'BUS';
+  rol: RolUsuario;
+  cooperativaId: number | null;
+}
+
+export interface LoginResponse {
+  token: string;
+  expiraEn: string;
+  usuario: Usuario;
 }

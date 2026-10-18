@@ -1,4 +1,5 @@
 import { inject } from '@angular/core';
+
 import {
   ActivatedRouteSnapshot,
   CanActivateFn,
@@ -6,7 +7,10 @@ import {
 } from '@angular/router';
 
 import { AuthService } from '../services/auth.service';
-import { Usuario } from '../models/usuario.model';
+
+import type {
+  RolUsuario
+} from '../models/usuario.model';
 
 export const roleGuard: CanActivateFn = (
   route: ActivatedRouteSnapshot
@@ -16,11 +20,24 @@ export const roleGuard: CanActivateFn = (
   const router = inject(Router);
 
   if (!authService.estaAutenticado()) {
-    return router.createUrlTree(['/login']);
+    return router.createUrlTree([
+      '/login'
+    ]);
+  }
+
+  const usuario =
+    authService.usuarioActual();
+
+  if (!usuario) {
+    return router.createUrlTree([
+      '/login'
+    ]);
   }
 
   const rolesPermitidos =
-    route.data['roles'] as Usuario['rol'][] | undefined;
+    route.data['roles'] as
+      | RolUsuario[]
+      | undefined;
 
   if (
     !rolesPermitidos ||
@@ -29,15 +46,17 @@ export const roleGuard: CanActivateFn = (
     return true;
   }
 
-  const usuario =
-    authService.usuarioActual();
-
   if (
-    usuario &&
-    rolesPermitidos.includes(usuario.rol)
+    rolesPermitidos.includes(
+      usuario.rol
+    )
   ) {
     return true;
   }
 
-  return router.createUrlTree(['/login']);
+  return router.createUrlTree([
+    authService.obtenerRutaInicio(
+      usuario.rol
+    )
+  ]);
 };
