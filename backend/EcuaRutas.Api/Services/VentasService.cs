@@ -304,4 +304,37 @@ public class VentasService
             throw;
         }
     }
+    public async Task<int> ExpirarReservasAsync()
+{
+    var ahora = DateTime.UtcNow;
+
+    var ventas = await _context.Ventas
+        .Include(v => v.VentaAsientos)
+        .Where(v =>
+            v.Estado == "RESERVADA" &&
+            v.ExpiraEn.HasValue &&
+            v.ExpiraEn.Value <= ahora)
+        .ToListAsync();
+
+    foreach (var venta in ventas)
+    {
+        venta.Estado = "EXPIRADA";
+        venta.ActualizadoEn = ahora;
+
+        foreach (var asiento in venta.VentaAsientos)
+        {
+            if (asiento.EstadoAsiento == "RETENIDO")
+            {
+                asiento.EstadoAsiento = "EXPIRADO";
+            }
+        }
+    }
+
+    if (ventas.Count > 0)
+    {
+        await _context.SaveChangesAsync();
+    }
+
+    return ventas.Count;
+}
 }

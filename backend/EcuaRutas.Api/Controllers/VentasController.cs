@@ -41,4 +41,16 @@ public class VentasController : ControllerBase
             });
         }
     }
+
+    [HttpPost("expirar")]
+public async Task<IActionResult> ExpirarReservas()
+{
+    var cantidad = await _service.ExpirarReservasAsync();
+
+    return Ok(new
+    {
+        mensaje = "Reservas expiradas correctamente.",
+        cantidadExpirada = cantidad
+    });
+}
 }
