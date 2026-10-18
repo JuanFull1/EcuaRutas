@@ -1,0 +1,83 @@
+using EcuaRutas.Api.Data;
+using EcuaRutas.Api.DTOs;
+using EcuaRutas.Api.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace EcuaRutas.Api.Services;
+
+public class BusService : IBusService
+{
+    private readonly EcuaRutasDbContext _db;
+
+    public BusService(EcuaRutasDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<IReadOnlyList<BusDto>> ListarAsync(
+        long cooperativaId,
+        long? grupoBusId = null,
+        string? estado = null,
+        CancellationToken ct = default)
+    {
+        var consulta = _db.Buses
+            .AsNoTracking()
+            .Where(b => b.CooperativaId == cooperativaId);
+
+        if (grupoBusId.HasValue)
+            consulta = consulta.Where(b => b.GrupoBusId == grupoBusId);
+
+        if (!string.IsNullOrWhiteSpace(estado))
+            consulta = consulta.Where(b => b.Estado == estado);
+
+        var buses = await consulta
+            .OrderBy(b => b.NumeroInterno)
+            .ToListAsync(ct);
+
+        return buses.Select(Mapear).ToList();
+    }
+
+    public async Task<BusDto?> ObtenerAsync(long id, CancellationToken ct = default)
+    {
+        var bus = await _db.Buses
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == id, ct);
+
+        return bus is null ? null : Mapear(bus);
+    }
+
+    public Task<BusDto> CrearAsync(CrearBusRequest request, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<BusDto?> ActualizarAsync(long id, ActualizarBusRequest request, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> DarDeBajaAsync(long id, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static BusDto Mapear(Bus bus) => new()
+    {
+        Id = bus.Id,
+        CooperativaId = bus.CooperativaId,
+        GrupoBusId = bus.GrupoBusId,
+        PlantillaId = bus.PlantillaId,
+        NumeroInterno = bus.NumeroInterno,
+        Placa = bus.Placa,
+        Color = bus.Color,
+        MarcaChasis = bus.MarcaChasis,
+        MarcaCarroceria = bus.MarcaCarroceria,
+        Modelo = bus.Modelo,
+        Anio = bus.Anio,
+        Pisos = bus.Pisos,
+        Capacidad = bus.Capacidad,
+        TieneBanio = bus.TieneBanio,
+        FotoUrl = bus.FotoUrl,
+        Estado = bus.Estado
+    };
+}
