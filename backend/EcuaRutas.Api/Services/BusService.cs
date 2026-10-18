@@ -46,9 +46,32 @@ public class BusService : IBusService
         return bus is null ? null : Mapear(bus);
     }
 
-    public Task<BusDto> CrearAsync(CrearBusRequest request, CancellationToken ct = default)
+    public async Task<BusDto> CrearAsync(CrearBusRequest request, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        var bus = new Bus
+        {
+            CooperativaId = request.CooperativaId,
+            GrupoBusId = request.GrupoBusId,
+            PlantillaId = request.PlantillaId,
+            NumeroInterno = request.NumeroInterno.Trim(),
+            Placa = request.Placa.Trim().ToUpperInvariant(),
+            Color = request.Color,
+            MarcaChasis = request.MarcaChasis,
+            MarcaCarroceria = request.MarcaCarroceria,
+            Modelo = request.Modelo,
+            Anio = (short?)request.Anio,
+            Pisos = (short)request.Pisos,
+            Capacidad = (short)request.Capacidad,
+            TieneBanio = request.TieneBanio,
+            FotoUrl = request.FotoUrl,
+            Estado = "ACTIVO",
+            CreadoEn = DateTime.UtcNow
+        };
+
+        _db.Buses.Add(bus);
+        await _db.SaveChangesAsync(ct);
+
+        return Mapear(bus);
     }
 
     public Task<BusDto?> ActualizarAsync(long id, ActualizarBusRequest request, CancellationToken ct = default)
