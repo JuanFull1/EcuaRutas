@@ -100,9 +100,16 @@ public class BusService : IBusService
         return Mapear(bus);
     }
 
-    public Task<bool> DarDeBajaAsync(long id, CancellationToken ct = default)
+    public async Task<bool> DarDeBajaAsync(long id, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        var bus = await _db.Buses.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (bus is null)
+            return false;
+
+        bus.Estado = "INACTIVO";
+        await _db.SaveChangesAsync(ct);
+
+        return true;
     }
 
     private static BusDto Mapear(Bus bus) => new()
