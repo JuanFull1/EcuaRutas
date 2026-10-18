@@ -29,7 +29,7 @@ public class GruposBusesController : ControllerBase
         return grupo is null ? NotFound() : Ok(grupo);
     }
 
-    [HttpPost]
+        [HttpPost]
     public async Task<ActionResult<GrupoBusDto>> Crear(
         CrearGrupoBusRequest request, CancellationToken ct)
     {
@@ -42,14 +42,25 @@ public class GruposBusesController : ControllerBase
         {
             return NotFound(new { mensaje = ex.Message });
         }
+        catch (ConflictoException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
     }
 
     [HttpPut("{id:long}")]
     public async Task<ActionResult<GrupoBusDto>> Actualizar(
         long id, ActualizarGrupoBusRequest request, CancellationToken ct)
     {
-        var grupo = await _servicio.ActualizarAsync(id, request, ct);
-        return grupo is null ? NotFound() : Ok(grupo);
+        try
+        {
+            var grupo = await _servicio.ActualizarAsync(id, request, ct);
+            return grupo is null ? NotFound() : Ok(grupo);
+        }
+        catch (ConflictoException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
     }
 
     [HttpDelete("{id:long}")]

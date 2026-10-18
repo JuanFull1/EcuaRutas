@@ -47,10 +47,20 @@ public class GrupoBusService : IGrupoBusService
             throw new RecursoNoEncontradoException(
                 $"No existe la cooperativa con id {request.CooperativaId}.");
         }
+                var nombre = request.Nombre.Trim();
+
+        var nombreRepetido = await _db.GruposBuses.AnyAsync(
+            g => g.CooperativaId == request.CooperativaId && g.Nombre == nombre, ct);
+
+        if (nombreRepetido)
+        {
+            throw new ConflictoException(
+                $"Ya existe un grupo llamado '{nombre}' en esta cooperativa.");
+        }
         var grupo = new GruposBuse
         {
             CooperativaId = request.CooperativaId,
-            Nombre = request.Nombre.Trim(),
+            Nombre = nombre,
             Descripcion = request.Descripcion,
             Activo = true
         };
@@ -72,7 +82,20 @@ public class GrupoBusService : IGrupoBusService
             return null;
         }
 
-        grupo.Nombre = request.Nombre.Trim();
+                var nombre = request.Nombre.Trim();
+
+        var nombreRepetido = await _db.GruposBuses.AnyAsync(
+            g => g.CooperativaId == grupo.CooperativaId
+                 && g.Id != id
+                 && g.Nombre == nombre, ct);
+
+        if (nombreRepetido)
+        {
+            throw new ConflictoException(
+                $"Ya existe un grupo llamado '{nombre}' en esta cooperativa.");
+        }
+
+        grupo.Nombre = nombre;
         grupo.Descripcion = request.Descripcion;
         grupo.Activo = request.Activo;
 
