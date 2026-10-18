@@ -48,6 +48,7 @@ public class BusService : IBusService
 
     public async Task<BusDto> CrearAsync(CrearBusRequest request, CancellationToken ct = default)
     {
+        await ValidarReferenciasAsync(request.CooperativaId, request.GrupoBusId, request.PlantillaId, ct);
         var bus = new Bus
         {
             CooperativaId = request.CooperativaId,
@@ -79,6 +80,7 @@ public class BusService : IBusService
         var bus = await _db.Buses.FirstOrDefaultAsync(b => b.Id == id, ct);
         if (bus is null)
             return null;
+            await ValidarReferenciasAsync(bus.CooperativaId, request.GrupoBusId, request.PlantillaId, ct);
 
         bus.GrupoBusId = request.GrupoBusId;
         bus.PlantillaId = request.PlantillaId;
@@ -110,6 +112,33 @@ public class BusService : IBusService
         await _db.SaveChangesAsync(ct);
 
         return true;
+    }
+
+    private async Task ValidarReferenciasAsync(
+        long cooperativaId,
+        long? grupoBusId,
+        long? plantillaId,
+        CancellationToken ct)
+    {
+        var existeCooperativa = await _db.Cooperativas.AnyAsync(c => c.Id == cooperativaId, ct);
+        if (!existeCooperativa)
+            throw new RecursoNoEncontradoException($"No existe la cooperativa con id {cooperativaId}.");
+
+        if (grupoBusId.HasValue)
+        {
+            var existeGrupo = await _db.GruposBuses.AnyAsync(
+                g => g.Id == grupoBusId.Value && g.CooperativaId == cooperativaId, ct);
+            if (!existeGrupo)
+                throw new RecursoNoEncontradoException(
+                    $"No existe el grupo {grupoBusId.Value} en la cooperativa {cooperativaId}.");
+        }
+
+        if (plantillaId.HasValue)
+        {
+            var existePlantilla = await _db.PlantillasBus.AnyAsync(p => p.Id == plantillaId.Value, ct);
+            if (!existePlantilla)
+                throw new RecursoNoEncontradoException($"No existe la plantilla con id {plantillaId.Value}.");
+        }
     }
 
     private static BusDto Mapear(Bus bus) => new()

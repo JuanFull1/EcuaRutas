@@ -36,21 +36,35 @@ public class BusesController : ControllerBase
         return Ok(bus);
     }
 
-    [HttpPost]
+        [HttpPost]
     public async Task<ActionResult<BusDto>> Crear(CrearBusRequest request, CancellationToken ct)
     {
-        var bus = await _servicio.CrearAsync(request, ct);
-        return CreatedAtAction(nameof(Obtener), new { id = bus.Id }, bus);
+        try
+        {
+            var bus = await _servicio.CrearAsync(request, ct);
+            return CreatedAtAction(nameof(Obtener), new { id = bus.Id }, bus);
+        }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
     }
 
     [HttpPut("{id:long}")]
     public async Task<ActionResult<BusDto>> Actualizar(long id, ActualizarBusRequest request, CancellationToken ct)
     {
-        var bus = await _servicio.ActualizarAsync(id, request, ct);
-        if (bus is null)
-            return NotFound();
+        try
+        {
+            var bus = await _servicio.ActualizarAsync(id, request, ct);
+            if (bus is null)
+                return NotFound();
 
-        return Ok(bus);
+            return Ok(bus);
+        }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
     }
 
     [HttpDelete("{id:long}")]
