@@ -74,9 +74,30 @@ public class BusService : IBusService
         return Mapear(bus);
     }
 
-    public Task<BusDto?> ActualizarAsync(long id, ActualizarBusRequest request, CancellationToken ct = default)
+    public async Task<BusDto?> ActualizarAsync(long id, ActualizarBusRequest request, CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        var bus = await _db.Buses.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (bus is null)
+            return null;
+
+        bus.GrupoBusId = request.GrupoBusId;
+        bus.PlantillaId = request.PlantillaId;
+        bus.NumeroInterno = request.NumeroInterno.Trim();
+        bus.Placa = request.Placa.Trim().ToUpperInvariant();
+        bus.Color = request.Color;
+        bus.MarcaChasis = request.MarcaChasis;
+        bus.MarcaCarroceria = request.MarcaCarroceria;
+        bus.Modelo = request.Modelo;
+        bus.Anio = (short?)request.Anio;
+        bus.Pisos = (short)request.Pisos;
+        bus.Capacidad = (short)request.Capacidad;
+        bus.TieneBanio = request.TieneBanio;
+        bus.FotoUrl = request.FotoUrl;
+        bus.Estado = request.Estado;
+
+        await _db.SaveChangesAsync(ct);
+
+        return Mapear(bus);
     }
 
     public Task<bool> DarDeBajaAsync(long id, CancellationToken ct = default)
