@@ -10,10 +10,10 @@ public class GenerarHojasRutaAutomaticaDto
     public long GrupoBusId { get; set; }
 
     [Required(ErrorMessage = "La fecha de inicio es obligatoria.")]
-    public DateOnly FechaInicio { get; set; }
+    public DateOnly? FechaInicio { get; set; }
 
     [Required(ErrorMessage = "La fecha de fin es obligatoria.")]
-    public DateOnly FechaFin { get; set; }
+    public DateOnly? FechaFin { get; set; }
 
     [Required(ErrorMessage = "Las frecuencias a programar son obligatorias.")]
     [MinLength(1, ErrorMessage = "Debe indicar al menos una frecuencia.")]

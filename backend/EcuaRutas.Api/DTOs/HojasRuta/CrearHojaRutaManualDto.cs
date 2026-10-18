@@ -10,7 +10,7 @@ public class CrearHojaRutaManualDto
     public long GrupoBusId { get; set; }
 
     [Required(ErrorMessage = "La fecha de la hoja de ruta es obligatoria.")]
-    public DateOnly Fecha { get; set; }
+    public DateOnly? Fecha { get; set; }
 
     [Required(ErrorMessage = "Los detalles de la hoja de ruta son obligatorios.")]
     [MinLength(1, ErrorMessage = "La hoja de ruta debe tener al menos un detalle.")]
