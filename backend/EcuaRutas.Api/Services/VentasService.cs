@@ -337,4 +337,35 @@ public class VentasService
 
     return ventas.Count;
 }
+
+public async Task CancelarReservaAsync(long ventaId)
+{
+    var venta = await _context.Ventas
+        .Include(v => v.VentaAsientos)
+        .FirstOrDefaultAsync(v => v.Id == ventaId);
+
+    if (venta == null)
+    {
+        throw new ArgumentException("La venta no existe.");
+    }
+
+    if (venta.Estado != "RESERVADA")
+    {
+        throw new InvalidOperationException(
+            $"La reserva no puede cancelarse porque su estado actual es {venta.Estado}.");
+    }
+
+    venta.Estado = "CANCELADA";
+    venta.ActualizadoEn = DateTime.UtcNow;
+
+    foreach (var asiento in venta.VentaAsientos)
+    {
+        if (asiento.EstadoAsiento == "RETENIDO")
+        {
+            asiento.EstadoAsiento = "CANCELADO";
+        }
+    }
+
+    await _context.SaveChangesAsync();
+}
 }

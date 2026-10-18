@@ -53,4 +53,33 @@ public async Task<IActionResult> ExpirarReservas()
         cantidadExpirada = cantidad
     });
 }
+
+[HttpPost("{ventaId}/cancelar")]
+public async Task<IActionResult> CancelarReserva(long ventaId)
+{
+    try
+    {
+        await _service.CancelarReservaAsync(ventaId);
+
+        return Ok(new
+        {
+            mensaje = "Reserva cancelada correctamente.",
+            ventaId
+        });
+    }
+    catch (ArgumentException ex)
+    {
+        return NotFound(new
+        {
+            mensaje = ex.Message
+        });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Conflict(new
+        {
+            mensaje = ex.Message
+        });
+    }
+}
 }
