@@ -26,6 +26,7 @@ builder.Services.Configure<JwtSettings>(
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<DisponibilidadService>();
+builder.Services.AddScoped<VentasService>();
 
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 
