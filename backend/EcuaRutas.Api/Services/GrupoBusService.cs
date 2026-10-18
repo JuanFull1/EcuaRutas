@@ -39,6 +39,14 @@ public class GrupoBusService : IGrupoBusService
         public async Task<GrupoBusDto> CrearAsync(
         CrearGrupoBusRequest request, CancellationToken ct = default)
     {
+                var existeCooperativa = await _db.Cooperativas
+            .AnyAsync(c => c.Id == request.CooperativaId, ct);
+
+        if (!existeCooperativa)
+        {
+            throw new RecursoNoEncontradoException(
+                $"No existe la cooperativa con id {request.CooperativaId}.");
+        }
         var grupo = new GruposBuse
         {
             CooperativaId = request.CooperativaId,

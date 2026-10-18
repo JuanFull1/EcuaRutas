@@ -33,8 +33,15 @@ public class GruposBusesController : ControllerBase
     public async Task<ActionResult<GrupoBusDto>> Crear(
         CrearGrupoBusRequest request, CancellationToken ct)
     {
-        var grupo = await _servicio.CrearAsync(request, ct);
-        return CreatedAtAction(nameof(Obtener), new { id = grupo.Id }, grupo);
+        try
+        {
+            var grupo = await _servicio.CrearAsync(request, ct);
+            return CreatedAtAction(nameof(Obtener), new { id = grupo.Id }, grupo);
+        }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
     }
 
     [HttpPut("{id:long}")]
