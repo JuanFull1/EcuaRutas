@@ -53,10 +53,25 @@ public class GrupoBusService : IGrupoBusService
         return Mapear(grupo);
     }
 
-    public Task<GrupoBusDto?> ActualizarAsync(
+        public async Task<GrupoBusDto?> ActualizarAsync(
         long id, ActualizarGrupoBusRequest request, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        var grupo = await _db.GruposBuses
+            .FirstOrDefaultAsync(g => g.Id == id, ct);
 
+        if (grupo is null)
+        {
+            return null;
+        }
+
+        grupo.Nombre = request.Nombre.Trim();
+        grupo.Descripcion = request.Descripcion;
+        grupo.Activo = request.Activo;
+
+        await _db.SaveChangesAsync(ct);
+
+        return Mapear(grupo);
+    }
     public Task<bool> DesactivarAsync(
         long id, CancellationToken ct = default)
         => throw new NotImplementedException();
