@@ -1,85 +1,204 @@
-import { Injectable, signal } from '@angular/core';
-import { Router } from '@angular/router';
-
-import { Usuario } from '../models/usuario.model';
 import {
-  inicializarUsuariosDemo,
-  obtenerUsuariosDemo
-} from '../auth/usuarios-demo';
+  computed,
+  Injectable,
+  signal
+} from '@angular/core';
+
+import {
+  HttpClient
+} from '@angular/common/http';
+
+import {
+  Observable,
+  tap
+} from 'rxjs';
+
+import {
+  Router
+} from '@angular/router';
+
+import {
+  LoginResponse,
+  RolUsuario,
+  Usuario
+} from '../models/usuario.model';
+
+export const AUTH_SESSION_KEY =
+  'ecuarutas_sesion';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-  private readonly SESSION_KEY = 'ecuarutas_usuario_actual';
+  private readonly apiUrl =
+    'http://localhost:5268/api/auth';
 
-  private readonly usuarioSignal = signal<Usuario | null>(
-    this.obtenerSesionGuardada()
-  );
+  private readonly sesionSignal =
+    signal<LoginResponse | null>(
+      this.obtenerSesionGuardada()
+    );
 
-  readonly usuarioActual = this.usuarioSignal.asReadonly();
+  readonly usuarioActual =
+    computed<Usuario | null>(
+      () =>
+        this.sesionSignal()?.usuario
+        ?? null
+    );
 
   constructor(
+    private readonly http: HttpClient,
     private readonly router: Router
-  ) {
-    inicializarUsuariosDemo();
-  }
+  ) {}
 
-  login(correo: string, password: string): boolean {
+  login(
+    correo: string,
+    password: string
+  ): Observable<LoginResponse> {
 
-    const usuarios = obtenerUsuariosDemo();
+    return this.http
+      .post<LoginResponse>(
+        `${this.apiUrl}/login`,
+        {
+          correo,
+          password
+        }
+      )
+      .pipe(
+        tap(respuesta => {
 
-    const usuario = usuarios.find(
-      u =>
-        u.correo.toLowerCase() === correo.toLowerCase().trim()
-        && u.password === password
-    );
+          localStorage.setItem(
+            AUTH_SESSION_KEY,
+            JSON.stringify(respuesta)
+          );
 
-    if (!usuario) {
-      return false;
-    }
+          this.sesionSignal.set(
+            respuesta
+          );
 
-    localStorage.setItem(
-      this.SESSION_KEY,
-      JSON.stringify(usuario)
-    );
-
-    this.usuarioSignal.set(usuario);
-
-    return true;
+        })
+      );
   }
 
   logout(): void {
 
-    localStorage.removeItem(this.SESSION_KEY);
+    this.cerrarSesionLocal();
 
-    this.usuarioSignal.set(null);
-
-    this.router.navigate(['/login']);
+    this.router.navigate([
+      '/login'
+    ]);
   }
 
   estaAutenticado(): boolean {
-    return this.usuarioSignal() !== null;
+
+    const sesion =
+      this.sesionSignal();
+
+    if (!sesion) {
+      return false;
+    }
+
+    const expiraEn =
+      new Date(
+        sesion.expiraEn
+      ).getTime();
+
+    if (
+      Number.isNaN(expiraEn) ||
+      expiraEn <= Date.now()
+    ) {
+
+      this.cerrarSesionLocal();
+
+      return false;
+    }
+
+    return true;
   }
 
-  tieneRol(rol: Usuario['rol']): boolean {
-    return this.usuarioSignal()?.rol === rol;
+  tieneRol(
+    rol: RolUsuario
+  ): boolean {
+
+    return (
+      this.estaAutenticado() &&
+      this.usuarioActual()?.rol === rol
+    );
   }
 
-  private obtenerSesionGuardada(): Usuario | null {
+  obtenerToken(): string | null {
 
-    const datos = localStorage.getItem(this.SESSION_KEY);
+    if (!this.estaAutenticado()) {
+      return null;
+    }
+
+    return (
+      this.sesionSignal()?.token
+      ?? null
+    );
+  }
+
+  obtenerRutaInicio(
+    rol: RolUsuario
+  ): string {
+
+    switch (rol) {
+
+      case 'ADMIN':
+        return '/admin/inicio';
+
+      case 'COOPERATIVA':
+        return '/cooperativas/inicio';
+
+      case 'OFICINISTA':
+        return '/ventas/inicio';
+
+      case 'CLIENTE':
+        return '/cliente/inicio';
+
+      case 'BUS':
+        return '/personal-bus/inicio';
+
+      default:
+        return '/login';
+    }
+  }
+
+  private obtenerSesionGuardada():
+    LoginResponse | null {
+
+    const datos =
+      localStorage.getItem(
+        AUTH_SESSION_KEY
+      );
 
     if (!datos) {
       return null;
     }
 
     try {
-      return JSON.parse(datos) as Usuario;
-    } catch {
-      localStorage.removeItem(this.SESSION_KEY);
+
+      return JSON.parse(
+        datos
+      ) as LoginResponse;
+
+    }
+    catch {
+
+      localStorage.removeItem(
+        AUTH_SESSION_KEY
+      );
+
       return null;
     }
+  }
+
+  private cerrarSesionLocal(): void {
+
+    localStorage.removeItem(
+      AUTH_SESSION_KEY
+    );
+
+    this.sesionSignal.set(null);
   }
 }
