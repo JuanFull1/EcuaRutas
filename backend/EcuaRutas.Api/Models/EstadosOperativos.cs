@@ -27,3 +27,11 @@ public static class EstadosViaje
     public const string Finalizado = "FINALIZADO";
     public const string Cancelado = "CANCELADO";
 }
+
+public static class EstadosOcupacion
+{
+    public const string Abordado = "ABORDADO";
+    public const string Liberado = "LIBERADO";
+    public const string NoPresentado = "NO_PRESENTADO";
+    public const string Cancelado = "CANCELADO";
+}
