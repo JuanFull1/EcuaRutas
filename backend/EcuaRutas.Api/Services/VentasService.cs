@@ -447,4 +447,59 @@ public async Task<ReservaResponse> ConfirmarVentaAsync(long ventaId)
         }).ToList()
     };
 }
+
+public async Task<VentaResponse> ObtenerVentaPorCodigoAsync(string codigo)
+{
+    if (string.IsNullOrWhiteSpace(codigo))
+    {
+        throw new ArgumentException("El código de venta es obligatorio.");
+    }
+
+    var venta = await _context.Ventas
+        .Include(v => v.VentaAsientos)
+            .ThenInclude(va => va.AsientoBus)
+        .FirstOrDefaultAsync(v => v.Codigo == codigo);
+
+    if (venta == null)
+    {
+        throw new ArgumentException(
+            "No existe una venta con el código indicado.");
+    }
+
+    return new VentaResponse
+    {
+        VentaId = venta.Id,
+        Codigo = venta.Codigo,
+        ViajeId = venta.ViajeId,
+        UsuarioClienteId = venta.UsuarioClienteId,
+        UsuarioVendedorId = venta.UsuarioVendedorId,
+        Canal = venta.Canal,
+        Estado = venta.Estado,
+        Subtotal = venta.Subtotal,
+        DescuentoTotal = venta.DescuentoTotal,
+        Total = venta.Total,
+        ExpiraEn = venta.ExpiraEn,
+        CreadoEn = venta.CreadoEn,
+        ActualizadoEn = venta.ActualizadoEn,
+
+        Asientos = venta.VentaAsientos
+            .Select(va => new VentaAsientoResponse
+            {
+                VentaAsientoId = va.Id,
+                PasajeroId = va.PasajeroId,
+                AsientoBusId = va.AsientoBusId,
+                NumeroAsiento = va.AsientoBus.Numero,
+                OrigenRutaParadaId = va.OrigenRutaParadaId,
+                DestinoRutaParadaId = va.DestinoRutaParadaId,
+                PrecioBase = va.PrecioBase,
+                RecargoAsiento = va.RecargoAsiento,
+                TipoDescuento = va.TipoDescuento,
+                PorcentajeDescuento = va.PorcentajeDescuento,
+                ValorDescuento = va.ValorDescuento,
+                PrecioFinal = va.PrecioFinal,
+                EstadoAsiento = va.EstadoAsiento
+            })
+            .ToList()
+    };
+}
 }

@@ -108,4 +108,23 @@ public async Task<IActionResult> ConfirmarVenta(long ventaId)
         });
     }
 }
+
+[HttpGet("codigo/{codigo}")]
+public async Task<IActionResult> ObtenerVentaPorCodigo(string codigo)
+{
+    try
+    {
+        var resultado =
+            await _service.ObtenerVentaPorCodigoAsync(codigo);
+
+        return Ok(resultado);
+    }
+    catch (ArgumentException ex)
+    {
+        return NotFound(new
+        {
+            mensaje = ex.Message
+        });
+    }
+}
 }
