@@ -51,4 +51,38 @@ public class DisponibilidadController : ControllerBase
 
         return Ok(resultado);
     }
+
+    [HttpGet("lugares")]
+public async Task<IActionResult> ObtenerLugares()
+{
+    var lugares =
+        await _service.ObtenerLugaresAsync();
+
+    return Ok(lugares);
+}
+
+[HttpGet("viajes")]
+public async Task<IActionResult> BuscarViajes(
+    [FromQuery] long origenLugarId,
+    [FromQuery] long destinoLugarId,
+    [FromQuery] DateTime fecha)
+{
+    try
+    {
+        var viajes =
+            await _service.BuscarViajesAsync(
+                origenLugarId,
+                destinoLugarId,
+                fecha);
+
+        return Ok(viajes);
+    }
+    catch (ArgumentException ex)
+    {
+        return BadRequest(new
+        {
+            mensaje = ex.Message
+        });
+    }
+}
 }

@@ -110,27 +110,20 @@ export const routes: Routes = [
       roles: ['OFICINISTA']
     },
 
-    children: [
+   children: [
 
-      {
-        path: 'inicio',
+  {
+    path: '',
+    loadChildren: () =>
+      import(
+        './ventas/ventas.routes'
+      )
+        .then(
+          m => m.VENTAS_ROUTES
+        )
+  }
 
-        loadComponent: () =>
-          import(
-            './ventas/inicio/inicio-oficinista'
-          )
-            .then(
-              m => m.InicioOficinista
-            )
-      },
-
-      {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: 'inicio'
-      }
-
-    ]
+]
   },
 
   {
@@ -217,5 +210,7 @@ export const routes: Routes = [
     path: '**',
     redirectTo: 'login'
   }
+
+  
 
 ];

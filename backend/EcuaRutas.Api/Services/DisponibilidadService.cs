@@ -122,4 +122,171 @@ public class DisponibilidadService
             Asientos = asientosDisponibles
         };
     }
+
+    public async Task<List<LugarDisponibilidadResponse>>
+    ObtenerLugaresAsync()
+{
+    var lugares = await _context.RutaParadas
+        .AsNoTracking()
+        .Include(rp => rp.Lugar)
+        .Include(rp => rp.Ruta)
+        .Where(rp =>
+            rp.Lugar.Activo &&
+            rp.Ruta.Activa)
+        .Select(rp => new LugarDisponibilidadResponse
+        {
+            LugarId = rp.LugarId,
+            Nombre = rp.Lugar.Nombre,
+            Provincia = rp.Lugar.Provincia,
+            Canton = rp.Lugar.Canton
+        })
+        .Distinct()
+        .OrderBy(l => l.Nombre)
+        .ToListAsync();
+
+    return lugares;
+}
+
+public async Task<List<ViajeDisponibilidadResponse>>
+    BuscarViajesAsync(
+        long origenLugarId,
+        long destinoLugarId,
+        DateTime fecha)
+{
+    if (origenLugarId <= 0)
+    {
+        throw new ArgumentException(
+            "El origen es obligatorio.");
+    }
+
+    if (destinoLugarId <= 0)
+    {
+        throw new ArgumentException(
+            "El destino es obligatorio.");
+    }
+
+    if (origenLugarId == destinoLugarId)
+    {
+        throw new ArgumentException(
+            "El origen y destino no pueden ser iguales.");
+    }
+
+   var zonaEcuador = TimeZoneInfo.FindSystemTimeZoneById(
+    OperatingSystem.IsWindows()
+        ? "SA Pacific Standard Time"
+        : "America/Guayaquil"
+);
+
+var inicioDiaLocal = DateTime.SpecifyKind(
+    fecha.Date,
+    DateTimeKind.Unspecified
+);
+
+var finDiaLocal = inicioDiaLocal.AddDays(1);
+
+var inicioDia = TimeZoneInfo.ConvertTimeToUtc(
+    inicioDiaLocal,
+    zonaEcuador
+);
+
+var finDia = TimeZoneInfo.ConvertTimeToUtc(
+    finDiaLocal,
+    zonaEcuador
+);
+
+    var viajes = await _context.Viajes
+        .AsNoTracking()
+        .Include(v => v.Bus)
+        .Include(v => v.Frecuencia)
+            .ThenInclude(f => f.Cooperativa)
+        .Include(v => v.Frecuencia)
+            .ThenInclude(f => f.Ruta)
+                .ThenInclude(r => r.RutaParada)
+                    .ThenInclude(rp => rp.Lugar)
+        .Include(v => v.Frecuencia)
+            .ThenInclude(f => f.TarifasFrecuencia)
+        .Where(v =>
+            v.SalidaProgramada >= inicioDia &&
+            v.SalidaProgramada < finDia &&
+            (v.Estado == "PROGRAMADO" ||
+             v.Estado == "ABIERTO") &&
+            v.Frecuencia.Activa &&
+            v.Frecuencia.Ruta.Activa &&
+            v.Bus.Estado != "INACTIVO")
+        .ToListAsync();
+
+    var resultado = new List<ViajeDisponibilidadResponse>();
+
+    foreach (var viaje in viajes)
+    {
+        var paradas = viaje.Frecuencia.Ruta.RutaParada
+            .OrderBy(rp => rp.Orden)
+            .ToList();
+
+        var origen = paradas
+            .FirstOrDefault(rp =>
+                rp.LugarId == origenLugarId);
+
+        var destino = paradas
+            .FirstOrDefault(rp =>
+                rp.LugarId == destinoLugarId);
+
+        if (origen == null || destino == null)
+        {
+            continue;
+        }
+
+        if (destino.Orden <= origen.Orden)
+        {
+            continue;
+        }
+
+        var tarifa = viaje.Frecuencia.TarifasFrecuencia
+            .FirstOrDefault(t =>
+                t.Activa &&
+                t.OrigenRutaParadaId == origen.Id &&
+                t.DestinoRutaParadaId == destino.Id);
+
+        if (tarifa == null)
+        {
+            continue;
+        }
+
+        resultado.Add(
+            new ViajeDisponibilidadResponse
+            {
+                ViajeId = viaje.Id,
+                FrecuenciaId = viaje.FrecuenciaId,
+                RutaId = viaje.Frecuencia.RutaId,
+                RutaNombre = viaje.Frecuencia.Ruta.Nombre,
+                CodigoFrecuencia = viaje.Frecuencia.Codigo,
+                SalidaProgramada = viaje.SalidaProgramada,
+                Estado = viaje.Estado,
+
+                BusId = viaje.BusId,
+                NumeroInternoBus =
+                    viaje.Bus.NumeroInterno,
+                PlacaBus =
+                    viaje.Bus.Placa,
+                CapacidadBus =
+                    viaje.Bus.Capacidad,
+
+                OrigenRutaParadaId =
+                    origen.Id,
+
+                DestinoRutaParadaId =
+                    destino.Id,
+
+                PrecioBase =
+                    tarifa.PrecioBase,
+
+                Cooperativa =
+                    viaje.Frecuencia.Cooperativa.Nombre
+            });
+    }
+
+    return resultado
+        .OrderBy(v => v.SalidaProgramada)
+        .ToList();
+}
 }

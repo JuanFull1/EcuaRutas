@@ -1,0 +1,171 @@
+.disponibilidad-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 35px;
+}
+
+.encabezado {
+  margin-bottom: 30px;
+}
+
+.encabezado h1 {
+  margin-bottom: 8px;
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.encabezado p {
+  margin: 0;
+}
+
+.formulario {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 18px;
+  align-items: end;
+  padding: 25px;
+  margin-bottom: 25px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.campo label {
+  font-weight: 600;
+}
+
+.campo select,
+.campo input {
+  width: 100%;
+  height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+.formulario button {
+  height: 42px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.formulario button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.mensaje {
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  background: #f1f1f1;
+}
+
+.error {
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  background: #f8d7da;
+}
+
+.resultados {
+  margin-top: 30px;
+}
+
+.resultados h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.viaje-card {
+  display: grid;
+  grid-template-columns: 130px 1fr 180px;
+  gap: 25px;
+  align-items: center;
+  padding: 22px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+}
+
+.viaje-hora {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.viaje-hora strong {
+  font-size: 26px;
+}
+
+.viaje-hora span {
+  font-size: 13px;
+}
+
+.viaje-info h3 {
+  margin: 0 0 8px;
+}
+
+.viaje-info p {
+  margin: 5px 0;
+}
+
+.viaje-precio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.viaje-precio span {
+  font-size: 13px;
+}
+
+.viaje-precio strong {
+  font-size: 24px;
+}
+
+.viaje-precio button {
+  padding: 9px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+
+  .formulario {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .viaje-card {
+    grid-template-columns: 1fr;
+  }
+
+  .viaje-precio {
+    align-items: flex-start;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .disponibilidad-container {
+    padding: 20px;
+  }
+
+  .formulario {
+    grid-template-columns: 1fr;
+  }
+
+}

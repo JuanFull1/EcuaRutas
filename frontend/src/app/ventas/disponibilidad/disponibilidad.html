@@ -1,0 +1,222 @@
+<div class="disponibilidad-container">
+
+  <div class="encabezado">
+
+    <h1>Consulta de disponibilidad</h1>
+
+    <p>
+      Busque viajes disponibles según el origen,
+      destino y fecha.
+    </p>
+
+  </div>
+
+  @if (cargandoLugares) {
+
+    <div class="mensaje">
+      Cargando lugares...
+    </div>
+
+  }
+
+  @if (error) {
+
+    <div class="error">
+      {{ error }}
+    </div>
+
+  }
+
+  <form
+    class="formulario"
+    (ngSubmit)="buscarViajes()"
+  >
+
+    <div class="campo">
+
+      <label for="origen">
+        Origen
+      </label>
+
+      <select
+        id="origen"
+        name="origenLugarId"
+        [(ngModel)]="origenLugarId"
+        [disabled]="cargandoLugares"
+      >
+
+        <option [ngValue]="null">
+          Seleccione el origen
+        </option>
+
+        @for (lugar of lugares; track lugar.lugarId) {
+
+          <option [ngValue]="lugar.lugarId">
+            {{ lugar.nombre }}
+          </option>
+
+        }
+
+      </select>
+
+    </div>
+
+    <div class="campo">
+
+      <label for="destino">
+        Destino
+      </label>
+
+      <select
+        id="destino"
+        name="destinoLugarId"
+        [(ngModel)]="destinoLugarId"
+        [disabled]="cargandoLugares"
+      >
+
+        <option [ngValue]="null">
+          Seleccione el destino
+        </option>
+
+        @for (lugar of lugares; track lugar.lugarId) {
+
+          <option [ngValue]="lugar.lugarId">
+            {{ lugar.nombre }}
+          </option>
+
+        }
+
+      </select>
+
+    </div>
+
+    <div class="campo">
+
+      <label for="fecha">
+        Fecha del viaje
+      </label>
+
+      <input
+        id="fecha"
+        type="date"
+        name="fecha"
+        [(ngModel)]="fecha"
+      />
+
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="
+        cargandoLugares ||
+        cargandoViajes
+      "
+    >
+
+      {{
+        cargandoViajes
+          ? 'Buscando...'
+          : 'Buscar viajes'
+      }}
+
+    </button>
+
+  </form>
+
+  @if (mensaje) {
+
+    <div class="mensaje">
+      {{ mensaje }}
+    </div>
+
+  }
+
+  @if (viajes.length > 0) {
+
+    <section class="resultados">
+
+      <h2>
+        Viajes disponibles
+      </h2>
+
+      @for (
+        viaje of viajes;
+        track viaje.viajeId
+      ) {
+
+        <article class="viaje-card">
+
+          <div class="viaje-hora">
+
+            <strong>
+              {{ obtenerHora(viaje.salidaProgramada) }}
+            </strong>
+
+            <span>
+              Hora de salida
+            </span>
+
+          </div>
+
+          <div class="viaje-info">
+
+            <h3>
+              {{ viaje.rutaNombre }}
+            </h3>
+
+            <p>
+              {{ obtenerNombreLugar(
+                viaje.origenRutaParadaId
+              ) }}
+
+              →
+              
+              {{ obtenerNombreLugar(
+                viaje.destinoRutaParadaId
+              ) }}
+            </p>
+
+            <p>
+              Cooperativa:
+              <strong>
+                {{ viaje.cooperativa }}
+              </strong>
+            </p>
+
+            <p>
+              Bus:
+              {{ viaje.numeroInternoBus }}
+              |
+              Placa:
+              {{ viaje.placaBus }}
+            </p>
+
+          </div>
+
+          <div class="viaje-precio">
+
+            <span>
+              Desde
+            </span>
+
+            <strong>
+              ${{ viaje.precioBase | number:'1.2-2' }}
+            </strong>
+
+            <button
+              type="button"
+            >
+              Ver asientos
+            </button>
+
+          </div>
+
+        </article>
+
+      }
+
+    </section>
+
+  }
+
+</div>
