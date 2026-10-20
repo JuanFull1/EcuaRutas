@@ -48,7 +48,7 @@ public class BusService : IBusService
 
     public async Task<BusDto> CrearAsync(CrearBusRequest request, CancellationToken ct = default)
     {
-        await ValidarReferenciasAsync(request.CooperativaId, request.GrupoBusId, request.PlantillaId, ct);
+        await ValidarReferenciasAsync(request.CooperativaId, request.GrupoBusId, null, ct);
         var numeroInterno = request.NumeroInterno.Trim();
         var placa = request.Placa.Trim().ToUpperInvariant();
         await ValidarDuplicadosAsync(request.CooperativaId, numeroInterno, placa, null, ct);
@@ -57,7 +57,6 @@ public class BusService : IBusService
         {
             CooperativaId = request.CooperativaId,
             GrupoBusId = request.GrupoBusId,
-            PlantillaId = request.PlantillaId,
             NumeroInterno = numeroInterno,
             Placa = placa,
             MarcaChasis = request.MarcaChasis,
