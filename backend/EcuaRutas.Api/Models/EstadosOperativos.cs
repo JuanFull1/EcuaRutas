@@ -35,10 +35,3 @@ public static class EstadosOcupacion
     public const string NoPresentado = "NO_PRESENTADO";
     public const string Cancelado = "CANCELADO";
 }
-
-public static class EstadosBus
-{
-    public const string Activo = "ACTIVO";
-    public const string Mantenimiento = "MANTENIMIENTO";
-    public const string Inactivo = "INACTIVO";
-}
