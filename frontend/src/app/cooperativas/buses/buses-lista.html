@@ -16,4 +16,46 @@
 
   </section>
 
+  <div class="card border-0 shadow-sm">
+
+    <div class="table-responsive">
+
+      <table class="table table-hover align-middle mb-0">
+
+        <thead class="table-light">
+          <tr>
+            <th>N.º interno</th>
+            <th>Placa</th>
+            <th>Modelo</th>
+            <th class="text-center">Año</th>
+            <th class="text-center">Pisos</th>
+            <th class="text-center">Capacidad</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (bus of buses(); track bus.id) {
+            <tr>
+              <td class="fw-semibold">{{ bus.numeroInterno }}</td>
+              <td>{{ bus.placa }}</td>
+              <td>{{ bus.modelo ?? '-' }}</td>
+              <td class="text-center">{{ bus.anio ?? '-' }}</td>
+              <td class="text-center">{{ bus.pisos }}</td>
+              <td class="text-center">{{ bus.capacidad }}</td>
+              <td>
+                <span class="badge" [class]="'badge ' + claseEstado(bus.estado)">
+                  {{ bus.estado }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
 </div>
