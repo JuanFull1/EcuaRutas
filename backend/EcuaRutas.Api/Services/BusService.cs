@@ -68,7 +68,7 @@ public class BusService : IBusService
             Capacidad = (short)request.Capacidad,
             TieneBanio = request.TieneBanio,
             FotoUrl = request.FotoUrl,
-            Estado = "ACTIVO",
+            Estado = EstadosBus.Activo,
             CreadoEn = DateTime.UtcNow
         };
 
@@ -114,7 +114,7 @@ public class BusService : IBusService
         if (bus is null)
             return false;
 
-        bus.Estado = "INACTIVO";
+        bus.Estado = EstadosBus.Inactivo;
         await _db.SaveChangesAsync(ct);
 
         return true;
