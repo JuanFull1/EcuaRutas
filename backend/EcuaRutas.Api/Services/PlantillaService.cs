@@ -45,8 +45,22 @@ public class PlantillaService : IPlantillaService
         return plantilla is null ? null : MapearPlantilla(plantilla);
     }
 
-    public Task<PlantillaBusDto> CrearAsync(CrearPlantillaBusRequest request, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public async Task<PlantillaBusDto> CrearAsync(CrearPlantillaBusRequest request, CancellationToken ct = default)
+    {
+        var plantilla = new PlantillasBu
+        {
+            CooperativaId = request.CooperativaId,
+            Nombre = request.Nombre.Trim(),
+            Pisos = (short)request.Pisos,
+            TieneBanio = request.TieneBanio,
+            Activa = true
+        };
+
+        _db.PlantillasBus.Add(plantilla);
+        await _db.SaveChangesAsync(ct);
+
+        return MapearPlantilla(plantilla);
+    }
 
     public Task<IReadOnlyList<PlantillaAsientoDto>?> ObtenerDisposicionAsync(long plantillaId, CancellationToken ct = default)
         => throw new NotImplementedException();
