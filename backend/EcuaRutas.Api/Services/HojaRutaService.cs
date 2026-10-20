@@ -50,13 +50,46 @@ public class HojaRutaService : IHojaRutaService
         GenerarHojasRutaAutomaticaDto dto, long? cooperativaContexto, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<HojaRutaDto> ObtenerPorIdAsync(
+    public async Task<HojaRutaDto> ObtenerPorIdAsync(
         long id, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        var hoja = await _db.HojasRuta.AsNoTracking()
+            .Include(h => h.HojaRutaDetalles)
+            .FirstOrDefaultAsync(h => h.Id == id
+                && (cooperativaContexto == null || h.CooperativaId == cooperativaContexto), ct)
+            ?? throw new ReglaNegocioException(404, "La hoja de ruta no existe.");
 
-    public Task<IReadOnlyList<HojaRutaResumenDto>> ListarAsync(
+        return MapearADto(hoja);
+    }
+
+    public async Task<IReadOnlyList<HojaRutaResumenDto>> ListarAsync(
         long? cooperativaContexto, long? grupoBusId, DateOnly? desde, DateOnly? hasta, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        if (desde is not null && hasta is not null && hasta.Value < desde.Value)
+            throw new ReglaNegocioException(400, "El rango de fechas no es válido.");
+
+        var q = _db.HojasRuta.AsNoTracking().Include(h => h.HojaRutaDetalles).AsQueryable();
+        if (cooperativaContexto is not null) q = q.Where(h => h.CooperativaId == cooperativaContexto);
+        if (grupoBusId is not null) q = q.Where(h => h.GrupoBusId == grupoBusId);
+        if (desde is not null) q = q.Where(h => h.Fecha >= desde.Value);
+        if (hasta is not null) q = q.Where(h => h.Fecha <= hasta.Value);
+
+        var hojas = await q.OrderByDescending(h => h.Fecha).ThenBy(h => h.GrupoBusId).ToListAsync(ct);
+        return hojas.Select(MapearAResumen).ToList();
+    }
+    private static HojaRutaDto MapearADto(HojasRutum h) => new(
+        h.Id, h.CooperativaId, h.GrupoBusId, h.Fecha, h.ModoGeneracion, h.Estado, h.CreadoEn,
+        h.HojaRutaDetalles
+            .OrderBy(d => d.OrdenDia).ThenBy(d => d.BusId)
+            .Select(d => new HojaRutaDetalleDto(
+                d.Id, d.HojaRutaId, d.BusId, d.FrecuenciaId, d.TipoAsignacion,
+                d.OrdenDia, d.HoraProgramada, d.Observacion))
+            .ToList());
+
+    private static HojaRutaResumenDto MapearAResumen(HojasRutum h) => new(
+        h.Id, h.GrupoBusId, h.Fecha, h.ModoGeneracion, h.Estado,
+        h.HojaRutaDetalles.Count(d => d.TipoAsignacion == TiposAsignacion.Servicio),
+        h.HojaRutaDetalles.Count(d => d.TipoAsignacion == TiposAsignacion.Parada));
 
     public Task<HojaRutaDto> PublicarAsync(
         long id, long? cooperativaContexto, CancellationToken ct = default)
@@ -69,4 +102,5 @@ public class HojaRutaService : IHojaRutaService
     public Task<HojaRutaDto> SustituirBusAsync(
         long hojaRutaId, long detalleId, SustituirBusDto dto, long? cooperativaContexto, CancellationToken ct = default)
         => throw new NotImplementedException();
+
 }
