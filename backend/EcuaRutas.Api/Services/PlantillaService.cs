@@ -47,7 +47,9 @@ public class PlantillaService : IPlantillaService
 
     public async Task<PlantillaBusDto> CrearAsync(CrearPlantillaBusRequest request, CancellationToken ct = default)
     {
-        var plantilla = new PlantillasBu
+        if (request.CooperativaId.HasValue &&
+            !await _db.Cooperativas.AnyAsync(c => c.Id == request.CooperativaId.Value, ct))
+            throw new RecursoNoEncontradoException($"No existe la cooperativa con id {request.CooperativaId}.");        var plantilla = new PlantillasBu
         {
             CooperativaId = request.CooperativaId,
             Nombre = request.Nombre.Trim(),

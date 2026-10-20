@@ -33,8 +33,15 @@ public class PlantillasController : ControllerBase
     public async Task<ActionResult<PlantillaBusDto>> Crear(
         CrearPlantillaBusRequest request, CancellationToken ct)
     {
-        var plantilla = await _servicio.CrearAsync(request, ct);
-        return CreatedAtAction(nameof(Obtener), new { id = plantilla.Id }, plantilla);
+        try
+        {
+            var plantilla = await _servicio.CrearAsync(request, ct);
+            return CreatedAtAction(nameof(Obtener), new { id = plantilla.Id }, plantilla);
+        }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
     }
 
     [HttpGet("{id:long}/asientos")]
