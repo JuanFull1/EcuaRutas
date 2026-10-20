@@ -188,6 +188,12 @@ public class HojaRutaService : IHojaRutaService
         await GuardarCambiosAsync(ct);
         return MapearADto(hoja);
     }
+    public async Task<HojaRutaDto> ObtenerPorIdAsync(
+        long id, long? cooperativaContexto, CancellationToken ct = default)
+    {
+        var hoja = await CargarHojaAsync(id, cooperativaContexto, ct);
+        return MapearADto(hoja);
+    }
 
     public async Task<HojaRutaDto> SustituirBusAsync(
         long hojaRutaId, long detalleId, SustituirBusDto dto, long? cooperativaContexto, CancellationToken ct = default)
