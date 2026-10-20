@@ -83,13 +83,13 @@ public class BusService : IBusService
         var bus = await _db.Buses.FirstOrDefaultAsync(b => b.Id == id, ct);
         if (bus is null)
             return null;
-        await ValidarReferenciasAsync(bus.CooperativaId, request.GrupoBusId, request.PlantillaId, ct);
+        await ValidarReferenciasAsync(bus.CooperativaId, request.GrupoBusId, null, ct);
         var numeroInterno = request.NumeroInterno.Trim();
         var placa = request.Placa.Trim().ToUpperInvariant();
         await ValidarDuplicadosAsync(bus.CooperativaId, numeroInterno, placa, id, ct);
 
         bus.GrupoBusId = request.GrupoBusId;
-        bus.PlantillaId = request.PlantillaId;
+        // La plantilla solo cambia al asignarla al bus (copia sus asientos); aquí se conserva.
         bus.NumeroInterno = numeroInterno;
         bus.Placa = placa;
         bus.Color = request.Color;
