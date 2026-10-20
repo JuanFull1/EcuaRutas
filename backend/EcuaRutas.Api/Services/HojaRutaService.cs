@@ -145,4 +145,66 @@ public class HojaRutaService : IHojaRutaService
         }
     }
 
+    private async Task ValidarGrupoAsync(long cooperativaId, long grupoBusId, CancellationToken ct)
+    {
+        var valido = await _db.GruposBuses.AsNoTracking()
+            .AnyAsync(g => g.Id == grupoBusId && g.CooperativaId == cooperativaId && g.Activo == true, ct);
+        if (!valido)
+            throw new ReglaNegocioException(404, "El grupo de buses no existe, está inactivo o es de otra cooperativa.");
+    }
+
+    private async Task<Dictionary<long, TimeOnly>> ObtenerHorasFrecuenciasAsync(
+        long cooperativaId, IReadOnlyCollection<long> frecuenciaIds, CancellationToken ct)
+    {
+        var ids = frecuenciaIds.Distinct().ToList();
+        var frecuencias = await _db.Frecuencias.AsNoTracking()
+            .Where(f => ids.Contains(f.Id) && f.CooperativaId == cooperativaId && f.Activa == true)
+            .Select(f => new { f.Id, f.HoraSalida })
+            .ToListAsync(ct);
+        if (frecuencias.Count != ids.Count)
+            throw new ReglaNegocioException(400, "Alguna frecuencia no existe, está inactiva o es de otra cooperativa.");
+
+        return frecuencias.ToDictionary(f => f.Id, f => f.HoraSalida);
+    }
+
+    private async Task<Dictionary<long, TimeOnly>> ValidarReferenciasManualAsync(
+        long cooperativaId, CrearHojaRutaManualDto dto, CancellationToken ct)
+    {
+        await ValidarGrupoAsync(cooperativaId, dto.GrupoBusId, ct);
+
+        var busIds = dto.Detalles.Select(d => d.BusId).Distinct().ToList();
+        var busesValidos = await _db.Buses.AsNoTracking()
+            .CountAsync(b => busIds.Contains(b.Id)
+                && b.CooperativaId == cooperativaId
+                && b.GrupoBusId == dto.GrupoBusId
+                && b.Estado == EstadosBus.Activo, ct);
+        if (busesValidos != busIds.Count)
+            throw new ReglaNegocioException(400, "Algún bus no pertenece al grupo indicado o no está ACTIVO.");
+
+        var frecIds = dto.Detalles.Where(d => d.FrecuenciaId is not null)
+            .Select(d => d.FrecuenciaId!.Value).ToList();
+        return await ObtenerHorasFrecuenciasAsync(cooperativaId, frecIds, ct);
+    }
+
+    private async Task GuardarCambiosAsync(CancellationToken ct)
+    {
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            throw new ReglaNegocioException(409,
+                "Conflicto de unicidad: ya existe una hoja de ruta para ese grupo y fecha, o un bus/orden repetido.");
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.CheckViolation })
+        {
+            throw new ReglaNegocioException(400, "Los datos no cumplen las restricciones de la hoja de ruta.");
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation })
+        {
+            throw new ReglaNegocioException(400, "Alguna referencia (bus, frecuencia o grupo) no existe.");
+        }
+    }
+
 }
