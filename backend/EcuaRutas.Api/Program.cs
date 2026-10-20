@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<IGrupoBusService, GrupoBusService>();
+builder.Services.AddScoped<IPlantillaService, PlantillaService>();
 
 builder.Services.AddDbContext<EcuaRutasDbContext>(options =>
     options.UseNpgsql(
