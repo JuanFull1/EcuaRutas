@@ -12,9 +12,39 @@ public class HojaRutaService : IHojaRutaService
 
     public HojaRutaService(EcuaRutasDbContext db) => _db = db;
 
-    public Task<HojaRutaDto> CrearManualAsync(
+    public async Task<HojaRutaDto> CrearManualAsync(
         CrearHojaRutaManualDto dto, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        ValidarEntradaManual(dto);
+        var cooperativaId = ResolverCooperativa(cooperativaContexto, dto.CooperativaId);
+        var fecha = dto.Fecha!.Value;
+        var horas = await ValidarReferenciasManualAsync(cooperativaId, dto, ct);
+
+        if (await _db.HojasRuta.AnyAsync(h => h.GrupoBusId == dto.GrupoBusId && h.Fecha == fecha, ct))
+            throw new ReglaNegocioException(409, "Ya existe una hoja de ruta para ese grupo y fecha.");
+
+        var hoja = new HojasRutum
+        {
+            CooperativaId = cooperativaId,
+            GrupoBusId = dto.GrupoBusId,
+            Fecha = fecha,
+            ModoGeneracion = ModosGeneracion.Manual,
+            Estado = EstadosHojaRuta.Borrador,
+            HojaRutaDetalles = dto.Detalles.Select(d => new HojaRutaDetalle
+            {
+                BusId = d.BusId,
+                FrecuenciaId = d.FrecuenciaId,
+                TipoAsignacion = d.TipoAsignacion,
+                OrdenDia = d.OrdenDia,
+                HoraProgramada = ResolverHora(d.HoraProgramada, d.FrecuenciaId, horas),
+                Observacion = d.Observacion
+            }).ToList()
+        };
+
+        _db.HojasRuta.Add(hoja);
+        await GuardarCambiosAsync(ct);
+        return MapearADto(hoja);
+    }
 
     public Task<IReadOnlyList<HojaRutaDto>> GenerarAutomaticaAsync(
         GenerarHojasRutaAutomaticaDto dto, long? cooperativaContexto, CancellationToken ct = default)
