@@ -161,17 +161,70 @@ public class HojaRutaService : IHojaRutaService
         return hojas.Select(MapearAResumen).ToList();
     }
 
-    public Task<HojaRutaDto> PublicarAsync(
+    public async Task<HojaRutaDto> PublicarAsync(
         long id, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        var hoja = await CargarHojaAsync(id, cooperativaContexto, ct);
+        if (hoja.Estado != EstadosHojaRuta.Borrador)
+            throw new ReglaNegocioException(409,
+                $"Solo una hoja en BORRADOR puede publicarse (estado actual: {hoja.Estado}).");
+        if (!hoja.HojaRutaDetalles.Any(d => d.TipoAsignacion == TiposAsignacion.Servicio))
+            throw new ReglaNegocioException(400, "La hoja debe tener al menos un servicio para publicarse.");
 
-    public Task<HojaRutaDto> CerrarAsync(
+        hoja.Estado = EstadosHojaRuta.Publicada;
+        await GuardarCambiosAsync(ct);
+        return MapearADto(hoja);
+    }
+
+    public async Task<HojaRutaDto> CerrarAsync(
         long id, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        var hoja = await CargarHojaAsync(id, cooperativaContexto, ct);
+        if (hoja.Estado != EstadosHojaRuta.Publicada)
+            throw new ReglaNegocioException(409,
+                $"Solo una hoja PUBLICADA puede cerrarse (estado actual: {hoja.Estado}).");
 
-    public Task<HojaRutaDto> SustituirBusAsync(
+        hoja.Estado = EstadosHojaRuta.Cerrada;
+        await GuardarCambiosAsync(ct);
+        return MapearADto(hoja);
+    }
+
+    public async Task<HojaRutaDto> SustituirBusAsync(
         long hojaRutaId, long detalleId, SustituirBusDto dto, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        var hoja = await CargarHojaAsync(hojaRutaId, cooperativaContexto, ct);
+        if (hoja.Estado == EstadosHojaRuta.Cerrada)
+            throw new ReglaNegocioException(409, "No se puede sustituir un bus en una hoja CERRADA.");
+
+        var servicio = hoja.HojaRutaDetalles.FirstOrDefault(d => d.Id == detalleId)
+            ?? throw new ReglaNegocioException(404, "El detalle no pertenece a la hoja de ruta.");
+        if (servicio.TipoAsignacion != TiposAsignacion.Servicio)
+            throw new ReglaNegocioException(400, "Solo se puede sustituir el bus de un detalle en SERVICIO.");
+        if (dto.BusReemplazoId == servicio.BusId)
+            throw new ReglaNegocioException(400, "El bus de reemplazo es el mismo bus del detalle.");
+
+        var reten = hoja.HojaRutaDetalles.FirstOrDefault(
+                d => d.BusId == dto.BusReemplazoId && d.TipoAsignacion == TiposAsignacion.Parada)
+            ?? throw new ReglaNegocioException(400, "El bus de reemplazo debe estar en PARADA en esta hoja de ruta.");
+
+        var reemplazoActivo = await _db.Buses.AsNoTracking()
+            .AnyAsync(b => b.Id == dto.BusReemplazoId && b.Estado == EstadosBus.Activo, ct);
+        if (!reemplazoActivo)
+            throw new ReglaNegocioException(400, "El bus de reemplazo no está ACTIVO.");
+
+        if (await _db.Viajes.AnyAsync(v => v.HojaRutaDetalleId == servicio.Id, ct))
+            throw new ReglaNegocioException(409,
+                "El detalle ya tiene un viaje generado; la sustitución debe hacerse desde el módulo de viajes.");
+
+        var busOriginal = servicio.BusId;
+        servicio.BusId = reten.BusId;
+        reten.BusId = busOriginal;
+        servicio.Observacion = $"Sustituido bus {busOriginal} por {servicio.BusId}: {dto.Observacion}";
+        reten.Observacion = $"Retirado del servicio (reemplazado por bus {servicio.BusId}): {dto.Observacion}";
+
+        await GuardarCambiosAsync(ct);
+        return MapearADto(hoja);
+    }
 
 private static HojaRutaDto MapearADto(HojasRutum h) => new(
         h.Id, h.CooperativaId, h.GrupoBusId, h.Fecha, h.ModoGeneracion, h.Estado, h.CreadoEn,
@@ -289,5 +342,13 @@ private static HojaRutaDto MapearADto(HojasRutum h) => new(
             throw new ReglaNegocioException(400, "Alguna referencia (bus, frecuencia o grupo) no existe.");
         }
     }
+    private async Task<HojasRutum> CargarHojaAsync(long id, long? cooperativaContexto, CancellationToken ct)
+        => await _db.HojasRuta
+            .Include(h => h.HojaRutaDetalles)
+            .FirstOrDefaultAsync(h => h.Id == id
+                && (cooperativaContexto == null || h.CooperativaId == cooperativaContexto), ct)
+            ?? throw new ReglaNegocioException(404, "La hoja de ruta no existe.");
+
+ 
 
 }
