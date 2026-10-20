@@ -16,6 +16,7 @@ export class BusesLista implements OnInit {
   private readonly busService = inject(BusService);
 
   readonly buses = signal<Bus[]>([]);
+  readonly error = signal<string | null>(null);
 
   ngOnInit(): void {
     this.cargar();
@@ -32,15 +33,21 @@ export class BusesLista implements OnInit {
     }
   }
 
-  private cargar(): void {
+  cargar(): void {
     const cooperativaId = this.authService.usuarioActual()?.cooperativaId;
 
     if (cooperativaId == null) {
+      this.error.set('Tu usuario no está asociado a una cooperativa.');
       return;
     }
 
-    this.busService.listar(cooperativaId).subscribe(buses => {
-      this.buses.set(buses);
+    this.error.set(null);
+
+    this.busService.listar(cooperativaId).subscribe({
+      next: buses => this.buses.set(buses),
+      error: () => this.error.set(
+        'No se pudieron cargar los buses. Verifica tu conexión e inténtalo de nuevo.'
+      )
     });
   }
 }
