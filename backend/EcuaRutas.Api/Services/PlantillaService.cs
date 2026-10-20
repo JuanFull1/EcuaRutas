@@ -139,6 +139,9 @@ public class PlantillaService : IPlantillaService
             .Where(a => a.PlantillaId == plantillaId)
             .ToListAsync(ct);
 
+        if (plantillaAsientos.Count == 0)
+            throw new ConflictoException("La plantilla no tiene asientos definidos.");
+
         var anteriores = await _db.AsientosBus
             .Where(a => a.BusId == busId)
             .ToListAsync(ct);

@@ -74,7 +74,14 @@ public class PlantillasController : ControllerBase
     [HttpPut("/api/buses/{busId:long}/plantilla/{plantillaId:long}")]
     public async Task<IActionResult> AsignarABus(long busId, long plantillaId, CancellationToken ct)
     {
-        var asignada = await _servicio.AsignarABusAsync(busId, plantillaId, ct);
-        return asignada ? NoContent() : NotFound();
+        try
+        {
+            var asignada = await _servicio.AsignarABusAsync(busId, plantillaId, ct);
+            return asignada ? NoContent() : NotFound();
+        }
+        catch (ConflictoException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
     }
 }
