@@ -38,7 +38,32 @@ public class HojasRutaController : ControllerBase
             return CreatedAtAction(nameof(Obtener), new { id = hoja.Id }, hoja);
         });
 
+    [HttpPost("automatica")]
+    [Authorize(Roles = RolesEscritura)]
+    public Task<IActionResult> GenerarAutomatica(GenerarHojasRutaAutomaticaDto dto, CancellationToken ct)
+        => Ejecutar(async () =>
+        {
+            var hojas = await _service.GenerarAutomaticaAsync(dto, User.ObtenerCooperativaContexto(), ct);
+            return StatusCode(StatusCodes.Status201Created, hojas);
+        });
 
+    [HttpPost("{id:long}/publicar")]
+    [Authorize(Roles = RolesEscritura)]
+    public Task<IActionResult> Publicar(long id, CancellationToken ct)
+        => Ejecutar(async () =>
+            Ok(await _service.PublicarAsync(id, User.ObtenerCooperativaContexto(), ct)));
+
+    [HttpPost("{id:long}/cerrar")]
+    [Authorize(Roles = RolesEscritura)]
+    public Task<IActionResult> Cerrar(long id, CancellationToken ct)
+        => Ejecutar(async () =>
+            Ok(await _service.CerrarAsync(id, User.ObtenerCooperativaContexto(), ct)));
+
+    [HttpPost("{id:long}/detalles/{detalleId:long}/sustituir-bus")]
+    [Authorize(Roles = RolesEscritura)]
+    public Task<IActionResult> SustituirBus(long id, long detalleId, SustituirBusDto dto, CancellationToken ct)
+        => Ejecutar(async () =>
+            Ok(await _service.SustituirBusAsync(id, detalleId, dto, User.ObtenerCooperativaContexto(), ct)));
 
     private async Task<IActionResult> Ejecutar(Func<Task<IActionResult>> accion)
     {
