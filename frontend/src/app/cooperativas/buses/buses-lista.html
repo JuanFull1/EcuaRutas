@@ -35,6 +35,26 @@
 
   <div class="card border-0 shadow-sm">
 
+    <div class="card-header bg-white border-0 pt-3 d-flex flex-wrap align-items-center gap-2">
+
+      <label for="filtro-estado" class="form-label mb-0 text-secondary">
+        Estado
+      </label>
+
+      <select
+        id="filtro-estado"
+        class="form-select form-select-sm w-auto"
+        [value]="filtroEstado()"
+        (change)="cambiarFiltro($any($event.target).value)"
+      >
+        <option value="">Todos</option>
+        @for (estado of estados; track estado) {
+          <option [value]="estado">{{ estado }}</option>
+        }
+      </select>
+
+    </div>
+
     <div class="table-responsive">
 
       <table class="table table-hover align-middle mb-0">
@@ -65,7 +85,11 @@
           } @else if (!error() && buses().length === 0) {
             <tr>
               <td colspan="7" class="text-center text-secondary py-4">
-                No hay buses registrados.
+                @if (filtroEstado()) {
+                  No hay buses con estado {{ filtroEstado() }}.
+                } @else {
+                  No hay buses registrados.
+                }
               </td>
             </tr>
           }

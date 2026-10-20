@@ -15,9 +15,12 @@ export class BusesLista implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly busService = inject(BusService);
 
+  readonly estados: EstadoBus[] = ['ACTIVO', 'MANTENIMIENTO', 'INACTIVO'];
+
   readonly buses = signal<Bus[]>([]);
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
+  readonly filtroEstado = signal<EstadoBus | ''>('');
 
   ngOnInit(): void {
     this.cargar();
@@ -34,6 +37,11 @@ export class BusesLista implements OnInit {
     }
   }
 
+  cambiarFiltro(valor: string): void {
+    this.filtroEstado.set(valor as EstadoBus | '');
+    this.cargar();
+  }
+
   cargar(): void {
     const cooperativaId = this.authService.usuarioActual()?.cooperativaId;
 
@@ -45,17 +53,19 @@ export class BusesLista implements OnInit {
     this.error.set(null);
     this.cargando.set(true);
 
-    this.busService.listar(cooperativaId).subscribe({
-      next: buses => {
-        this.buses.set(buses);
-        this.cargando.set(false);
-      },
-      error: () => {
-        this.error.set(
-          'No se pudieron cargar los buses. Verifica tu conexión e inténtalo de nuevo.'
-        );
-        this.cargando.set(false);
-      }
-    });
+    this.busService
+      .listar(cooperativaId, undefined, this.filtroEstado() || undefined)
+      .subscribe({
+        next: buses => {
+          this.buses.set(buses);
+          this.cargando.set(false);
+        },
+        error: () => {
+          this.error.set(
+            'No se pudieron cargar los buses. Verifica tu conexión e inténtalo de nuevo.'
+          );
+          this.cargando.set(false);
+        }
+      });
   }
 }
