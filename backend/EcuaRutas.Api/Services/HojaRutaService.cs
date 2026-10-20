@@ -103,4 +103,46 @@ public class HojaRutaService : IHojaRutaService
         long hojaRutaId, long detalleId, SustituirBusDto dto, long? cooperativaContexto, CancellationToken ct = default)
         => throw new NotImplementedException();
 
+    private static long ResolverCooperativa(long? contexto, long? dtoId)
+    {
+        if (contexto is null && dtoId is null)
+            throw new ReglaNegocioException(400, "La cooperativa es obligatoria.");
+        if (contexto is not null && dtoId is not null && contexto != dtoId)
+            throw new ReglaNegocioException(403, "No puede operar sobre otra cooperativa.");
+        return contexto ?? dtoId!.Value;
+    }
+
+    private static TimeOnly? ResolverHora(
+        TimeOnly? explicita, long? frecuenciaId, IReadOnlyDictionary<long, TimeOnly> horas)
+        => explicita ?? (frecuenciaId is long f && horas.TryGetValue(f, out var h) ? h : (TimeOnly?)null);
+
+    private static void ValidarEntradaManual(CrearHojaRutaManualDto dto)
+    {
+        if (dto.Fecha is null || dto.Fecha.Value == default)
+            throw new ReglaNegocioException(400, "La fecha de la hoja de ruta no es válida.");
+
+        if (dto.Detalles is null || dto.Detalles.Count == 0)
+            throw new ReglaNegocioException(400, "La hoja de ruta debe tener al menos un detalle.");
+
+        var vistos = new HashSet<(long BusId, int Orden)>();
+        foreach (var d in dto.Detalles)
+        {
+            switch (d.TipoAsignacion)
+            {
+                case TiposAsignacion.Servicio when d.FrecuenciaId is null:
+                    throw new ReglaNegocioException(400, $"El bus {d.BusId} en SERVICIO requiere frecuencia.");
+                case TiposAsignacion.Parada when d.FrecuenciaId is not null:
+                    throw new ReglaNegocioException(400, $"El bus {d.BusId} en PARADA no debe tener frecuencia.");
+                case TiposAsignacion.Servicio:
+                case TiposAsignacion.Parada:
+                    break;
+                default:
+                    throw new ReglaNegocioException(400, "El tipo de asignación debe ser SERVICIO o PARADA.");
+            }
+
+            if (!vistos.Add((d.BusId, d.OrdenDia)))
+                throw new ReglaNegocioException(400, $"El bus {d.BusId} está repetido en el orden {d.OrdenDia}.");
+        }
+    }
+
 }
