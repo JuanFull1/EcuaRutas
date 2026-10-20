@@ -46,20 +46,103 @@ public class HojaRutaService : IHojaRutaService
         return MapearADto(hoja);
     }
 
-    public Task<IReadOnlyList<HojaRutaDto>> GenerarAutomaticaAsync(
+    private const int MaxDiasGeneracion = 31;
+
+    private static int Mod(int a, int n) => ((a % n) + n) % n;
+
+    public async Task<IReadOnlyList<HojaRutaDto>> GenerarAutomaticaAsync(
         GenerarHojasRutaAutomaticaDto dto, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
-
-    public async Task<HojaRutaDto> ObtenerPorIdAsync(
-        long id, long? cooperativaContexto, CancellationToken ct = default)
     {
-        var hoja = await _db.HojasRuta.AsNoTracking()
-            .Include(h => h.HojaRutaDetalles)
-            .FirstOrDefaultAsync(h => h.Id == id
-                && (cooperativaContexto == null || h.CooperativaId == cooperativaContexto), ct)
-            ?? throw new ReglaNegocioException(404, "La hoja de ruta no existe.");
+        if (dto.FechaInicio is null || dto.FechaInicio.Value == default
+            || dto.FechaFin is null || dto.FechaFin.Value == default)
+            throw new ReglaNegocioException(400, "Las fechas de inicio y fin no son válidas.");
 
-        return MapearADto(hoja);
+        var inicio = dto.FechaInicio.Value;
+        var fin = dto.FechaFin.Value;
+        if (fin < inicio)
+            throw new ReglaNegocioException(400, "La fecha de fin no puede ser anterior a la de inicio.");
+        if (fin.DayNumber - inicio.DayNumber + 1 > MaxDiasGeneracion)
+            throw new ReglaNegocioException(400, $"El rango no puede superar {MaxDiasGeneracion} días.");
+
+        if (dto.Frecuencias is null || dto.Frecuencias.Count == 0)
+            throw new ReglaNegocioException(400, "Debe indicar al menos una frecuencia.");
+        var frecIds = dto.Frecuencias.Select(f => f.FrecuenciaId).ToList();
+        if (frecIds.Distinct().Count() != frecIds.Count)
+            throw new ReglaNegocioException(400, "Hay frecuencias repetidas.");
+
+        var cooperativaId = ResolverCooperativa(cooperativaContexto, dto.CooperativaId);
+        await ValidarGrupoAsync(cooperativaId, dto.GrupoBusId, ct);
+
+        var busIds = await _db.Buses.AsNoTracking()
+            .Where(b => b.CooperativaId == cooperativaId
+                && b.GrupoBusId == dto.GrupoBusId
+                && b.Estado == EstadosBus.Activo)
+            .OrderBy(b => b.Id)
+            .Select(b => b.Id)
+            .ToListAsync(ct);
+        if (busIds.Count == 0)
+            throw new ReglaNegocioException(400, "El grupo no tiene buses ACTIVOS.");
+        if (frecIds.Count > busIds.Count)
+            throw new ReglaNegocioException(400,
+                $"Hay {frecIds.Count} frecuencias y solo {busIds.Count} buses activos en el grupo.");
+
+        var horas = await ObtenerHorasFrecuenciasAsync(cooperativaId, frecIds, ct);
+
+        var existentes = await _db.HojasRuta.AsNoTracking()
+            .Where(h => h.GrupoBusId == dto.GrupoBusId && h.Fecha >= inicio && h.Fecha <= fin)
+            .OrderBy(h => h.Fecha)
+            .Select(h => h.Fecha)
+            .ToListAsync(ct);
+        if (existentes.Count > 0)
+            throw new ReglaNegocioException(409,
+                "Ya existen hojas de ruta para ese grupo en: "
+                + string.Join(", ", existentes.Select(f => f.ToString("yyyy-MM-dd"))) + ".");
+
+        var hojas = new List<HojasRutum>();
+        for (var fecha = inicio; fecha <= fin; fecha = fecha.AddDays(1))
+        {
+            var detalles = new List<HojaRutaDetalle>();
+            for (var slot = 0; slot < busIds.Count; slot++)
+            {
+                var busId = busIds[Mod(slot - fecha.DayNumber, busIds.Count)];
+                if (slot < dto.Frecuencias.Count)
+                {
+                    var fp = dto.Frecuencias[slot];
+                    detalles.Add(new HojaRutaDetalle
+                    {
+                        BusId = busId,
+                        FrecuenciaId = fp.FrecuenciaId,
+                        TipoAsignacion = TiposAsignacion.Servicio,
+                        OrdenDia = slot + 1,
+                        HoraProgramada = fp.HoraProgramada ?? horas[fp.FrecuenciaId]
+                    });
+                }
+                else
+                {
+                    detalles.Add(new HojaRutaDetalle
+                    {
+                        BusId = busId,
+                        TipoAsignacion = TiposAsignacion.Parada,
+                        OrdenDia = slot + 1,
+                        Observacion = "Bus de retén (día de parada)"
+                    });
+                }
+            }
+
+            hojas.Add(new HojasRutum
+            {
+                CooperativaId = cooperativaId,
+                GrupoBusId = dto.GrupoBusId,
+                Fecha = fecha,
+                ModoGeneracion = ModosGeneracion.Automatica,
+                Estado = EstadosHojaRuta.Borrador,
+                HojaRutaDetalles = detalles
+            });
+        }
+
+        _db.HojasRuta.AddRange(hojas);
+        await GuardarCambiosAsync(ct);
+        return hojas.Select(MapearADto).ToList();
     }
 
     public async Task<IReadOnlyList<HojaRutaResumenDto>> ListarAsync(
@@ -77,19 +160,6 @@ public class HojaRutaService : IHojaRutaService
         var hojas = await q.OrderByDescending(h => h.Fecha).ThenBy(h => h.GrupoBusId).ToListAsync(ct);
         return hojas.Select(MapearAResumen).ToList();
     }
-    private static HojaRutaDto MapearADto(HojasRutum h) => new(
-        h.Id, h.CooperativaId, h.GrupoBusId, h.Fecha, h.ModoGeneracion, h.Estado, h.CreadoEn,
-        h.HojaRutaDetalles
-            .OrderBy(d => d.OrdenDia).ThenBy(d => d.BusId)
-            .Select(d => new HojaRutaDetalleDto(
-                d.Id, d.HojaRutaId, d.BusId, d.FrecuenciaId, d.TipoAsignacion,
-                d.OrdenDia, d.HoraProgramada, d.Observacion))
-            .ToList());
-
-    private static HojaRutaResumenDto MapearAResumen(HojasRutum h) => new(
-        h.Id, h.GrupoBusId, h.Fecha, h.ModoGeneracion, h.Estado,
-        h.HojaRutaDetalles.Count(d => d.TipoAsignacion == TiposAsignacion.Servicio),
-        h.HojaRutaDetalles.Count(d => d.TipoAsignacion == TiposAsignacion.Parada));
 
     public Task<HojaRutaDto> PublicarAsync(
         long id, long? cooperativaContexto, CancellationToken ct = default)
@@ -103,6 +173,19 @@ public class HojaRutaService : IHojaRutaService
         long hojaRutaId, long detalleId, SustituirBusDto dto, long? cooperativaContexto, CancellationToken ct = default)
         => throw new NotImplementedException();
 
+private static HojaRutaDto MapearADto(HojasRutum h) => new(
+        h.Id, h.CooperativaId, h.GrupoBusId, h.Fecha, h.ModoGeneracion, h.Estado, h.CreadoEn,
+        h.HojaRutaDetalles
+            .OrderBy(d => d.OrdenDia).ThenBy(d => d.BusId)
+            .Select(d => new HojaRutaDetalleDto(
+                d.Id, d.HojaRutaId, d.BusId, d.FrecuenciaId, d.TipoAsignacion,
+                d.OrdenDia, d.HoraProgramada, d.Observacion))
+            .ToList());
+
+    private static HojaRutaResumenDto MapearAResumen(HojasRutum h) => new(
+        h.Id, h.GrupoBusId, h.Fecha, h.ModoGeneracion, h.Estado,
+        h.HojaRutaDetalles.Count(d => d.TipoAsignacion == TiposAsignacion.Servicio),
+        h.HojaRutaDetalles.Count(d => d.TipoAsignacion == TiposAsignacion.Parada));
     private static long ResolverCooperativa(long? contexto, long? dtoId)
     {
         if (contexto is null && dtoId is null)
