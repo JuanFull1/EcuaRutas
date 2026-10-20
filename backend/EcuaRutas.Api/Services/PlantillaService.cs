@@ -118,8 +118,40 @@ public class PlantillaService : IPlantillaService
         Activo = a.Activo
     };
 
-    public Task<bool> AsignarABusAsync(long busId, long plantillaId, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public async Task<bool> AsignarABusAsync(long busId, long plantillaId, CancellationToken ct = default)
+    {
+        var bus = await _db.Buses.FirstOrDefaultAsync(b => b.Id == busId, ct);
+        if (bus is null) return false;
+
+        var existePlantilla = await _db.PlantillasBus.AnyAsync(p => p.Id == plantillaId, ct);
+        if (!existePlantilla) return false;
+
+        var plantillaAsientos = await _db.PlantillaAsientos.AsNoTracking()
+            .Where(a => a.PlantillaId == plantillaId)
+            .ToListAsync(ct);
+
+        var anteriores = await _db.AsientosBus
+            .Where(a => a.BusId == busId)
+            .ToListAsync(ct);
+        _db.AsientosBus.RemoveRange(anteriores);
+
+        var copias = plantillaAsientos.Select(a => new AsientosBu
+        {
+            BusId = busId,
+            TipoAsientoId = a.TipoAsientoId,
+            Numero = a.Numero,
+            Piso = a.Piso,
+            Fila = a.Fila,
+            Columna = a.Columna,
+            Activo = a.Activo
+        });
+        _db.AsientosBus.AddRange(copias);
+
+        bus.PlantillaId = plantillaId;
+        await _db.SaveChangesAsync(ct);
+
+        return true;
+    }
 
     private static TipoAsientoDto MapearTipo(TiposAsiento t) => new()
     {
