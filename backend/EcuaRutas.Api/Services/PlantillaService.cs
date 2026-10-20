@@ -165,6 +165,30 @@ public class PlantillaService : IPlantillaService
         return true;
     }
 
+    public async Task<IReadOnlyList<AsientoBusDto>?> ListarAsientosDeBusAsync(long busId, CancellationToken ct = default)
+    {
+        var existe = await _db.Buses.AnyAsync(b => b.Id == busId, ct);
+        if (!existe) return null;
+
+        return await _db.AsientosBus.AsNoTracking()
+            .Where(a => a.BusId == busId && a.Activo)
+            .OrderBy(a => a.Piso).ThenBy(a => a.Fila).ThenBy(a => a.Columna)
+            .Select(a => new AsientoBusDto
+            {
+                Id = a.Id,
+                BusId = a.BusId,
+                TipoAsientoId = a.TipoAsientoId,
+                TipoAsiento = a.TipoAsiento.Nombre,
+                RecargoPorcentaje = a.TipoAsiento.RecargoPorcentaje,
+                Numero = a.Numero,
+                Piso = a.Piso,
+                Fila = a.Fila,
+                Columna = a.Columna,
+                Activo = a.Activo
+            })
+            .ToListAsync(ct);
+    }
+
     private static TipoAsientoDto MapearTipo(TiposAsiento t) => new()
     {
         Id = t.Id,
