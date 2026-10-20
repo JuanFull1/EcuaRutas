@@ -62,11 +62,61 @@ public class PlantillaService : IPlantillaService
         return MapearPlantilla(plantilla);
     }
 
-    public Task<IReadOnlyList<PlantillaAsientoDto>?> ObtenerDisposicionAsync(long plantillaId, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public async Task<IReadOnlyList<PlantillaAsientoDto>?> ObtenerDisposicionAsync(long plantillaId, CancellationToken ct = default)
+    {
+        var existe = await _db.PlantillasBus.AnyAsync(p => p.Id == plantillaId, ct);
+        if (!existe) return null;
 
-    public Task<IReadOnlyList<PlantillaAsientoDto>?> DefinirDisposicionAsync(long plantillaId, IReadOnlyList<CrearAsientoPlantillaRequest> asientos, CancellationToken ct = default)
-        => throw new NotImplementedException();
+        var asientos = await _db.PlantillaAsientos.AsNoTracking()
+            .Where(a => a.PlantillaId == plantillaId)
+            .OrderBy(a => a.Piso).ThenBy(a => a.Fila).ThenBy(a => a.Columna)
+            .ToListAsync(ct);
+
+        return asientos.Select(MapearAsiento).ToList();
+    }
+
+    public async Task<IReadOnlyList<PlantillaAsientoDto>?> DefinirDisposicionAsync(long plantillaId, IReadOnlyList<CrearAsientoPlantillaRequest> asientos, CancellationToken ct = default)
+    {
+        var plantilla = await _db.PlantillasBus.FirstOrDefaultAsync(p => p.Id == plantillaId, ct);
+        if (plantilla is null) return null;
+
+        var errores = DisposicionPlantillaValidator.Validar(plantilla.Pisos, asientos);
+        if (errores.Count > 0)
+            throw new ArgumentException(string.Join(" ", errores));
+
+        var anteriores = await _db.PlantillaAsientos
+            .Where(a => a.PlantillaId == plantillaId)
+            .ToListAsync(ct);
+        _db.PlantillaAsientos.RemoveRange(anteriores);
+
+        var nuevos = asientos.Select(a => new PlantillaAsiento
+        {
+            PlantillaId = plantillaId,
+            TipoAsientoId = a.TipoAsientoId,
+            Numero = a.Numero.Trim(),
+            Piso = (short)a.Piso,
+            Fila = (short?)a.Fila,
+            Columna = (short?)a.Columna,
+            Activo = true
+        }).ToList();
+
+        _db.PlantillaAsientos.AddRange(nuevos);
+        await _db.SaveChangesAsync(ct);
+
+        return nuevos.Select(MapearAsiento).ToList();
+    }
+
+    private static PlantillaAsientoDto MapearAsiento(PlantillaAsiento a) => new()
+    {
+        Id = a.Id,
+        PlantillaId = a.PlantillaId,
+        TipoAsientoId = a.TipoAsientoId,
+        Numero = a.Numero,
+        Piso = a.Piso,
+        Fila = a.Fila,
+        Columna = a.Columna,
+        Activo = a.Activo
+    };
 
     public Task<bool> AsignarABusAsync(long busId, long plantillaId, CancellationToken ct = default)
         => throw new NotImplementedException();
