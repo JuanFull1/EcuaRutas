@@ -16,6 +16,7 @@ export class BusesLista implements OnInit {
   private readonly busService = inject(BusService);
 
   readonly buses = signal<Bus[]>([]);
+  readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -42,12 +43,19 @@ export class BusesLista implements OnInit {
     }
 
     this.error.set(null);
+    this.cargando.set(true);
 
     this.busService.listar(cooperativaId).subscribe({
-      next: buses => this.buses.set(buses),
-      error: () => this.error.set(
-        'No se pudieron cargar los buses. Verifica tu conexión e inténtalo de nuevo.'
-      )
+      next: buses => {
+        this.buses.set(buses);
+        this.cargando.set(false);
+      },
+      error: () => {
+        this.error.set(
+          'No se pudieron cargar los buses. Verifica tu conexión e inténtalo de nuevo.'
+        );
+        this.cargando.set(false);
+      }
     });
   }
 }
