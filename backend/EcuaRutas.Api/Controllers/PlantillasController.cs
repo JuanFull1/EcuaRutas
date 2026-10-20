@@ -36,4 +36,34 @@ public class PlantillasController : ControllerBase
         var plantilla = await _servicio.CrearAsync(request, ct);
         return CreatedAtAction(nameof(Obtener), new { id = plantilla.Id }, plantilla);
     }
+
+    [HttpGet("{id:long}/asientos")]
+    public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> ObtenerDisposicion(
+        long id, CancellationToken ct)
+    {
+        var asientos = await _servicio.ObtenerDisposicionAsync(id, ct);
+        return asientos is null ? NotFound() : Ok(asientos);
+    }
+
+    [HttpPut("{id:long}/asientos")]
+    public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> DefinirDisposicion(
+        long id, List<CrearAsientoPlantillaRequest> asientos, CancellationToken ct)
+    {
+        try
+        {
+            var resultado = await _servicio.DefinirDisposicionAsync(id, asientos, ct);
+            return resultado is null ? NotFound() : Ok(resultado);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
+
+    [HttpPut("/api/buses/{busId:long}/plantilla/{plantillaId:long}")]
+    public async Task<IActionResult> AsignarABus(long busId, long plantillaId, CancellationToken ct)
+    {
+        var asignada = await _servicio.AsignarABusAsync(busId, plantillaId, ct);
+        return asignada ? NoContent() : NotFound();
+    }
 }
