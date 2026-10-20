@@ -49,7 +49,9 @@ public class PlantillaService : IPlantillaService
     {
         if (request.CooperativaId.HasValue &&
             !await _db.Cooperativas.AnyAsync(c => c.Id == request.CooperativaId.Value, ct))
-            throw new RecursoNoEncontradoException($"No existe la cooperativa con id {request.CooperativaId}.");        var plantilla = new PlantillasBu
+            throw new RecursoNoEncontradoException($"No existe la cooperativa con id {request.CooperativaId}.");
+
+        var plantilla = new PlantillasBu
         {
             CooperativaId = request.CooperativaId,
             Nombre = request.Nombre.Trim(),
@@ -85,6 +87,11 @@ public class PlantillaService : IPlantillaService
         var errores = DisposicionPlantillaValidator.Validar(plantilla.Pisos, asientos);
         if (errores.Count > 0)
             throw new ArgumentException(string.Join(" ", errores));
+
+        var tiposIds = asientos.Select(a => a.TipoAsientoId).Distinct().ToList();
+        var tiposExistentes = await _db.TiposAsientos.CountAsync(t => tiposIds.Contains(t.Id), ct);
+        if (tiposExistentes != tiposIds.Count)
+            throw new RecursoNoEncontradoException("Uno o más tipos de asiento no existen.");
 
         var anteriores = await _db.PlantillaAsientos
             .Where(a => a.PlantillaId == plantillaId)

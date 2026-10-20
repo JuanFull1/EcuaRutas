@@ -65,6 +65,10 @@ public class PlantillasController : ControllerBase
         {
             return BadRequest(new { mensaje = ex.Message });
         }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
     }
 
     [HttpPut("/api/buses/{busId:long}/plantilla/{plantillaId:long}")]
