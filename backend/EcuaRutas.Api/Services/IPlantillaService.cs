@@ -30,4 +30,7 @@ public interface IPlantillaService
     // Copia los asientos de la plantilla al bus. Devuelve false si el bus o la plantilla no existen.
     Task<bool> AsignarABusAsync(
         long busId, long plantillaId, CancellationToken ct = default);
+
+    // Lista los asientos activos de un bus. Devuelve null si el bus no existe.
+    Task<IReadOnlyList<AsientoBusDto>?> ListarAsientosDeBusAsync(long busId, CancellationToken ct = default);
 }
