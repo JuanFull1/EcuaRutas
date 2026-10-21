@@ -1,0 +1,111 @@
+<div class="container-fluid py-3">
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Nuevo bus</h5>
+      <a routerLink="/cooperativas/buses" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Volver
+      </a>
+    </div>
+
+    <form class="card-body" [formGroup]="form">
+      <div class="row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label" for="numeroInterno">Número interno *</label>
+          <input id="numeroInterno" class="form-control" formControlName="numeroInterno"
+                 [class.is-invalid]="invalido('numeroInterno')" />
+          @if (invalido('numeroInterno')) {
+            <div class="invalid-feedback">Obligatorio, máximo 30 caracteres.</div>
+          }
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label" for="placa">Placa *</label>
+          <input id="placa" class="form-control" formControlName="placa"
+                 [class.is-invalid]="invalido('placa')" />
+          @if (invalido('placa')) {
+            <div class="invalid-feedback">Obligatoria, máximo 20 caracteres.</div>
+          }
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label" for="grupoBusId">Grupo</label>
+          <select id="grupoBusId" class="form-select" formControlName="grupoBusId">
+            <option [ngValue]="null">Sin grupo</option>
+            @for (g of grupos(); track g.id) {
+              <option [ngValue]="g.id">{{ g.nombre }}</option>
+            }
+          </select>
+          @if (errorGrupos()) {
+            <div class="form-text text-danger">{{ errorGrupos() }}</div>
+          }
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="color">Color</label>
+          <input id="color" class="form-control" formControlName="color"
+                 [class.is-invalid]="invalido('color')" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="marcaChasis">Marca del chasis</label>
+          <input id="marcaChasis" class="form-control" formControlName="marcaChasis"
+                 [class.is-invalid]="invalido('marcaChasis')" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="marcaCarroceria">Marca de carrocería</label>
+          <input id="marcaCarroceria" class="form-control" formControlName="marcaCarroceria"
+                 [class.is-invalid]="invalido('marcaCarroceria')" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="modelo">Modelo</label>
+          <input id="modelo" class="form-control" formControlName="modelo"
+                 [class.is-invalid]="invalido('modelo')" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="anio">Año</label>
+          <input id="anio" type="number" class="form-control" formControlName="anio"
+                 [class.is-invalid]="invalido('anio')" />
+          @if (invalido('anio')) {
+            <div class="invalid-feedback">El año debe estar entre 1900 y 2100.</div>
+          }
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="pisos">Pisos *</label>
+          <select id="pisos" class="form-select" formControlName="pisos">
+            <option [ngValue]="1">1</option>
+            <option [ngValue]="2">2</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="capacidad">Capacidad *</label>
+          <input id="capacidad" type="number" class="form-control" formControlName="capacidad"
+                 [class.is-invalid]="invalido('capacidad')" />
+          @if (invalido('capacidad')) {
+            <div class="invalid-feedback">La capacidad debe ser mayor a 0.</div>
+          }
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="form-check">
+            <input id="tieneBanio" type="checkbox" class="form-check-input"
+                   formControlName="tieneBanio" />
+            <label class="form-check-label" for="tieneBanio">Tiene baño</label>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label" for="fotoUrl">URL de la foto</label>
+          <input id="fotoUrl" class="form-control" formControlName="fotoUrl"
+                 [class.is-invalid]="invalido('fotoUrl')" />
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
