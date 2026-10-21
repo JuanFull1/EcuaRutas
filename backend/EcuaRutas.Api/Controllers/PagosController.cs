@@ -66,7 +66,7 @@ public class PagosController : ControllerBase
             return Conflict(new { mensaje = ex.Message });
         }
     }
-    
+
 [HttpGet("venta/{ventaId:long}")]
 public async Task<IActionResult> ObtenerPagosPorVenta(long ventaId)
 {
@@ -98,6 +98,53 @@ public async Task<IActionResult> ObtenerPagosPorVenta(long ventaId)
         return BadRequest(new { mensaje = ex.Message });
     }
 }
+
+    [HttpPost("{pagoId:long}/comprobante")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public async Task<IActionResult> SubirComprobante(
+        long pagoId,
+        [FromForm] IFormFile archivo)
+    {
+        var usuarioClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (!long.TryParse(usuarioClaim, out var usuarioId))
+        {
+            return Unauthorized(new
+            {
+                mensaje = "Usuario no válido."
+            });
+        }
+
+        try
+        {
+            var pago = await _pagosService.SubirComprobanteAsync(
+                pagoId, usuarioId, archivo);
+
+            return Ok(new
+            {
+                mensaje = "Comprobante enviado para revisión.",
+                pago
+            });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
+    }
 
 
 }
