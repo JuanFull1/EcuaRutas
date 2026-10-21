@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import {
   FormBuilder,
@@ -22,6 +23,8 @@ import { AuthService } from '../../services/auth.service';
 export class Login {
 
   error = '';
+  cargando = false;
+  mostrarPassword = false;
 
   readonly formulario;
 
@@ -30,10 +33,8 @@ export class Login {
     private readonly authService: AuthService,
     private readonly router: Router
   ) {
-
     this.formulario =
       this.formBuilder.nonNullable.group({
-
         correo: [
           '',
           [
@@ -46,8 +47,13 @@ export class Login {
           '',
           Validators.required
         ]
-
       });
+
+    this.formulario.valueChanges.subscribe(() => {
+      if (this.error) {
+        this.error = '';
+      }
+    });
   }
 
   iniciarSesion(): void {
@@ -59,51 +65,58 @@ export class Login {
       return;
     }
 
-    const datos =
-      this.formulario.getRawValue();
-
-    const autenticado =
-      this.authService.login(
-        datos.correo,
-        datos.password
-      );
-
-    if (!autenticado) {
-
-      this.error =
-        'Correo o contraseña incorrectos.';
-
+    if (this.cargando) {
       return;
     }
 
-    const usuario =
-      this.authService.usuarioActual();
+    this.cargando = true;
 
-    switch (usuario?.rol) {
+    const datos =
+      this.formulario.getRawValue();
 
-      case 'ADMIN':
-        this.router.navigate(['/admin/inicio']);
-        break;
+    this.authService
+      .login(
+        datos.correo.trim(),
+        datos.password
+      )
+      .subscribe({
+        next: respuesta => {
 
-      case 'COOPERATIVA':
-        this.router.navigate(['/cooperativas']);
-        break;
+          this.cargando = false;
 
-      case 'OFICINISTA':
-        this.router.navigate(['/ventas']);
-        break;
+          const ruta =
+            this.authService.obtenerRutaInicio(
+              respuesta.usuario.rol
+            );
 
-      case 'CLIENTE':
-        this.router.navigate(['/cliente']);
-        break;
+          this.router.navigateByUrl(ruta);
+        },
 
-      case 'BUS':
-        this.router.navigate(['/personal-bus']);
-        break;
+        error: (error: HttpErrorResponse) => {
 
-      default:
-        this.router.navigate(['/login']);
-        break;
-    }
+          this.cargando = false;
+
+          if (error.status === 401) {
+            this.error =
+              'Correo o contraseña incorrectos.';
+            return;
+          }
+
+          if (error.status === 0) {
+            this.error =
+              'No se pudo conectar con el servidor.';
+            return;
+          }
+
+          this.error =
+            error.error?.message ??
+            'Ocurrió un error al iniciar sesión.';
+        }
+      });
+  }
+
+  alternarPassword(): void {
+    this.mostrarPassword =
+      !this.mostrarPassword;
   }
 }

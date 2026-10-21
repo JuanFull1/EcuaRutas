@@ -1,25 +1,27 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
 namespace EcuaRutas.Api.Models;
 
-[Table("rutas")]
-public class Ruta
+public partial class Ruta
 {
-    [Column("id")]
     public long Id { get; set; }
 
-    [Column("nombre")]
-    public string Nombre { get; set; } = string.Empty;
+    public string Nombre { get; set; } = null!;
 
-    [Column("origen_lugar_id")]
     public long OrigenLugarId { get; set; }
 
-    [Column("destino_lugar_id")]
     public long DestinoLugarId { get; set; }
 
-    [Column("tipo_viaje")]
-    public string TipoViaje { get; set; } = string.Empty;
+    public string TipoViaje { get; set; } = null!;
 
-    [Column("activa")]
-    public bool Activa { get; set; } = true;
+    public bool Activa { get; set; }
+
+    public virtual Lugare DestinoLugar { get; set; } = null!;
+
+    public virtual ICollection<Frecuencia> Frecuencia { get; set; } = new List<Frecuencia>();
+
+    public virtual Lugare OrigenLugar { get; set; } = null!;
+
+    public virtual ICollection<RutaParada> RutaParada { get; set; } = new List<RutaParada>();
 }

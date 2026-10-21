@@ -1,31 +1,43 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
 namespace EcuaRutas.Api.Models;
 
-[Table("ruta_paradas")]
-public class RutaParada
+public partial class RutaParada
 {
-    [Column("id")]
     public long Id { get; set; }
 
-    [Column("ruta_id")]
     public long RutaId { get; set; }
 
-    [Column("lugar_id")]
     public long LugarId { get; set; }
 
-    [Column("orden")]
     public int Orden { get; set; }
 
-    [Column("km_acumulado", TypeName = "numeric(10,2)")]
     public decimal? KmAcumulado { get; set; }
 
-    [Column("minutos_acumulados")]
     public int? MinutosAcumulados { get; set; }
 
-    [Column("permite_ascenso")]
-    public bool PermiteAscenso { get; set; } = true;
+    public bool PermiteAscenso { get; set; }
 
-    [Column("permite_descenso")]
-    public bool PermiteDescenso { get; set; } = true;
+    public bool PermiteDescenso { get; set; }
+
+    public virtual ICollection<ExtensionesBoleto> ExtensionesBoletoDestinoAnteriors { get; set; } = new List<ExtensionesBoleto>();
+
+    public virtual ICollection<ExtensionesBoleto> ExtensionesBoletoDestinoNuevos { get; set; } = new List<ExtensionesBoleto>();
+
+    public virtual Lugare Lugar { get; set; } = null!;
+
+    public virtual ICollection<OcupacionesAsiento> OcupacionesAsientoParadaAbordajes { get; set; } = new List<OcupacionesAsiento>();
+
+    public virtual ICollection<OcupacionesAsiento> OcupacionesAsientoParadaLiberacions { get; set; } = new List<OcupacionesAsiento>();
+
+    public virtual Ruta Ruta { get; set; } = null!;
+
+    public virtual ICollection<TarifasFrecuencium> TarifasFrecuenciumDestinoRutaParada { get; set; } = new List<TarifasFrecuencium>();
+
+    public virtual ICollection<TarifasFrecuencium> TarifasFrecuenciumOrigenRutaParada { get; set; } = new List<TarifasFrecuencium>();
+
+    public virtual ICollection<VentaAsiento> VentaAsientoDestinoRutaParada { get; set; } = new List<VentaAsiento>();
+
+    public virtual ICollection<VentaAsiento> VentaAsientoOrigenRutaParada { get; set; } = new List<VentaAsiento>();
 }
