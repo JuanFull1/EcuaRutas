@@ -1,11 +1,13 @@
 using EcuaRutas.Api.DTOs;
 using EcuaRutas.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/plantillas")]
+[Authorize(Roles = "ADMIN,COOPERATIVA,OFICINISTA")]
 public class PlantillasController : ControllerBase
 {
     private readonly IPlantillaService _servicio;
@@ -29,6 +31,7 @@ public class PlantillasController : ControllerBase
         return plantilla is null ? NotFound() : Ok(plantilla);
     }
 
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     [HttpPost]
     public async Task<ActionResult<PlantillaBusDto>> Crear(
         CrearPlantillaBusRequest request, CancellationToken ct)
@@ -52,6 +55,7 @@ public class PlantillasController : ControllerBase
         return asientos is null ? NotFound() : Ok(asientos);
     }
 
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     [HttpPut("{id:long}/asientos")]
     public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> DefinirDisposicion(
         long id, List<CrearAsientoPlantillaRequest> asientos, CancellationToken ct)
@@ -71,6 +75,7 @@ public class PlantillasController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     [HttpPut("/api/buses/{busId:long}/plantilla/{plantillaId:long}")]
     public async Task<IActionResult> AsignarABus(long busId, long plantillaId, CancellationToken ct)
     {
