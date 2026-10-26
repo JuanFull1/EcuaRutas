@@ -61,6 +61,7 @@ export class GestionVentas implements OnInit {
   ventaProcesando: number | null = null;
   error = '';
   mensaje = '';
+  ventaImprimiendo: number | null = null;
 
   ngOnInit(): void {
     this.buscar();
@@ -121,6 +122,19 @@ export class GestionVentas implements OnInit {
   cancelar(venta: Venta): void {
     if (venta.estado !== 'RESERVADA') return;
     this.accion(venta, 'cancelar');
+  }
+
+  tieneBoletos(venta: Venta): boolean {
+    return venta.asientos.some(asiento => !!asiento.codigoBoleto);
+  }
+
+  imprimirBoletos(venta: Venta): void {
+    this.ventaImprimiendo = venta.ventaId;
+    window.addEventListener('afterprint', () => {
+      this.ventaImprimiendo = null;
+      this.cdr.detectChanges();
+    }, { once: true });
+    window.setTimeout(() => window.print(), 0);
   }
 
   private accion(venta: Venta, accion: 'confirmar' | 'cancelar'): void {

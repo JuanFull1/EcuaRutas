@@ -36,7 +36,7 @@
   @else {
     <section class="lista" aria-label="Reservas y ventas">
       @for (venta of ventas; track venta.ventaId) {
-        <article class="venta-card">
+        <article class="venta-card" [class.imprimir-seleccionado]="ventaImprimiendo === venta.ventaId">
           <div class="venta-cabecera">
             <div><span class="etiqueta">Código</span><strong>{{ venta.codigo }}</strong></div>
             <span class="estado" [class]="'estado estado-' + venta.estado.toLowerCase()">{{ venta.estado }}</span>
@@ -51,6 +51,27 @@
             </div>
             <div class="importe"><span class="etiqueta">Total</span><strong>{{ venta.total | currency:'USD':'symbol':'1.2-2' }}</strong></div>
           </div>
+          @if (tieneBoletos(venta)) {
+            <section class="boletos-emitidos" aria-label="Boletos emitidos">
+              <div class="boletos-encabezado">
+                <strong>Boletos emitidos</strong>
+                <button class="ocultar-impresion" type="button" (click)="imprimirBoletos(venta)">Imprimir boletos</button>
+              </div>
+              @for (asiento of venta.asientos; track asiento.numeroAsiento + asiento.documento) {
+                @if (asiento.codigoBoleto) {
+                  <article class="boleto-imprimible">
+                    <strong>{{ venta.rutaNombre }}</strong>
+                    <span>{{ venta.origen }} → {{ venta.destino }}</span>
+                    <span>Salida: {{ venta.salidaProgramada | date:'medium' }}</span>
+                    <span>Pasajero: {{ asiento.pasajero }} · {{ asiento.documento }}</span>
+                    <span>Asiento {{ asiento.numeroAsiento }} · {{ asiento.precioFinal | currency:'USD':'symbol':'1.2-2' }}</span>
+                    <span class="codigo-boleto">Boleto: {{ asiento.codigoBoleto }}</span>
+                    <small>Presente este boleto al abordar.</small>
+                  </article>
+                }
+              }
+            </section>
+          }
           @if (venta.estado === 'RESERVADA') {
             <div class="reserva-pie">
               <span>Vence {{ venta.expiraEn | date:'short' }}</span>
