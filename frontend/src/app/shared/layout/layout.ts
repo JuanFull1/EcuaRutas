@@ -107,7 +107,8 @@ export class Layout {
             },
             {
               texto: 'Buses',
-              icono: 'bi-bus-front'
+              icono: 'bi-bus-front',
+              ruta: '/cooperativas/buses'
             },
             {
               texto: 'Plantillas',

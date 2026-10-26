@@ -12,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddScoped<IGrupoBusService, GrupoBusService>();
+builder.Services.AddScoped<IBusService, BusService>();
+builder.Services.AddScoped<IPlantillaService, PlantillaService>();
 
 builder.Services.AddDbContext<EcuaRutasDbContext>(options =>
     options.UseNpgsql(
@@ -25,6 +28,7 @@ builder.Services.Configure<JwtSettings>(
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<PagosService>();
 builder.Services.AddScoped<DisponibilidadService>();
 builder.Services.AddScoped<VentasService>();
 

@@ -88,6 +88,18 @@ export const routes: Routes = [
       },
 
       {
+        path: 'buses',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/buses/buses-lista'
+          )
+            .then(
+              m => m.BusesLista
+            )
+      },
+
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'inicio'
