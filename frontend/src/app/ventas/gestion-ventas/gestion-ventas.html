@@ -36,7 +36,7 @@
   @else {
     <section class="lista" aria-label="Reservas y ventas">
       @for (venta of ventas; track venta.ventaId) {
-        <article class="venta-card" [class.imprimir-seleccionado]="ventaImprimiendo === venta.ventaId">
+        <article class="venta-card">
           <div class="venta-cabecera">
             <div><span class="etiqueta">Código</span><strong>{{ venta.codigo }}</strong></div>
             <span class="estado" [class]="'estado estado-' + venta.estado.toLowerCase()">{{ venta.estado }}</span>
@@ -46,7 +46,7 @@
             <div><span class="etiqueta">Viaje / Pago</span><strong>{{ venta.salidaProgramada | date:'short' }}</strong><span>Creada {{ venta.creadoEn | date:'short' }}</span>@if (venta.estadoPago) { <span>{{ venta.metodoPago }} · {{ venta.estadoPago }}</span> }</div>
             <div><span class="etiqueta">Pasajero(s) y asiento(s)</span>
               @for (asiento of venta.asientos; track asiento.numeroAsiento + asiento.documento) {
-                <span>{{ asiento.pasajero }} · {{ asiento.documento }} · Asiento {{ asiento.numeroAsiento }}@if (asiento.codigoBoleto) { · Boleto {{ asiento.codigoBoleto }} ({{ asiento.estadoBoleto }}) }</span>
+                <span>{{ asiento.pasajero }} · {{ asiento.documento }}@if (!asiento.codigoBoleto) { · Asiento {{ asiento.numeroAsiento }} }</span>
               }
             </div>
             <div class="importe"><span class="etiqueta">Total</span><strong>{{ venta.total | currency:'USD':'symbol':'1.2-2' }}</strong></div>
@@ -55,19 +55,15 @@
             <section class="boletos-emitidos" aria-label="Boletos emitidos">
               <div class="boletos-encabezado">
                 <strong>Boletos emitidos</strong>
-                <button class="ocultar-impresion" type="button" (click)="imprimirBoletos(venta)">Imprimir boletos</button>
+                <button class="ocultar-impresion" type="button" (click)="imprimirBoletos(venta)">Imprimir</button>
               </div>
               @for (asiento of venta.asientos; track asiento.numeroAsiento + asiento.documento) {
                 @if (asiento.codigoBoleto) {
-                  <article class="boleto-imprimible">
-                    <strong>{{ venta.rutaNombre }}</strong>
-                    <span>{{ venta.origen }} → {{ venta.destino }}</span>
-                    <span>Salida: {{ venta.salidaProgramada | date:'medium' }}</span>
-                    <span>Pasajero: {{ asiento.pasajero }} · {{ asiento.documento }}</span>
-                    <span>Asiento {{ asiento.numeroAsiento }} · {{ asiento.precioFinal | currency:'USD':'symbol':'1.2-2' }}</span>
-                    <span class="codigo-boleto">Boleto: {{ asiento.codigoBoleto }}</span>
-                    <small>Presente este boleto al abordar.</small>
-                  </article>
+                  <div class="boleto-fila">
+                    <span>Asiento {{ asiento.numeroAsiento }}</span>
+                    <strong>{{ asiento.codigoBoleto }}</strong>
+                    <span class="estado-boleto">{{ asiento.estadoBoleto }}</span>
+                  </div>
                 }
               }
             </section>
