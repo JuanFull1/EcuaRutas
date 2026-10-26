@@ -86,6 +86,112 @@
   font-size: 24px;
 }
 
+.asientos-panel {
+  margin-top: 30px;
+}
+
+.asientos-panel h2 {
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.asientos-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.asiento-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+}
+
+.asiento-card button {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #1677c8;
+  border-radius: 6px;
+  color: #075b9d;
+  background: white;
+  cursor: pointer;
+}
+
+.asiento-card button.seleccionado {
+  color: white;
+  background: #1677c8;
+}
+
+.asiento-card button:disabled,
+.reserva-formulario button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.reserva-formulario {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+}
+
+.pasajero-encontrado {
+  margin: 0;
+  color: #166534;
+}
+
+.reserva-formulario .campo input {
+  height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.reserva-formulario small {
+  color: #526274;
+}
+
+.reserva-formulario button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  color: white;
+  background: #1677c8;
+  cursor: pointer;
+}
+
+.reserva-confirmacion {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid #a8d5b5;
+  border-radius: 8px;
+  background: #effaf2;
+}
+
+.reserva-confirmacion h2 {
+  margin-bottom: 12px;
+  font-size: 22px;
+}
+
+.reserva-confirmacion p {
+  margin: 6px 0;
+}
+
+.asiento-seleccionado {
+  margin-top: 18px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  background: #e7f2fb;
+}
+
 .viaje-card {
   display: grid;
   grid-template-columns: 130px 1fr 180px;

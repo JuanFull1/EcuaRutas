@@ -15,6 +15,29 @@ public class VentasService
         _context = context;
     }
 
+    public async Task<object?> ObtenerPasajeroPorDocumentoAsync(string documento)
+    {
+        var documentoNormalizado = documento.Trim();
+        if (string.IsNullOrWhiteSpace(documentoNormalizado))
+        {
+            throw new ArgumentException("Ingrese el documento del pasajero.");
+        }
+
+        var pasajero = await _context.Pasajeros
+            .AsNoTracking()
+            .Where(p => p.Documento == documentoNormalizado)
+            .Select(p => new
+            {
+                pasajeroId = p.Id,
+                p.Documento,
+                p.Nombres,
+                p.Apellidos
+            })
+            .FirstOrDefaultAsync();
+
+        return pasajero;
+    }
+
     public async Task<ReservaResponse> CrearReservaAsync(
         CrearReservaRequest request)
     {

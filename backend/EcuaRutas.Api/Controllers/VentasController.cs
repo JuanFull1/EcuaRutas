@@ -15,6 +15,22 @@ public class VentasController : ControllerBase
         _service = service;
     }
 
+    [HttpGet("pasajeros/documento/{documento}")]
+    public async Task<IActionResult> ObtenerPasajeroPorDocumento(string documento)
+    {
+        try
+        {
+            var pasajero = await _service.ObtenerPasajeroPorDocumentoAsync(documento);
+            return pasajero == null
+                ? NotFound(new { mensaje = "No existe un pasajero con ese documento." })
+                : Ok(pasajero);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
+
     [HttpPost("reservar")]
     public async Task<IActionResult> Reservar(
         [FromBody] CrearReservaRequest request)

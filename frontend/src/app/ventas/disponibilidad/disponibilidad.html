@@ -165,15 +165,11 @@
             </h3>
 
             <p>
-              {{ obtenerNombreLugar(
-                viaje.origenRutaParadaId
-              ) }}
+              {{ obtenerNombreLugar(origenLugarId) }}
 
               →
               
-              {{ obtenerNombreLugar(
-                viaje.destinoRutaParadaId
-              ) }}
+              {{ obtenerNombreLugar(destinoLugarId) }}
             </p>
 
             <p>
@@ -205,8 +201,14 @@
 
             <button
               type="button"
+              [disabled]="cargandoAsientos"
+              (click)="verAsientos(viaje)"
             >
-              Ver asientos
+              {{
+                cargandoAsientos && viajeSeleccionado?.viajeId === viaje.viajeId
+                  ? 'Consultando...'
+                  : 'Ver asientos'
+              }}
             </button>
 
           </div>
@@ -217,6 +219,87 @@
 
     </section>
 
+  }
+
+  @if (viajeSeleccionado) {
+
+    <section class="asientos-panel">
+      <h2>Asientos disponibles</h2>
+      <p>
+        {{ obtenerNombreLugar(origenLugarId) }}
+        →
+        {{ obtenerNombreLugar(destinoLugarId) }}
+        · {{ viajeSeleccionado.rutaNombre }}
+      </p>
+
+      @if (cargandoAsientos) {
+        <p class="mensaje">Consultando asientos...</p>
+      } @else if (asientosDisponibles.length === 0) {
+        <p class="mensaje">No hay asientos disponibles para este tramo.</p>
+      } @else {
+        <div class="asientos-lista">
+          @for (asiento of asientosDisponibles; track asiento.asientoBusId) {
+            <article class="asiento-card">
+              <strong>Asiento {{ asiento.numero }}</strong>
+              <span>{{ asiento.tipoAsiento }}</span>
+              <span>Piso {{ asiento.piso }}</span>
+              <strong>${{ asiento.precioFinal | number:'1.2-2' }}</strong>
+              <button
+                type="button"
+                [class.seleccionado]="asientoSeleccionado?.asientoBusId === asiento.asientoBusId"
+                [disabled]="reservando"
+                (click)="seleccionarAsiento(asiento)"
+              >
+                {{ asientoSeleccionado?.asientoBusId === asiento.asientoBusId
+                    ? 'Seleccionado'
+                    : 'Elegir asiento' }}
+              </button>
+            </article>
+          }
+        </div>
+        @if (asientoSeleccionado; as asiento) {
+          <form class="reserva-formulario" (ngSubmit)="reservarAsiento()">
+            <div class="asiento-seleccionado">
+              Elegiste el asiento {{ asiento.numero }} por
+              ${{ asiento.precioFinal | number:'1.2-2' }}.
+            </div>
+            <div class="campo">
+              <label for="documentoPasajero">Cédula o documento del pasajero</label>
+              <input
+                id="documentoPasajero"
+                name="documentoPasajero"
+                type="text"
+                [(ngModel)]="documentoPasajero"
+                placeholder="Ingrese la cédula o documento"
+                required
+              />
+              <small>
+                Usaremos este documento para buscar al pasajero registrado.
+              </small>
+            </div>
+            @if (pasajeroEncontrado) {
+              <p class="pasajero-encontrado">
+                Pasajero: <strong>{{ pasajeroEncontrado.nombres }} {{ pasajeroEncontrado.apellidos }}</strong>
+              </p>
+            }
+            <button type="submit" [disabled]="reservando || !documentoPasajero.trim()">
+              {{ reservando ? 'Reservando...' : 'Reservar por 15 minutos' }}
+            </button>
+          </form>
+        }
+      }
+    </section>
+
+  }
+
+  @if (reservaCreada) {
+    <section class="reserva-confirmacion" aria-live="polite">
+      <h2>Reserva temporal creada</h2>
+      <p>Código: <strong>{{ reservaCreada.codigo }}</strong></p>
+      <p>Estado: {{ reservaCreada.estado }}</p>
+      <p>Total: <strong>${{ reservaCreada.total | number:'1.2-2' }}</strong></p>
+      <p>Vence: {{ reservaCreada.expiraEn | date:'short' }}</p>
+    </section>
   }
 
 </div>
