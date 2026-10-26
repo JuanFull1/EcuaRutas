@@ -3,6 +3,7 @@ using EcuaRutas.Api.DTOs.Ventas;
 using EcuaRutas.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Security.Cryptography;
 
 namespace EcuaRutas.Api.Services;
 
@@ -13,6 +14,83 @@ public class VentasService
     public VentasService(EcuaRutasDbContext context)
     {
         _context = context;
+    }
+
+    public async Task<VentasPaginadasResponse> BuscarVentasAsync(
+        string? busqueda,
+        string? estado,
+        DateTime? desde,
+        DateTime? hasta,
+        int pagina,
+        int tamanoPagina)
+    {
+        await ExpirarReservasAsync();
+
+        pagina = Math.Max(1, pagina);
+        tamanoPagina = Math.Clamp(tamanoPagina, 1, 100);
+        var consulta = _context.Ventas.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(estado))
+        {
+            var estadoNormalizado = estado.Trim().ToUpperInvariant();
+            consulta = consulta.Where(v => v.Estado == estadoNormalizado);
+        }
+
+        if (!string.IsNullOrWhiteSpace(busqueda))
+        {
+            var termino = busqueda.Trim().ToUpper();
+            consulta = consulta.Where(v =>
+                v.Codigo.ToUpper().Contains(termino) ||
+                v.VentaAsientos.Any(va => va.Pasajero.Documento.ToUpper().Contains(termino)));
+        }
+
+        if (desde.HasValue)
+        {
+            var inicio = DateTime.SpecifyKind(desde.Value.Date, DateTimeKind.Utc);
+            consulta = consulta.Where(v => v.CreadoEn >= inicio);
+        }
+
+        if (hasta.HasValue)
+        {
+            var finExclusivo = DateTime.SpecifyKind(hasta.Value.Date.AddDays(1), DateTimeKind.Utc);
+            consulta = consulta.Where(v => v.CreadoEn < finExclusivo);
+        }
+
+        var total = await consulta.CountAsync();
+        var items = await consulta
+            .OrderByDescending(v => v.CreadoEn)
+            .Skip((pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .Select(v => new VentaListadoResponse
+            {
+                VentaId = v.Id,
+                Codigo = v.Codigo,
+                Estado = v.Estado,
+                Canal = v.Canal,
+                Total = v.Total,
+                CreadoEn = v.CreadoEn,
+                ExpiraEn = v.ExpiraEn,
+                SalidaProgramada = v.Viaje.SalidaProgramada,
+                RutaNombre = v.Viaje.Frecuencia.Ruta.Nombre,
+                Origen = v.VentaAsientos.Select(va => va.OrigenRutaParada.Lugar.Nombre).FirstOrDefault() ?? string.Empty,
+                Destino = v.VentaAsientos.Select(va => va.DestinoRutaParada.Lugar.Nombre).FirstOrDefault() ?? string.Empty,
+                Asientos = v.VentaAsientos.Select(va => new VentaListadoAsientoResponse
+                {
+                    Documento = va.Pasajero.Documento,
+                    Pasajero = va.Pasajero.Nombres + " " + va.Pasajero.Apellidos,
+                    NumeroAsiento = va.AsientoBus.Numero,
+                    PrecioFinal = va.PrecioFinal
+                }).ToList()
+            })
+            .ToListAsync();
+
+        return new VentasPaginadasResponse
+        {
+            Items = items,
+            Total = total,
+            Pagina = pagina,
+            TamanoPagina = tamanoPagina
+        };
     }
 
     public async Task<object?> ObtenerPasajeroPorDocumentoAsync(string documento)
@@ -41,6 +119,8 @@ public class VentasService
     public async Task<ReservaResponse> CrearReservaAsync(
         CrearReservaRequest request)
     {
+        await ExpirarReservasAsync();
+
         if (request.Asientos == null || request.Asientos.Count == 0)
         {
             throw new ArgumentException(
@@ -334,7 +414,8 @@ public class VentasService
     var ventas = await _context.Ventas
         .Include(v => v.VentaAsientos)
         .Where(v =>
-            v.Estado == "RESERVADA" &&
+            (v.Estado == "RESERVADA" ||
+             v.Estado == "PENDIENTE_PAGO") &&
             v.ExpiraEn.HasValue &&
             v.ExpiraEn.Value <= ahora)
         .ToListAsync();
@@ -392,8 +473,13 @@ public async Task CancelarReservaAsync(long ventaId)
     await _context.SaveChangesAsync();
 }
 
-public async Task<ReservaResponse> ConfirmarVentaAsync(long ventaId)
+public async Task<ReservaResponse> ConfirmarVentaAsync(
+    long ventaId,
+    long usuarioVendedorId)
 {
+    await using var transaction =
+        await _context.Database.BeginTransactionAsync();
+
     var venta = await _context.Ventas
         .Include(v => v.VentaAsientos)
             .ThenInclude(va => va.AsientoBus)
@@ -425,13 +511,36 @@ public async Task<ReservaResponse> ConfirmarVentaAsync(long ventaId)
         }
 
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
 
         throw new InvalidOperationException(
             "La reserva ya expiró y no puede confirmarse.");
     }
 
+    if (venta.Total <= 0)
+    {
+        throw new InvalidOperationException(
+            "El total de la venta no es válido para registrar el pago.");
+    }
+
+    var ahora = DateTime.UtcNow;
     venta.Estado = "PAGADA";
-    venta.ActualizadoEn = DateTime.UtcNow;
+    venta.UsuarioVendedorId = usuarioVendedorId;
+    venta.ActualizadoEn = ahora;
+
+    _context.Pagos.Add(new Pago
+    {
+        VentaId = venta.Id,
+        Metodo = "EFECTIVO",
+        Monto = venta.Total,
+        Estado = "APROBADO",
+        UsuarioValidadorId = usuarioVendedorId,
+        CreadoEn = ahora,
+        ValidadoEn = ahora,
+        Observacion = "Pago en efectivo registrado en punto de venta."
+    });
+
+    var codigosBoletos = new List<string>();
 
     foreach (var asiento in venta.VentaAsientos)
     {
@@ -439,9 +548,22 @@ public async Task<ReservaResponse> ConfirmarVentaAsync(long ventaId)
         {
             asiento.EstadoAsiento = "CONFIRMADO";
         }
+
+        var codigoBoleto = $"{venta.Codigo}-{asiento.AsientoBus.Numero}";
+        var qrToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        _context.Boletos.Add(new Boleto
+        {
+            VentaAsientoId = asiento.Id,
+            CodigoBoleto = codigoBoleto,
+            QrToken = qrToken,
+            Estado = "ACTIVO",
+            GeneradoEn = ahora
+        });
+        codigosBoletos.Add(codigoBoleto);
     }
 
     await _context.SaveChangesAsync();
+    await transaction.CommitAsync();
 
     return new ReservaResponse
     {
@@ -454,6 +576,7 @@ public async Task<ReservaResponse> ConfirmarVentaAsync(long ventaId)
         DescuentoTotal = venta.DescuentoTotal,
         Total = venta.Total,
         ExpiraEn = venta.ExpiraEn ?? DateTime.UtcNow,
+        CodigosBoletos = codigosBoletos,
         Asientos = venta.VentaAsientos.Select(va => new ReservaAsientoResponse
         {
             VentaAsientoId = va.Id,

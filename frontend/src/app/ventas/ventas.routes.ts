@@ -27,6 +27,13 @@ export const VENTAS_ROUTES: Routes = [
   },
 
   {
+    path: 'gestion',
+    loadComponent: () =>
+      import('./gestion-ventas/gestion-ventas')
+        .then(m => m.GestionVentas)
+  },
+
+  {
     path: '',
     pathMatch: 'full',
     redirectTo: 'inicio'

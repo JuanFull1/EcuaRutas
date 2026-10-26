@@ -138,11 +138,8 @@ export class Layout {
     },
     {
       texto: 'Venta de boletos',
-      icono: 'bi-ticket-perforated'
-    },
-    {
-      texto: 'Validación',
-      icono: 'bi-check-circle'
+      icono: 'bi-ticket-perforated',
+      ruta: '/ventas/gestion'
     },
     {
       texto: 'Pagos',
@@ -151,6 +148,10 @@ export class Layout {
     {
       texto: 'Comprobantes',
       icono: 'bi-receipt'
+    },
+    {
+      texto: 'Validación de pagos',
+      icono: 'bi-check-circle'
     }
   ];
 

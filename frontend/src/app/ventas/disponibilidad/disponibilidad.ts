@@ -11,6 +11,7 @@ import {
 
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { API_URL } from '../../services/api.config';
 
 interface Lugar {
@@ -69,6 +70,7 @@ interface ReservaResponse {
   descuentoTotal: number;
   total: number;
   expiraEn: string;
+  codigosBoletos: string[];
 }
 
 interface PasajeroEncontrado {
@@ -84,7 +86,8 @@ interface PasajeroEncontrado {
   imports: [
     FormsModule,
     DatePipe,
-    DecimalPipe
+    DecimalPipe,
+    RouterLink
   ],
   templateUrl: './disponibilidad.html',
   styleUrl: './disponibilidad.css'
@@ -97,6 +100,8 @@ export class Disponibilidad implements OnInit {
   lugares: Lugar[] = [];
   viajes: Viaje[] = [];
   viajeSeleccionado: Viaje | null = null;
+  modalAsientosAbierto = false;
+  modalReservaAbierto = false;
   asientosDisponibles: AsientoDisponible[] = [];
   asientoSeleccionado: AsientoDisponible | null = null;
   documentoPasajero = '';
@@ -177,6 +182,7 @@ export class Disponibilidad implements OnInit {
     this.asientosDisponibles = [];
     this.asientoSeleccionado = null;
     this.reservaCreada = null;
+    this.modalReservaAbierto = false;
 
     if (!this.origenLugarId) {
       this.error = 'Seleccione el origen.';
@@ -243,9 +249,10 @@ export class Disponibilidad implements OnInit {
       });
   }
 
-  verAsientos(viaje: Viaje): void {
+  verAsientos(viaje: Viaje, abrirModal = true): void {
     this.error = '';
     this.viajeSeleccionado = viaje;
+    this.modalAsientosAbierto = abrirModal;
     this.asientosDisponibles = [];
     this.asientoSeleccionado = null;
     this.cargandoAsientos = true;
@@ -274,11 +281,21 @@ export class Disponibilidad implements OnInit {
       });
   }
 
+  cerrarModalAsientos(): void {
+    this.modalAsientosAbierto = false;
+    this.asientoSeleccionado = null;
+  }
+
+  cerrarModalReserva(): void {
+    this.modalReservaAbierto = false;
+  }
+
   seleccionarAsiento(asiento: AsientoDisponible): void {
     this.asientoSeleccionado = asiento;
     this.documentoPasajero = '';
     this.pasajeroEncontrado = null;
   }
+
 
   reservarAsiento(): void {
     if (!this.viajeSeleccionado || !this.asientoSeleccionado) {
@@ -327,6 +344,8 @@ export class Disponibilidad implements OnInit {
             .subscribe({
               next: reserva => {
                 this.reservaCreada = reserva;
+                this.modalAsientosAbierto = false;
+                this.modalReservaAbierto = true;
                 this.documentoPasajero = '';
                 this.pasajeroEncontrado = null;
                 this.reservando = false;
@@ -334,7 +353,7 @@ export class Disponibilidad implements OnInit {
                 this.mensaje = `Reserva ${reserva.codigo} creada. Vence ${
                   new Date(reserva.expiraEn).toLocaleString('es-EC')
                 }.`;
-                this.verAsientos(viaje);
+                this.verAsientos(viaje, false);
                 this.cdr.detectChanges();
               },
               error: error => {

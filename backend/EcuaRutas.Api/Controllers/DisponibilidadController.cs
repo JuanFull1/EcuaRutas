@@ -8,11 +8,14 @@ namespace EcuaRutas.Api.Controllers;
 public class DisponibilidadController : ControllerBase
 {
     private readonly DisponibilidadService _service;
+    private readonly VentasService _ventasService;
 
     public DisponibilidadController(
-        DisponibilidadService service)
+        DisponibilidadService service,
+        VentasService ventasService)
     {
         _service = service;
+        _ventasService = ventasService;
     }
 
     [HttpGet]
@@ -37,6 +40,8 @@ public class DisponibilidadController : ControllerBase
             return BadRequest(
                 "El destinoRutaParadaId debe ser mayor que cero.");
         }
+
+        await _ventasService.ExpirarReservasAsync();
 
         var resultado = await _service.ConsultarAsync(
             viajeId,

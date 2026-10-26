@@ -1,11 +1,14 @@
+using System.Security.Claims;
 using EcuaRutas.Api.DTOs.Ventas;
 using EcuaRutas.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "OFICINISTA")]
 public class VentasController : ControllerBase
 {
     private readonly VentasService _service;
@@ -13,6 +16,25 @@ public class VentasController : ControllerBase
     public VentasController(VentasService service)
     {
         _service = service;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BuscarVentas(
+        [FromQuery] string? busqueda,
+        [FromQuery] string? estado,
+        [FromQuery] DateTime? desde,
+        [FromQuery] DateTime? hasta,
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanoPagina = 20)
+    {
+        if (desde.HasValue && hasta.HasValue && desde.Value.Date > hasta.Value.Date)
+        {
+            return BadRequest(new { mensaje = "La fecha inicial no puede ser posterior a la fecha final." });
+        }
+
+        var respuesta = await _service.BuscarVentasAsync(
+            busqueda, estado, desde, hasta, pagina, tamanoPagina);
+        return Ok(respuesta);
     }
 
     [HttpGet("pasajeros/documento/{documento}")]
@@ -37,6 +59,14 @@ public class VentasController : ControllerBase
     {
         try
         {
+            if (!long.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var vendedorId))
+            {
+                return Unauthorized(new { mensaje = "Usuario de oficina no válido." });
+            }
+
+            request.UsuarioVendedorId = vendedorId;
             var resultado =
                 await _service.CrearReservaAsync(request);
 
@@ -104,8 +134,15 @@ public async Task<IActionResult> ConfirmarVenta(long ventaId)
 {
     try
     {
+        if (!long.TryParse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            out var vendedorId))
+        {
+            return Unauthorized(new { mensaje = "Usuario de oficina no válido." });
+        }
+
         var resultado =
-            await _service.ConfirmarVentaAsync(ventaId);
+            await _service.ConfirmarVentaAsync(ventaId, vendedorId);
 
         return Ok(resultado);
     }

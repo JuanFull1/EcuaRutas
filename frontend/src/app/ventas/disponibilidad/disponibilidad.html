@@ -221,85 +221,113 @@
 
   }
 
-  @if (viajeSeleccionado) {
-
-    <section class="asientos-panel">
-      <h2>Asientos disponibles</h2>
-      <p>
-        {{ obtenerNombreLugar(origenLugarId) }}
-        →
-        {{ obtenerNombreLugar(destinoLugarId) }}
-        · {{ viajeSeleccionado.rutaNombre }}
-      </p>
-
-      @if (cargandoAsientos) {
-        <p class="mensaje">Consultando asientos...</p>
-      } @else if (asientosDisponibles.length === 0) {
-        <p class="mensaje">No hay asientos disponibles para este tramo.</p>
-      } @else {
-        <div class="asientos-lista">
-          @for (asiento of asientosDisponibles; track asiento.asientoBusId) {
-            <article class="asiento-card">
-              <strong>Asiento {{ asiento.numero }}</strong>
-              <span>{{ asiento.tipoAsiento }}</span>
-              <span>Piso {{ asiento.piso }}</span>
-              <strong>${{ asiento.precioFinal | number:'1.2-2' }}</strong>
-              <button
-                type="button"
-                [class.seleccionado]="asientoSeleccionado?.asientoBusId === asiento.asientoBusId"
-                [disabled]="reservando"
-                (click)="seleccionarAsiento(asiento)"
-              >
-                {{ asientoSeleccionado?.asientoBusId === asiento.asientoBusId
-                    ? 'Seleccionado'
-                    : 'Elegir asiento' }}
-              </button>
-            </article>
+  @if (modalAsientosAbierto && viajeSeleccionado) {
+    <div class="modal-fondo" (click)="cerrarModalAsientos()">
+      <section
+        class="modal-contenido modal-asientos"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-modal-asientos"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="modal-encabezado">
+          <div>
+            <h2 id="titulo-modal-asientos">Elija un asiento</h2>
+            <p>{{ obtenerNombreLugar(origenLugarId) }} → {{ obtenerNombreLugar(destinoLugarId) }} · {{ viajeSeleccionado.rutaNombre }}</p>
+          </div>
+          <button class="modal-cerrar" type="button" (click)="cerrarModalAsientos()" aria-label="Cerrar">×</button>
+        </header>
+        <div class="modal-cuerpo">
+          @if (error) {
+            <div class="error" role="alert">{{ error }}</div>
+          }
+          @if (cargandoAsientos) {
+            <p class="mensaje">Consultando asientos...</p>
+          } @else if (asientosDisponibles.length === 0) {
+            <p class="mensaje">No hay asientos disponibles para este tramo.</p>
+          } @else {
+            <div class="asientos-lista">
+              @for (asiento of asientosDisponibles; track asiento.asientoBusId) {
+                <article class="asiento-card">
+                  <strong>Asiento {{ asiento.numero }}</strong>
+                  <span>{{ asiento.tipoAsiento }}</span>
+                  <span>Piso {{ asiento.piso }}</span>
+                  <strong>${{ asiento.precioFinal | number:'1.2-2' }}</strong>
+                  <button
+                    type="button"
+                    [class.seleccionado]="asientoSeleccionado?.asientoBusId === asiento.asientoBusId"
+                    [disabled]="reservando"
+                    (click)="seleccionarAsiento(asiento)"
+                  >
+                    {{ asientoSeleccionado?.asientoBusId === asiento.asientoBusId ? 'Seleccionado' : 'Elegir asiento' }}
+                  </button>
+                </article>
+              }
+            </div>
+            @if (asientoSeleccionado; as asiento) {
+              <form class="reserva-formulario" (ngSubmit)="reservarAsiento()">
+                <div class="asiento-seleccionado">
+                  Elegiste el asiento {{ asiento.numero }} por ${{ asiento.precioFinal | number:'1.2-2' }}.
+                </div>
+                <div class="campo">
+                  <label for="documentoPasajero">Cédula o documento del pasajero</label>
+                  <input
+                    id="documentoPasajero"
+                    name="documentoPasajero"
+                    type="text"
+                    [(ngModel)]="documentoPasajero"
+                    placeholder="Ingrese la cédula o documento"
+                    required
+                  />
+                  <small>Usaremos este documento para buscar al pasajero registrado.</small>
+                </div>
+                @if (pasajeroEncontrado) {
+                  <p class="pasajero-encontrado">Pasajero: <strong>{{ pasajeroEncontrado.nombres }} {{ pasajeroEncontrado.apellidos }}</strong></p>
+                }
+                <button type="submit" [disabled]="reservando || !documentoPasajero.trim()">
+                  {{ reservando ? 'Reservando...' : 'Reservar por 15 minutos' }}
+                </button>
+              </form>
+            }
           }
         </div>
-        @if (asientoSeleccionado; as asiento) {
-          <form class="reserva-formulario" (ngSubmit)="reservarAsiento()">
-            <div class="asiento-seleccionado">
-              Elegiste el asiento {{ asiento.numero }} por
-              ${{ asiento.precioFinal | number:'1.2-2' }}.
-            </div>
-            <div class="campo">
-              <label for="documentoPasajero">Cédula o documento del pasajero</label>
-              <input
-                id="documentoPasajero"
-                name="documentoPasajero"
-                type="text"
-                [(ngModel)]="documentoPasajero"
-                placeholder="Ingrese la cédula o documento"
-                required
-              />
-              <small>
-                Usaremos este documento para buscar al pasajero registrado.
-              </small>
-            </div>
-            @if (pasajeroEncontrado) {
-              <p class="pasajero-encontrado">
-                Pasajero: <strong>{{ pasajeroEncontrado.nombres }} {{ pasajeroEncontrado.apellidos }}</strong>
-              </p>
-            }
-            <button type="submit" [disabled]="reservando || !documentoPasajero.trim()">
-              {{ reservando ? 'Reservando...' : 'Reservar por 15 minutos' }}
-            </button>
-          </form>
-        }
-      }
-    </section>
-
+      </section>
+    </div>
   }
 
-  @if (reservaCreada) {
-    <section class="reserva-confirmacion" aria-live="polite">
-      <h2>Reserva temporal creada</h2>
-      <p>Código: <strong>{{ reservaCreada.codigo }}</strong></p>
-      <p>Estado: {{ reservaCreada.estado }}</p>
-      <p>Total: <strong>${{ reservaCreada.total | number:'1.2-2' }}</strong></p>
-      <p>Vence: {{ reservaCreada.expiraEn | date:'short' }}</p>
-    </section>
+  @if (modalReservaAbierto && reservaCreada) {
+    <div class="modal-fondo" (click)="cerrarModalReserva()">
+      <section
+        class="modal-contenido modal-reserva"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-modal-reserva"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="modal-encabezado">
+          <h2 id="titulo-modal-reserva">Reserva temporal creada</h2>
+          <button class="modal-cerrar" type="button" (click)="cerrarModalReserva()" aria-label="Cerrar">×</button>
+        </header>
+        <div class="modal-cuerpo" aria-live="polite">
+          <p>Código: <strong>{{ reservaCreada.codigo }}</strong></p>
+          <p>Total: <strong>${{ reservaCreada.total | number:'1.2-2' }}</strong></p>
+          <p>Vence: {{ reservaCreada.expiraEn | date:'short' }}</p>
+          <p class="aviso-efectivo">La reserva queda guardada en Venta de boletos y vence en 15 minutos si no se completa el pago.</p>
+          <div class="acciones-venta">
+            <a class="boton-gestion" routerLink="/ventas/gestion" (click)="cerrarModalReserva()">Ir a Venta de boletos</a>
+            <button type="button" class="boton-secundario" (click)="cerrarModalReserva()">Seguir consultando</button>
+          </div>
+          @if (reservaCreada.codigosBoletos?.length) {
+            <h3>Boletos emitidos</h3>
+            <ul>
+              @for (codigo of reservaCreada.codigosBoletos; track codigo) {
+                <li>{{ codigo }}</li>
+              }
+            </ul>
+          }
+        </div>
+      </section>
+    </div>
   }
 
 </div>

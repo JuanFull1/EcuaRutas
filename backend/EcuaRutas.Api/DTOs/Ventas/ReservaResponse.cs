@@ -20,6 +20,8 @@ public class ReservaResponse
 
     public DateTime ExpiraEn { get; set; }
 
+    public List<string> CodigosBoletos { get; set; } = new();
+
     public List<ReservaAsientoResponse> Asientos { get; set; } = new();
 }
 
