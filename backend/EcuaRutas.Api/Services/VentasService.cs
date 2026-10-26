@@ -41,7 +41,9 @@ public class VentasService
             var termino = busqueda.Trim().ToUpper();
             consulta = consulta.Where(v =>
                 v.Codigo.ToUpper().Contains(termino) ||
-                v.VentaAsientos.Any(va => va.Pasajero.Documento.ToUpper().Contains(termino)));
+                v.VentaAsientos.Any(va =>
+                    va.Pasajero.Documento.ToUpper().Contains(termino) ||
+                    (va.Boleto != null && va.Boleto.CodigoBoleto.ToUpper().Contains(termino))));
         }
 
         if (desde.HasValue)
@@ -70,6 +72,8 @@ public class VentasService
                 Total = v.Total,
                 CreadoEn = v.CreadoEn,
                 ExpiraEn = v.ExpiraEn,
+                EstadoPago = v.Pagos.OrderByDescending(p => p.CreadoEn).Select(p => p.Estado).FirstOrDefault(),
+                MetodoPago = v.Pagos.OrderByDescending(p => p.CreadoEn).Select(p => p.Metodo).FirstOrDefault(),
                 SalidaProgramada = v.Viaje.SalidaProgramada,
                 RutaNombre = v.Viaje.Frecuencia.Ruta.Nombre,
                 Origen = v.VentaAsientos.Select(va => va.OrigenRutaParada.Lugar.Nombre).FirstOrDefault() ?? string.Empty,
@@ -79,7 +83,9 @@ public class VentasService
                     Documento = va.Pasajero.Documento,
                     Pasajero = va.Pasajero.Nombres + " " + va.Pasajero.Apellidos,
                     NumeroAsiento = va.AsientoBus.Numero,
-                    PrecioFinal = va.PrecioFinal
+                    PrecioFinal = va.PrecioFinal,
+                    CodigoBoleto = va.Boleto == null ? null : va.Boleto.CodigoBoleto,
+                    EstadoBoleto = va.Boleto == null ? null : va.Boleto.Estado
                 }).ToList()
             })
             .ToListAsync();
@@ -459,6 +465,15 @@ public async Task CancelarReservaAsync(long ventaId)
             $"La reserva no puede cancelarse porque su estado actual es {venta.Estado}.");
     }
 
+    var pagoActivo = await _context.Pagos.AnyAsync(p =>
+        p.VentaId == ventaId &&
+        (p.Estado == "PENDIENTE" || p.Estado == "EN_REVISION" || p.Estado == "APROBADO"));
+    if (pagoActivo)
+    {
+        throw new InvalidOperationException(
+            "Esta reserva tiene un pago registrado o en revisión. Gestione ese pago antes de cancelarla.");
+    }
+
     venta.Estado = "CANCELADA";
     venta.ActualizadoEn = DateTime.UtcNow;
 
@@ -494,6 +509,15 @@ public async Task<ReservaResponse> ConfirmarVentaAsync(
     {
         throw new InvalidOperationException(
             $"La venta no puede confirmarse porque su estado actual es {venta.Estado}.");
+    }
+
+    var pagoExistente = await _context.Pagos.AnyAsync(p =>
+        p.VentaId == ventaId &&
+        (p.Estado == "PENDIENTE" || p.Estado == "EN_REVISION" || p.Estado == "APROBADO"));
+    if (pagoExistente)
+    {
+        throw new InvalidOperationException(
+            "Esta reserva ya tiene un pago registrado o en revisión. Gestione ese pago antes de registrar efectivo.");
     }
 
     if (venta.ExpiraEn.HasValue &&

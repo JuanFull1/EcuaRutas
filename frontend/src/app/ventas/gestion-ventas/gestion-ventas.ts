@@ -9,6 +9,8 @@ interface VentaAsiento {
   pasajero: string;
   numeroAsiento: string;
   precioFinal: number;
+  codigoBoleto: string | null;
+  estadoBoleto: string | null;
 }
 
 interface Venta {
@@ -19,6 +21,8 @@ interface Venta {
   total: number;
   creadoEn: string;
   expiraEn: string | null;
+  estadoPago: string | null;
+  metodoPago: string | null;
   salidaProgramada: string;
   rutaNombre: string;
   origen: string;

@@ -9,7 +9,7 @@
 
   <form class="filtros" (ngSubmit)="pagina = 1; buscar()">
     <label class="campo campo-busqueda">Código o cédula
-      <input name="busqueda" [(ngModel)]="busqueda" placeholder="Ej. RES-... o 010..." />
+      <input name="busqueda" [(ngModel)]="busqueda" placeholder="Venta, boleto o cédula" />
     </label>
     <label class="campo">Estado
       <select name="estado" [(ngModel)]="estado">
@@ -43,10 +43,10 @@
           </div>
           <div class="venta-detalle">
             <div><span class="etiqueta">Ruta</span><strong>{{ venta.rutaNombre }}</strong><span>{{ venta.origen }} → {{ venta.destino }}</span></div>
-            <div><span class="etiqueta">Viaje</span><strong>{{ venta.salidaProgramada | date:'short' }}</strong><span>Creada {{ venta.creadoEn | date:'short' }}</span></div>
+            <div><span class="etiqueta">Viaje / Pago</span><strong>{{ venta.salidaProgramada | date:'short' }}</strong><span>Creada {{ venta.creadoEn | date:'short' }}</span>@if (venta.estadoPago) { <span>{{ venta.metodoPago }} · {{ venta.estadoPago }}</span> }</div>
             <div><span class="etiqueta">Pasajero(s) y asiento(s)</span>
               @for (asiento of venta.asientos; track asiento.numeroAsiento + asiento.documento) {
-                <span>{{ asiento.pasajero }} · {{ asiento.documento }} · Asiento {{ asiento.numeroAsiento }}</span>
+                <span>{{ asiento.pasajero }} · {{ asiento.documento }} · Asiento {{ asiento.numeroAsiento }}@if (asiento.codigoBoleto) { · Boleto {{ asiento.codigoBoleto }} ({{ asiento.estadoBoleto }}) }</span>
               }
             </div>
             <div class="importe"><span class="etiqueta">Total</span><strong>{{ venta.total | currency:'USD':'symbol':'1.2-2' }}</strong></div>
@@ -54,9 +54,12 @@
           @if (venta.estado === 'RESERVADA') {
             <div class="reserva-pie">
               <span>Vence {{ venta.expiraEn | date:'short' }}</span>
+              @if (venta.estadoPago === 'PENDIENTE' || venta.estadoPago === 'EN_REVISION' || venta.estadoPago === 'APROBADO') {
+                <span class="aviso-pago">Ya existe un pago {{ venta.estadoPago.toLowerCase() }} por {{ venta.metodoPago }}. Revíselo en el flujo de pagos antes de continuar.</span>
+              }
               <div class="acciones-venta">
-                <button class="principal" type="button" [disabled]="ventaProcesando !== null" (click)="confirmar(venta)">Registrar efectivo y emitir boletos</button>
-                <button class="peligro" type="button" [disabled]="ventaProcesando !== null" (click)="cancelar(venta)">Cancelar reserva</button>
+                <button class="principal" type="button" [disabled]="ventaProcesando !== null || (venta.estadoPago === 'PENDIENTE' || venta.estadoPago === 'EN_REVISION' || venta.estadoPago === 'APROBADO')" (click)="confirmar(venta)">Registrar efectivo y emitir boletos</button>
+                <button class="peligro" type="button" [disabled]="ventaProcesando !== null || (venta.estadoPago === 'PENDIENTE' || venta.estadoPago === 'EN_REVISION' || venta.estadoPago === 'APROBADO')" (click)="cancelar(venta)">Cancelar reserva</button>
               </div>
             </div>
           }

@@ -9,6 +9,8 @@ public class VentaListadoResponse
     public decimal Total { get; set; }
     public DateTime CreadoEn { get; set; }
     public DateTime? ExpiraEn { get; set; }
+    public string? EstadoPago { get; set; }
+    public string? MetodoPago { get; set; }
     public DateTime SalidaProgramada { get; set; }
     public string RutaNombre { get; set; } = string.Empty;
     public string Origen { get; set; } = string.Empty;
@@ -22,6 +24,8 @@ public class VentaListadoAsientoResponse
     public string Pasajero { get; set; } = string.Empty;
     public string NumeroAsiento { get; set; } = string.Empty;
     public decimal PrecioFinal { get; set; }
+    public string? CodigoBoleto { get; set; }
+    public string? EstadoBoleto { get; set; }
 }
 
 public class VentasPaginadasResponse
