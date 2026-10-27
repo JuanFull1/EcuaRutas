@@ -61,7 +61,7 @@ public class PagosController : ControllerBase
         {
             return BadRequest(new { mensaje = ex.Message });
         }
-        catch (InvalidOperationException ex)
+        catch (ConflictoException ex)
         {
             return Conflict(new { mensaje = ex.Message });
         }

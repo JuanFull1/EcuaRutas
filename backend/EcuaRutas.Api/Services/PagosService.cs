@@ -175,15 +175,12 @@ public async Task<List<PagoRespuestaDto>> ObtenerPagosPorVentaAsync(
             .LoadAsync();
 
         if (pago.Venta.UsuarioClienteId != usuarioId)
-        {
-            throw new UnauthorizedAccessException(
-                "No tienes autorización para modificar este pago.");
-        }
+            throw new KeyNotFoundException("El pago no existe.");
 
         if (pago.Estado != "PENDIENTE" ||
             !string.IsNullOrWhiteSpace(pago.ComprobanteUrl))
         {
-            throw new InvalidOperationException(
+            throw new ConflictoException(
                 "Este pago no permite adjuntar un comprobante.");
         }
 
