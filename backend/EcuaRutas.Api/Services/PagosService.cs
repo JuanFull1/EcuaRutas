@@ -3,17 +3,24 @@ using EcuaRutas.Api.Data;
 using EcuaRutas.Api.DTOs.Pagos;
 using EcuaRutas.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace EcuaRutas.Api.Services;
 
 public class PagosService
 {
-    private readonly EcuaRutasDbContext _context;
 
-    public PagosService(EcuaRutasDbContext context)
+    private readonly EcuaRutasDbContext _context;
+    private readonly ComprobantesStorageService _comprobantesStorage;
+
+    public PagosService(
+        EcuaRutasDbContext context,
+        ComprobantesStorageService comprobantesStorage)
     {
         _context = context;
+        _comprobantesStorage = comprobantesStorage;
     }
+
 
     public async Task<Pago> RegistrarPagoAsync(
         RegistrarPagoDto dto,
@@ -95,7 +102,7 @@ public class PagosService
 
         return pago;
     }
-    
+
 public async Task<List<PagoRespuestaDto>> ObtenerPagosPorVentaAsync(
     long ventaId,
     long usuarioId)
@@ -135,5 +142,97 @@ public async Task<List<PagoRespuestaDto>> ObtenerPagosPorVentaAsync(
         })
         .ToListAsync();
 }
+
+    public async Task<PagoRespuestaDto> SubirComprobanteAsync(
+        long pagoId,
+        long usuarioId,
+        IFormFile archivo)
+    {
+        if (pagoId <= 0)
+        {
+            throw new ArgumentException(
+                "El identificador del pago no es válido.");
+        }
+
+        await using var transaccion =
+            await _context.Database.BeginTransactionAsync();
+
+
+        var pagosEncontrados = await _context.Pagos
+            .FromSqlInterpolated(
+                $"SELECT * FROM pagos WHERE id = {pagoId} FOR UPDATE")
+            .ToListAsync();
+
+        var pago = pagosEncontrados.FirstOrDefault();
+
+        if (pago is null)
+        {
+            throw new KeyNotFoundException("El pago no existe.");
+        }
+
+        await _context.Entry(pago)
+            .Reference(p => p.Venta)
+            .LoadAsync();
+
+        if (pago.Venta.UsuarioClienteId != usuarioId)
+            throw new KeyNotFoundException("El pago no existe.");
+
+        if (pago.Estado != "PENDIENTE" ||
+            !string.IsNullOrWhiteSpace(pago.ComprobanteUrl))
+        {
+            throw new ConflictoException(
+                "Este pago no permite adjuntar un comprobante.");
+        }
+
+        string? nombreArchivo = null;
+
+        try
+        {
+            nombreArchivo =
+                await _comprobantesStorage.GuardarAsync(archivo);
+
+            pago.ComprobanteUrl = nombreArchivo;
+            pago.Estado = "EN_REVISION";
+
+            await _context.SaveChangesAsync();
+            await transaccion.CommitAsync();
+        }
+        catch
+        {
+            await transaccion.RollbackAsync();
+
+            if (nombreArchivo is not null)
+            {
+                try
+                {
+                    _comprobantesStorage.Eliminar(nombreArchivo);
+                }
+                catch (IOException)
+                {
+
+                }
+                catch (UnauthorizedAccessException)
+                {
+
+                }
+            }
+
+            throw;
+        }
+
+        return new PagoRespuestaDto
+        {
+            Id = pago.Id,
+            VentaId = pago.VentaId,
+            Metodo = pago.Metodo,
+            Monto = pago.Monto,
+            Estado = pago.Estado,
+            CreadoEn = pago.CreadoEn
+        };
+    }
+
+
+
+
 
 }

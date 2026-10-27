@@ -26,3 +26,6 @@ node_modules/
 dist/
 .angular/
 npm-debug.log*
+
+# Comprobantes de pago (almacenamiento privado)
+backend/EcuaRutas.Api/Storage/Comprobantes/
