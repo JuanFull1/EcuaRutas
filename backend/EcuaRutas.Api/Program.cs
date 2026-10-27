@@ -12,7 +12,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+
 builder.Services.AddScoped<IGrupoBusService, GrupoBusService>();
+builder.Services.AddScoped<IBusService, BusService>();
+builder.Services.AddScoped<IPlantillaService, PlantillaService>();
+
+builder.Services.AddScoped<IHojaRutaService, HojaRutaService>();
 
 builder.Services.AddDbContext<EcuaRutasDbContext>(options =>
     options.UseNpgsql(
@@ -87,6 +92,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
 await DevelopmentSeeder.SeedAsync(
     app.Services,
     app.Configuration,
