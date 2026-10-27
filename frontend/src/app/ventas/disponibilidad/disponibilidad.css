@@ -1,0 +1,417 @@
+.disponibilidad-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 35px;
+}
+
+.encabezado {
+  margin-bottom: 30px;
+}
+
+.encabezado h1 {
+  margin-bottom: 8px;
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.encabezado p {
+  margin: 0;
+}
+
+.formulario {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 18px;
+  align-items: end;
+  padding: 25px;
+  margin-bottom: 25px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.campo label {
+  font-weight: 600;
+}
+
+.campo select,
+.campo input {
+  width: 100%;
+  height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+.formulario button {
+  height: 42px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.formulario button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.mensaje {
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  background: #f1f1f1;
+}
+
+.error {
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  background: #f8d7da;
+}
+
+.resultados {
+  margin-top: 30px;
+}
+
+.resultados h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.asientos-panel {
+  margin-top: 30px;
+}
+
+.asientos-panel h2 {
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.asientos-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.asiento-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+}
+
+.asiento-card button {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #1677c8;
+  border-radius: 6px;
+  color: #075b9d;
+  background: white;
+  cursor: pointer;
+}
+
+.asiento-card button.seleccionado {
+  color: white;
+  background: #1677c8;
+}
+
+.asiento-card button:disabled,
+.reserva-formulario button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.reserva-formulario {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+}
+
+.pasajero-encontrado {
+  margin: 0;
+  color: #166534;
+}
+
+.reserva-formulario .campo input {
+  height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.reserva-formulario small {
+  color: #526274;
+}
+
+.reserva-formulario button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  color: white;
+  background: #1677c8;
+  cursor: pointer;
+}
+
+.reserva-confirmacion {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid #a8d5b5;
+  border-radius: 8px;
+  background: #effaf2;
+}
+
+.reserva-confirmacion h2 {
+  margin-bottom: 12px;
+  font-size: 22px;
+}
+
+.reserva-confirmacion p {
+  margin: 6px 0;
+}
+
+.modal-fondo {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 58%);
+  overscroll-behavior: contain;
+}
+
+.modal-contenido {
+  display: flex;
+  flex-direction: column;
+  width: min(940px, 100%);
+  max-height: min(850px, calc(100vh - 48px));
+  overflow: hidden;
+  border: 1px solid #d6dee8;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(15 23 42 / 28%);
+}
+
+.modal-reserva {
+  width: min(560px, 100%);
+}
+
+.modal-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-encabezado h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.modal-encabezado p {
+  margin: 6px 0 0;
+  color: #526274;
+}
+
+.modal-cerrar {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #263748;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-cuerpo {
+  overflow-y: auto;
+  padding: 22px 24px 24px;
+  overscroll-behavior: contain;
+}
+
+.modal-cuerpo .asientos-lista {
+  margin-bottom: 18px;
+}
+
+.modal-cuerpo .reserva-formulario {
+  max-width: none;
+  margin: 0;
+}
+
+.modal-cuerpo .asiento-seleccionado {
+  margin-top: 0;
+}
+
+.aviso-efectivo {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.acciones-venta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.acciones-venta button,
+.acciones-venta .boton-gestion {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #1476c6;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.acciones-venta .boton-secundario {
+  border: 1px solid #b42318;
+  background: #fff;
+  color: #263748;
+}
+
+.acciones-venta button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.asiento-seleccionado {
+  margin-top: 18px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  background: #e7f2fb;
+}
+
+.viaje-card {
+  display: grid;
+  grid-template-columns: 130px 1fr 180px;
+  gap: 25px;
+  align-items: center;
+  padding: 22px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+}
+
+.viaje-hora {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.viaje-hora strong {
+  font-size: 26px;
+}
+
+.viaje-hora span {
+  font-size: 13px;
+}
+
+.viaje-info h3 {
+  margin: 0 0 8px;
+}
+
+.viaje-info p {
+  margin: 5px 0;
+}
+
+.viaje-precio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.viaje-precio span {
+  font-size: 13px;
+}
+
+.viaje-precio strong {
+  font-size: 24px;
+}
+
+.viaje-precio button {
+  padding: 9px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+
+  .formulario {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .viaje-card {
+    grid-template-columns: 1fr;
+  }
+
+  .viaje-precio {
+    align-items: flex-start;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .disponibilidad-container {
+    padding: 20px;
+  }
+
+  .formulario {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-fondo {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-contenido {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-encabezado,
+  .modal-cuerpo {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .acciones-venta {
+    flex-direction: column;
+  }
+
+}

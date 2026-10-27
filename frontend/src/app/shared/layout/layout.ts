@@ -125,29 +125,35 @@ export class Layout {
           ];
 
         case 'OFICINISTA':
-          return [
-            {
-              texto: 'Inicio',
-              icono: 'bi-grid',
-              ruta: '/ventas/inicio'
-            },
-            {
-              texto: 'Venta de boletos',
-              icono: 'bi-ticket-perforated'
-            },
-            {
-              texto: 'Validación',
-              icono: 'bi-check-circle'
-            },
-            {
-              texto: 'Pagos',
-              icono: 'bi-credit-card'
-            },
-            {
-              texto: 'Comprobantes',
-              icono: 'bi-receipt'
-            }
-          ];
+  return [
+    {
+      texto: 'Inicio',
+      icono: 'bi-grid',
+      ruta: '/ventas/inicio'
+    },
+    {
+      texto: 'Disponibilidad',
+      icono: 'bi-search',
+      ruta: '/ventas/disponibilidad'
+    },
+    {
+      texto: 'Venta de boletos',
+      icono: 'bi-ticket-perforated',
+      ruta: '/ventas/gestion'
+    },
+    {
+      texto: 'Pagos',
+      icono: 'bi-credit-card'
+    },
+    {
+      texto: 'Comprobantes',
+      icono: 'bi-receipt'
+    },
+    {
+      texto: 'Validación de pagos',
+      icono: 'bi-check-circle'
+    }
+  ];
 
         case 'CLIENTE':
           return [
