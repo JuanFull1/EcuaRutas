@@ -84,4 +84,12 @@ public class PlantillasController : ControllerBase
             return Conflict(new { mensaje = ex.Message });
         }
     }
+
+    [HttpGet("/api/buses/{busId:long}/asientos")]
+    public async Task<ActionResult<IReadOnlyList<AsientoBusDto>>> ListarAsientosDeBus(
+        long busId, CancellationToken ct)
+    {
+        var asientos = await _servicio.ListarAsientosDeBusAsync(busId, ct);
+        return asientos is null ? NotFound() : Ok(asientos);
+    }
 }

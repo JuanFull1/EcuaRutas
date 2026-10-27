@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { Bus, EstadoBus } from '../../models/bus.model';
 import { AuthService } from '../../services/auth.service';
@@ -7,6 +8,7 @@ import { BusService } from '../../services/bus.service';
 @Component({
   selector: 'app-buses-lista',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './buses-lista.html',
   styleUrl: './buses-lista.css'
 })
