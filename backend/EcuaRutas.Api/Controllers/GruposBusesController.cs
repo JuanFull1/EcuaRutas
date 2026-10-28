@@ -1,11 +1,13 @@
 using EcuaRutas.Api.DTOs;
 using EcuaRutas.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/grupos-buses")]
+[Authorize(Roles = "ADMIN,COOPERATIVA,OFICINISTA")]
 public class GruposBusesController : ControllerBase
 {
     private readonly IGrupoBusService _servicio;
@@ -29,7 +31,8 @@ public class GruposBusesController : ControllerBase
         return grupo is null ? NotFound() : Ok(grupo);
     }
 
-        [HttpPost]
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [HttpPost]
     public async Task<ActionResult<GrupoBusDto>> Crear(
         CrearGrupoBusRequest request, CancellationToken ct)
     {
@@ -48,6 +51,7 @@ public class GruposBusesController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     [HttpPut("{id:long}")]
     public async Task<ActionResult<GrupoBusDto>> Actualizar(
         long id, ActualizarGrupoBusRequest request, CancellationToken ct)
@@ -63,6 +67,7 @@ public class GruposBusesController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> Desactivar(long id, CancellationToken ct)
     {
