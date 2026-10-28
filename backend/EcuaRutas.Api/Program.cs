@@ -16,6 +16,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<IGrupoBusService, GrupoBusService>();
 builder.Services.AddScoped<IBusService, BusService>();
 builder.Services.AddScoped<IPlantillaService, PlantillaService>();
+builder.Services.AddScoped<ILugarService, LugarService>();
+builder.Services.AddScoped<IRutaService, RutaService>();
+builder.Services.AddScoped<IRutaParadaService, RutaParadaService>();
 
 builder.Services.AddScoped<IHojaRutaService, HojaRutaService>();
 
