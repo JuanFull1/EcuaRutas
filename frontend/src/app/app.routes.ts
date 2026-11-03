@@ -169,26 +169,13 @@ export const routes: Routes = [
     },
 
     children: [
-
-      {
-        path: 'inicio',
-
-        loadComponent: () =>
-          import(
-            './cliente/inicio/inicio-cliente'
-          )
-            .then(
-              m => m.InicioCliente
-            )
-      },
-
-      {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: 'inicio'
-      }
-
-    ]
+    {
+      path: '',
+      loadChildren: () =>
+        import('./cliente/cliente.routes')
+          .then(m => m.CLIENTE_ROUTES)
+    }
+  ]
   },
 
   {
@@ -238,7 +225,4 @@ export const routes: Routes = [
     path: '**',
     redirectTo: 'login'
   }
-
-  
-
 ];
