@@ -40,6 +40,13 @@ public class GruposBusesController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<GrupoBusDto>>> Listar(
         [FromQuery] long cooperativaId, CancellationToken ct)
     {
+        var denegado = DenegarSiOtraCooperativa(cooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         return Ok(await _servicio.ListarAsync(cooperativaId, ct));
     }
 
