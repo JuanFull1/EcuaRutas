@@ -212,6 +212,20 @@ public class PlantillasController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<AsientoBusDto>>> ListarAsientosDeBus(
         long busId, CancellationToken ct)
     {
+        var bus = await _busServicio.ObtenerAsync(busId, ct);
+
+        if (bus is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(bus.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         var asientos = await _servicio.ListarAsientosDeBusAsync(busId, ct);
         return asientos is null ? NotFound() : Ok(asientos);
     }
