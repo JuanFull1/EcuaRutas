@@ -131,6 +131,20 @@ public class GruposBusesController : ControllerBase
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> Desactivar(long id, CancellationToken ct)
     {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         var desactivado = await _servicio.DesactivarAsync(id, ct);
         return desactivado ? NoContent() : NotFound();
     }
