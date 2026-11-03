@@ -75,6 +75,13 @@ public class GruposBusesController : ControllerBase
     public async Task<ActionResult<GrupoBusDto>> Crear(
         CrearGrupoBusRequest request, CancellationToken ct)
     {
+        var denegado = DenegarSiOtraCooperativa(request.CooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         try
         {
             var grupo = await _servicio.CrearAsync(request, ct);
