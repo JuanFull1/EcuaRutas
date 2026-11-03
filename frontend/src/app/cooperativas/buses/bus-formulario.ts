@@ -3,7 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { CrearBusRequest, EstadoBus } from '../../models/bus.model';
+import { ActualizarBusRequest, CrearBusRequest, EstadoBus } from '../../models/bus.model';
 import { GrupoBus } from '../../models/grupo-bus.model';
 import { AuthService } from '../../services/auth.service';
 import { BusService } from '../../services/bus.service';
@@ -94,7 +94,12 @@ export class BusFormulario implements OnInit {
     this.errorGuardar.set(null);
     this.guardando.set(true);
 
-    this.busService.crear(request).subscribe({
+    const id = this.busId();
+    const peticion$ = id === null
+      ? this.busService.crear(request)
+      : this.busService.actualizar(id, this.aActualizar(request, v.estado ?? 'ACTIVO'));
+
+    peticion$.subscribe({
       next: () => {
         this.guardando.set(false);
         this.router.navigate(['/cooperativas/buses']);
@@ -148,6 +153,11 @@ export class BusFormulario implements OnInit {
     });
   }
 
+  private aActualizar(request: CrearBusRequest, estado: EstadoBus): ActualizarBusRequest {
+    const { cooperativaId, ...resto } = request;
+    return { ...resto, estado };
+  }
+
   private texto(valor: string | null | undefined): string | undefined {
     const limpio = valor?.trim();
     return limpio ? limpio : undefined;
@@ -159,6 +169,8 @@ export class BusFormulario implements OnInit {
         return 'No se pudo conectar con el servidor. Verifica tu conexión.';
       case 400:
         return 'Revisa los datos ingresados, alguno no es válido.';
+      case 403:
+        return 'No puedes modificar un bus de otra cooperativa.';
       case 404:
         return 'La cooperativa o el grupo seleccionado ya no existe.';
       case 409:
