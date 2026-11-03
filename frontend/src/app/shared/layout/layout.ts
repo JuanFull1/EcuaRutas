@@ -115,6 +115,16 @@ export class Layout {
               icono: 'bi-grid-3x3-gap'
             },
             {
+              texto: 'Hojas de Ruta',
+              icono: 'bi-calendar-check',
+              ruta: '/viajes/hojas-ruta'
+            },
+            {
+              texto: 'Viajes',
+              icono: 'bi-map',
+              ruta: '/viajes/lista'
+            },
+            {
               texto: 'Rutas',
               icono: 'bi-signpost-2'
             },

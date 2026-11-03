@@ -402,7 +402,7 @@ BEGIN
 
     -- Durante el viaje, si el pasajero sigue abordado, el asiento no puede
     -- venderse nuevamente hasta que el personal BUS lo libere explícitamente.
-    IF EXISTS (
+    IF TG_OP= 'INSERT' AND EXISTS (
         SELECT 1
         FROM ocupaciones_asiento oa
         WHERE oa.viaje_id = NEW.viaje_id
