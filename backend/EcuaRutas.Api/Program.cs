@@ -42,6 +42,7 @@ builder.Services.Configure<CorreoSmtpOptions>(
         CorreoSmtpOptions.Seccion));
 
 builder.Services.AddScoped<CorreoSmtpService>();
+builder.Services.AddHostedService<NotificacionesCorreoWorker>();
 builder.Services.AddHostedService<ReservasExpirationWorker>();
 builder.Services.AddScoped<ComprobantesStorageService>();
 builder.Services.AddScoped<IViajeService, ViajeService>();
