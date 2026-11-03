@@ -111,6 +111,20 @@ public class PlantillasController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> ObtenerDisposicion(
         long id, CancellationToken ct)
     {
+        var plantilla = await _servicio.ObtenerAsync(id, ct);
+
+        if (plantilla is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(plantilla.CooperativaId, permitirGeneral: true);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         var asientos = await _servicio.ObtenerDisposicionAsync(id, ct);
         return asientos is null ? NotFound() : Ok(asientos);
     }
