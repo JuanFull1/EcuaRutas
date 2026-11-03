@@ -52,7 +52,16 @@ public class PlantillasController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<PlantillaBusDto>>> Listar(
         [FromQuery] long? cooperativaId, CancellationToken ct)
     {
-        return Ok(await _servicio.ListarAsync(cooperativaId, ct));
+        var denegado = DenegarSiOtraCooperativa(cooperativaId, permitirGeneral: true);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var contexto = User.ObtenerCooperativaContexto();
+
+        return Ok(await _servicio.ListarAsync(cooperativaId ?? contexto, ct));
     }
 
     [HttpGet("{id:long}")]
