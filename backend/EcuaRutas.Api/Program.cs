@@ -34,6 +34,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PagosService>();
 builder.Services.AddScoped<DisponibilidadService>();
 builder.Services.AddScoped<VentasService>();
+builder.Services.AddScoped<ClienteService>();
 builder.Services.AddHostedService<ReservasExpirationWorker>();
 builder.Services.AddScoped<ComprobantesStorageService>();
 
