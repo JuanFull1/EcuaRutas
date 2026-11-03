@@ -110,6 +110,17 @@
           </div>
         </div>
 
+        @if (esEdicion()) {
+          <div class="col-md-3">
+            <label class="form-label" for="estado">Estado *</label>
+            <select id="estado" class="form-select" formControlName="estado">
+              <option value="ACTIVO">Activo</option>
+              <option value="MANTENIMIENTO">En mantenimiento</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+          </div>
+        }
+
         <div class="col-12">
           <label class="form-label" for="fotoUrl">URL de la foto</label>
           <input id="fotoUrl" class="form-control" formControlName="fotoUrl"
@@ -127,7 +138,7 @@
           @if (guardando()) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
-          Guardar
+          {{ esEdicion() ? 'Guardar cambios' : 'Guardar' }}
         </button>
       </div>
     </form>
