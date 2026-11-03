@@ -37,6 +37,10 @@
     </div>
   }
 
+  @if (errorAccion(); as mensaje) {
+    <div class="alert alert-danger" role="alert">{{ mensaje }}</div>
+  }
+
   <div class="card border-0 shadow-sm">
 
     <div class="card-header bg-white border-0 pt-3 d-flex flex-wrap align-items-center gap-2">
@@ -119,6 +123,15 @@
                 >
                   <i class="bi bi-pencil"></i> Editar
                 </a>
+                @if (bus.estado !== 'INACTIVO') {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    (click)="darDeBaja(bus)"
+                  >
+                    <i class="bi bi-trash"></i> Dar de baja
+                  </button>
+                }
               </td>
             </tr>
           }
