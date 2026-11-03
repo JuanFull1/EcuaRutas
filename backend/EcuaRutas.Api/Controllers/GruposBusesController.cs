@@ -102,6 +102,20 @@ public class GruposBusesController : ControllerBase
     public async Task<ActionResult<GrupoBusDto>> Actualizar(
         long id, ActualizarGrupoBusRequest request, CancellationToken ct)
     {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         try
         {
             var grupo = await _servicio.ActualizarAsync(id, request, ct);
