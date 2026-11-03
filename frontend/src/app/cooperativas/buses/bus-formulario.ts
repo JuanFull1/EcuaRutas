@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { CrearBusRequest } from '../../models/bus.model';
+import { CrearBusRequest, EstadoBus } from '../../models/bus.model';
 import { GrupoBus } from '../../models/grupo-bus.model';
 import { AuthService } from '../../services/auth.service';
 import { BusService } from '../../services/bus.service';
@@ -20,6 +20,7 @@ export class BusFormulario implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
   private readonly busService = inject(BusService);
   private readonly grupoBusService = inject(GrupoBusService);
@@ -28,6 +29,10 @@ export class BusFormulario implements OnInit {
   readonly errorGrupos = signal<string | null>(null);
   readonly guardando = signal(false);
   readonly errorGuardar = signal<string | null>(null);
+  readonly busId = signal<number | null>(null);
+  readonly esEdicion = computed(() => this.busId() !== null);
+  readonly cargandoBus = signal(false);
+  readonly errorCargar = signal<string | null>(null);
 
   readonly form = this.fb.group({
     numeroInterno: ['', [Validators.required, Validators.maxLength(30)]],
@@ -41,11 +46,13 @@ export class BusFormulario implements OnInit {
     pisos: [1, [Validators.required, Validators.min(1), Validators.max(2)]],
     capacidad: [null as number | null, [Validators.required, Validators.min(1), Validators.max(32767)]],
     tieneBanio: [false],
-    fotoUrl: ['', [Validators.maxLength(500)]]
+    fotoUrl: ['', [Validators.maxLength(500)]],
+    estado: ['ACTIVO' as EstadoBus]
   });
 
   ngOnInit(): void {
     this.cargarGrupos();
+    this.cargarBusSiEdita();
   }
 
   invalido(campo: string): boolean {
@@ -95,6 +102,48 @@ export class BusFormulario implements OnInit {
       error: (e: HttpErrorResponse) => {
         this.guardando.set(false);
         this.errorGuardar.set(this.mensajeError(e));
+      }
+    });
+  }
+
+  private cargarBusSiEdita(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+
+    if (!id) {
+      return;
+    }
+
+    this.busId.set(id);
+    this.cargandoBus.set(true);
+
+    this.busService.obtener(id).subscribe({
+      next: bus => {
+        this.form.patchValue({
+          numeroInterno: bus.numeroInterno,
+          placa: bus.placa,
+          grupoBusId: bus.grupoBusId,
+          color: bus.color ?? '',
+          marcaChasis: bus.marcaChasis ?? '',
+          marcaCarroceria: bus.marcaCarroceria ?? '',
+          modelo: bus.modelo ?? '',
+          anio: bus.anio,
+          pisos: bus.pisos,
+          capacidad: bus.capacidad,
+          tieneBanio: bus.tieneBanio,
+          fotoUrl: bus.fotoUrl ?? '',
+          estado: bus.estado
+        });
+        this.cargandoBus.set(false);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.cargandoBus.set(false);
+        this.errorCargar.set(
+          e.status === 404
+            ? 'El bus no existe.'
+            : e.status === 403
+              ? 'No puedes editar un bus de otra cooperativa.'
+              : 'No se pudo cargar el bus. Inténtalo de nuevo.'
+        );
       }
     });
   }
