@@ -35,4 +35,8 @@ public interface IUsuariosService
 
     Task<IReadOnlyList<RolDto>>
         ListarRolesAsync();
+
+        Task<IReadOnlyList<CooperativaResumenDto>>
+    ListarCooperativasActivasAsync();
+
 }

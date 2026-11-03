@@ -52,6 +52,19 @@ public class UsuariosController : ControllerBase
         return Ok(roles);
     }
 
+    // GET: api/usuarios/cooperativas
+[HttpGet("cooperativas")]
+public async Task<ActionResult<
+    IReadOnlyList<CooperativaResumenDto>
+>> ListarCooperativas()
+{
+    var cooperativas =
+        await _usuariosService
+            .ListarCooperativasActivasAsync();
+
+    return Ok(cooperativas);
+}
+
     // GET: api/usuarios/5
     [HttpGet("{id:long}")]
     public async Task<ActionResult<UsuarioDto>>

@@ -608,4 +608,22 @@ public class UsuariosService : IUsuariosService
 
         return valor.Trim();
     }
+
+    public async Task<
+    IReadOnlyList<CooperativaResumenDto>
+> ListarCooperativasActivasAsync()
+{
+    return await _context.Cooperativas
+        .AsNoTracking()
+        .Where(c => c.Activa)
+        .OrderBy(c => c.Nombre)
+        .Select(c => new CooperativaResumenDto
+        {
+            Id = c.Id,
+            Nombre = c.Nombre
+        })
+        .ToListAsync();
+}
+
+
 }
