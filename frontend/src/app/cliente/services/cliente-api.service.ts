@@ -30,6 +30,19 @@ export interface ViajeCliente {
   cooperativa: string;
 }
 
+export interface ResumenCompraCliente {
+  ventaId: number;
+  codigo: string;
+  viajeId: number;
+  estado: string;
+  canal: string;
+  subtotal: number;
+  descuentoTotal: number;
+  total: number;
+  creadoEn: string;
+  expiraEn: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -60,6 +73,12 @@ export class ClienteApiService {
     return this.http.get<ViajeCliente[]>(
       `${this.clienteUrl}/viajes`,
       { params }
+    );
+  }
+
+  obtenerHistorial(): Observable<ResumenCompraCliente[]> {
+    return this.http.get<ResumenCompraCliente[]>(
+      `${this.clienteUrl}/historial`
     );
   }
 }

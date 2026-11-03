@@ -173,7 +173,8 @@ export class Layout {
             },
             {
               texto: 'Mis viajes',
-              icono: 'bi-clock-history'
+              icono: 'bi-clock-history',
+              ruta: '/cliente/historial'
             },
             {
               texto: 'Notificaciones',

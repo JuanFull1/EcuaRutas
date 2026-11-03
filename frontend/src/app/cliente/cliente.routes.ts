@@ -15,8 +15,15 @@ export const CLIENTE_ROUTES: Routes = [
         .then(m => m.BuscarViajes)
   },
   {
+    path: 'historial',
+    loadComponent: () =>
+      import('./pages/historial-compras/historial-compras')
+        .then(m => m.HistorialCompras)
+  },
+  {
     path: '',
     pathMatch: 'full',
     redirectTo: 'inicio'
   }
+
 ];
