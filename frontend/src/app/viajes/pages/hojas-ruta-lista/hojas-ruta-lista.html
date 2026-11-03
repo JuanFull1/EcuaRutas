@@ -1,0 +1,60 @@
+<div class="container-fluid px-0">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h4 fw-bold mb-0">Hojas de ruta</h1>
+    <div class="d-flex gap-2">
+      <a routerLink="/viajes/lista" class="btn btn-outline-secondary btn-sm">Ver viajes</a>
+      <a routerLink="/viajes/hojas-ruta/nueva" class="btn btn-primary btn-sm">Nueva hoja manual</a>
+    </div>
+  </div>
+  @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
+  @if (aviso()) { <div class="alert alert-success">{{ aviso() }}</div> }
+
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+      <h2 class="h6 fw-semibold">Generar hojas automáticas</h2>
+      <div class="row g-2">
+        <div class="col-6 col-md-2"><input type="number" class="form-control" placeholder="Grupo (id)" [(ngModel)]="auto.grupoBusId"></div>
+        <div class="col-6 col-md-2"><input type="date" class="form-control" [(ngModel)]="auto.fechaInicio"></div>
+        <div class="col-6 col-md-2"><input type="date" class="form-control" [(ngModel)]="auto.fechaFin"></div>
+        <div class="col-6 col-md-4"><input type="text" class="form-control" placeholder="Frecuencias (ids): 1,2,3" [(ngModel)]="auto.frecuencias"></div>
+        <div class="col-12 col-md-2"><button type="button" class="btn btn-success w-100" (click)="generarAutomatica()">Generar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3"><input type="number" class="form-control" placeholder="Grupo (id)" [(ngModel)]="grupoBusId"></div>
+        <div class="col-6 col-md-3"><input type="date" class="form-control" [(ngModel)]="desde"></div>
+        <div class="col-6 col-md-3"><input type="date" class="form-control" [(ngModel)]="hasta"></div>
+        <div class="col-6 col-md-3"><button type="button" class="btn btn-outline-primary w-100" (click)="cargar()">Filtrar</button></div>
+      </div>
+      @if (cargando()) {
+        <div class="text-center py-4"><span class="spinner-border"></span></div>
+      } @else if (hojas().length === 0) {
+        <p class="text-secondary mb-0">No hay hojas de ruta para los filtros indicados.</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead><tr><th>Fecha</th><th>Grupo</th><th>Modo</th><th>Estado</th><th>Servicios</th><th>Paradas</th><th></th></tr></thead>
+            <tbody>
+              @for (h of hojas(); track h.id) {
+                <tr>
+                  <td>{{ h.fecha }}</td><td>{{ h.grupoBusId }}</td><td>{{ h.modoGeneracion }}</td>
+                  <td><span class="badge text-bg-secondary">{{ h.estado }}</span></td>
+                  <td>{{ h.totalServicios }}</td><td>{{ h.totalParadas }}</td>
+                  <td class="text-end text-nowrap">
+                    <a [routerLink]="['/viajes/hojas-ruta', h.id]" class="btn btn-sm btn-outline-secondary">Ver</a>
+                    @if (h.estado === 'BORRADOR') { <button type="button" class="btn btn-sm btn-primary ms-1" (click)="publicar(h.id)">Publicar</button> }
+                    @if (h.estado === 'PUBLICADA') { <button type="button" class="btn btn-sm btn-dark ms-1" (click)="cerrar(h.id)">Cerrar</button> }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
