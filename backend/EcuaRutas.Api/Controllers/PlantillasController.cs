@@ -183,6 +183,20 @@ public class PlantillasController : ControllerBase
             return denegado;
         }
 
+        var plantilla = await _servicio.ObtenerAsync(plantillaId, ct);
+
+        if (plantilla is null)
+        {
+            return NotFound();
+        }
+
+        var denegadoPlantilla = DenegarSiOtraCooperativa(plantilla.CooperativaId, permitirGeneral: true);
+
+        if (denegadoPlantilla is not null)
+        {
+            return denegadoPlantilla;
+        }
+
         try
         {
             var asignada = await _servicio.AsignarABusAsync(busId, plantillaId, ct);
