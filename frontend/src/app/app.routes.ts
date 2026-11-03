@@ -116,6 +116,14 @@ export const routes: Routes = [
       },
 
       {
+        path: 'plantillas',
+
+        loadComponent: () =>
+          import('./cooperativas/plantillas/plantillas-lista')
+            .then(m => m.PlantillasLista)
+      },
+
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'inicio'
