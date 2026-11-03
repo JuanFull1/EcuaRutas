@@ -108,6 +108,14 @@ export const routes: Routes = [
       },
 
       {
+        path: 'grupos',
+
+        loadComponent: () =>
+          import('./cooperativas/grupos/grupos-lista')
+            .then(m => m.GruposLista)
+      },
+
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'inicio'
