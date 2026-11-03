@@ -54,7 +54,20 @@ public class GruposBusesController : ControllerBase
     public async Task<ActionResult<GrupoBusDto>> Obtener(long id, CancellationToken ct)
     {
         var grupo = await _servicio.ObtenerAsync(id, ct);
-        return grupo is null ? NotFound() : Ok(grupo);
+
+        if (grupo is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(grupo.CooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        return Ok(grupo);
     }
 
     [Authorize(Roles = "ADMIN,COOPERATIVA")]
