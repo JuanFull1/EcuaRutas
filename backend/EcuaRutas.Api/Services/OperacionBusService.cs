@@ -147,7 +147,90 @@ public class OperacionBusService : IOperacionBusService
 
         return await ObtenerOcupacionDtoAsync(ocupacionId, ct);
     }
+    private const string AsientoUtilizado = "UTILIZADO";
+    private const string MapaLibre = "LIBRE";
+    private const string MapaReservado = "RESERVADO";
+    private const string MapaVendido = "VENDIDO";
 
+    private static readonly string[] EstadosAsientoVendido = { "RETENIDO", AsientoConfirmado, AsientoUtilizado };
+
+    public async Task<IReadOnlyList<AsientoMapaDto>> ObtenerMapaAsientosAsync(
+        long viajeId, long usuarioBusId, CancellationToken ct = default)
+    {
+        var viaje = await CargarViajeAsignadoAsync(viajeId, usuarioBusId, ct);
+
+        var asientos = await _db.AsientosBus.AsNoTracking().Include(a => a.TipoAsiento)
+            .Where(a => a.BusId == viaje.BusId && a.Activo)
+            .OrderBy(a => a.Piso).ThenBy(a => a.Fila).ThenBy(a => a.Columna)
+            .ToListAsync(ct);
+        var ventas = await _db.VentaAsientos.AsNoTracking().Include(v => v.Pasajero)
+            .Where(v => v.ViajeId == viajeId && EstadosAsientoVendido.Contains(v.EstadoAsiento))
+            .ToListAsync(ct);
+        var ocupaciones = await _db.OcupacionesAsientos.AsNoTracking()
+            .Where(o => o.ViajeId == viajeId)
+            .ToListAsync(ct);
+
+        return asientos.Select(a => ConstruirAsientoMapa(a, ventas, ocupaciones)).ToList();
+    }
+
+    public async Task ExtenderBoletoAsync(
+        long viajeId, long ventaAsientoId, long usuarioBusId, ExtenderBoletoDto dto, CancellationToken ct = default)
+    {
+        var viaje = await CargarViajeAsignadoAsync(viajeId, usuarioBusId, ct);
+        ExigirEnCurso(viaje);
+
+        var venta = await _db.VentaAsientos.AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == ventaAsientoId && v.ViajeId == viajeId, ct)
+            ?? throw new ReglaNegocioException(404, "El asiento vendido no pertenece a este viaje.");
+        if (venta.EstadoAsiento is not (AsientoConfirmado or AsientoUtilizado))
+            throw new ReglaNegocioException(409, "Solo se extiende un boleto CONFIRMADO o UTILIZADO.");
+
+        var rutaId = await ObtenerRutaIdAsync(viaje.FrecuenciaId, ct);
+        var destino = await _db.RutaParadas.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == dto.DestinoNuevoId && p.RutaId == rutaId, ct)
+            ?? throw new ReglaNegocioException(400, "El nuevo destino no pertenece a la ruta del viaje.");
+        if (destino.Orden <= venta.OrdenDestino)
+            throw new ReglaNegocioException(400, "El nuevo destino debe estar después del destino actual.");
+
+        try
+        {
+            await _db.Database.ExecuteSqlAsync(
+                $"SELECT extender_boleto({ventaAsientoId}, {usuarioBusId}, {dto.DestinoNuevoId}, {dto.MontoAdicional}, {dto.MetodoPago}, {dto.Observacion}::text)", ct);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.RaiseException)
+        {
+            throw new ReglaNegocioException(409, ex.MessageText);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.ExclusionViolation)
+        {
+            throw new ReglaNegocioException(409, "El asiento está reservado en el tramo adicional.");
+        }
+    }
+
+    // No libera asientos en bloque: la liberación solo la confirma el BUS (R3).
+    public async Task<ReporteViajeDto> FinalizarViajeAsync(long viajeId, long usuarioBusId, CancellationToken ct = default)
+    {
+        var viaje = await CargarViajeAsignadoAsync(viajeId, usuarioBusId, ct);
+        ExigirEnCurso(viaje);
+
+        viaje.Estado = EstadosViaje.Finalizado;
+        viaje.FinalizadoEn = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+        return await ConstruirReporteAsync(viaje, ct);
+    }
+
+    public async Task<ReporteViajeDto> ObtenerReporteAsync(long viajeId, long usuarioBusId, CancellationToken ct = default)
+        => await ConstruirReporteAsync(await CargarViajeAsignadoAsync(viajeId, usuarioBusId, ct), ct);
+
+    public async Task<IReadOnlyList<ViajeAsignadoDto>> ListarHistorialAsync(long usuarioBusId, CancellationToken ct = default)
+        => await _db.Viajes.AsNoTracking()
+            .Where(v => v.UsuarioBusId == usuarioBusId && v.Estado == EstadosViaje.Finalizado)
+            .OrderByDescending(v => v.SalidaProgramada)
+            .Select(v => new ViajeAsignadoDto(
+                v.Id, v.Estado, v.SalidaProgramada, v.IniciadoEn,
+                v.BusId, v.Bus.NumeroInterno, v.Bus.Placa, v.FrecuenciaId,
+                v.Frecuencia.Ruta.OrigenLugar.Nombre, v.Frecuencia.Ruta.DestinoLugar.Nombre))
+            .ToListAsync(ct);
     // --- PRIVADOS ---
     private async Task<Viaje> CargarViajeAsignadoAsync(long viajeId, long usuarioBusId, CancellationToken ct)
     {
@@ -193,4 +276,53 @@ public class OperacionBusService : IOperacionBusService
 
     private async Task<OcupacionAsientoDto> ObtenerOcupacionDtoAsync(long id, CancellationToken ct)
         => MapearOcupacion(await _db.OcupacionesAsientos.AsNoTracking().SingleAsync(o => o.Id == id, ct));
+    private static AsientoMapaDto ConstruirAsientoMapa(
+        AsientosBu a, IReadOnlyList<VentaAsiento> ventas, IReadOnlyList<OcupacionesAsiento> ocupaciones)
+    {
+        var activa = ocupaciones.FirstOrDefault(o => o.AsientoBusId == a.Id && o.Estado == EstadosOcupacion.Abordado);
+        var pendientes = ventas
+            .Where(v => v.AsientoBusId == a.Id
+                && !ocupaciones.Any(o => o.VentaAsientoId == v.Id && o.Estado == EstadosOcupacion.Liberado))
+            .OrderBy(v => v.OrdenOrigen)
+            .ToList();
+        var venta = activa is null ? pendientes.FirstOrDefault() : pendientes.FirstOrDefault(v => v.Id == activa.VentaAsientoId);
+
+        var estado = activa is not null ? EstadosOcupacion.Abordado
+            : venta is null ? MapaLibre
+            : ocupaciones.Any(o => o.VentaAsientoId == venta.Id && o.Estado == EstadosOcupacion.NoPresentado)
+                ? EstadosOcupacion.NoPresentado
+            : venta.EstadoAsiento == AsientoConfirmado || venta.EstadoAsiento == AsientoUtilizado ? MapaVendido
+            : MapaReservado;
+
+        return new AsientoMapaDto(
+            a.Id, a.Numero, a.Piso, a.Fila, a.Columna, a.TipoAsiento.Nombre, estado,
+            venta?.Id, activa?.Id,
+            venta is null ? null : $"{venta.Pasajero.Nombres} {venta.Pasajero.Apellidos}");
+    }
+
+    private async Task<ReporteViajeDto> ConstruirReporteAsync(Viaje viaje, CancellationToken ct)
+    {
+        var conteos = await _db.OcupacionesAsientos.AsNoTracking()
+            .Where(o => o.ViajeId == viaje.Id)
+            .GroupBy(o => o.Estado)
+            .Select(g => new { Estado = g.Key, Total = g.Count() })
+            .ToListAsync(ct);
+        int Total(string estado) => conteos.Where(c => c.Estado == estado).Sum(c => c.Total);
+
+        var ingresos = await _db.VentaAsientos.AsNoTracking()
+            .Where(v => v.ViajeId == viaje.Id
+                && (v.EstadoAsiento == AsientoConfirmado || v.EstadoAsiento == AsientoUtilizado))
+            .SumAsync(v => (decimal?)v.PrecioFinal, ct) ?? 0m;
+
+        int? duracion = viaje.IniciadoEn is null
+            ? null
+            : (int)Math.Round(((viaje.FinalizadoEn ?? DateTime.UtcNow) - viaje.IniciadoEn.Value).TotalMinutes);
+
+        return new ReporteViajeDto(
+            viaje.Id, viaje.Estado, viaje.SalidaProgramada, viaje.IniciadoEn, viaje.FinalizadoEn, duracion,
+            Total(EstadosOcupacion.Abordado) + Total(EstadosOcupacion.Liberado),
+            Total(EstadosOcupacion.NoPresentado),
+            Total(EstadosOcupacion.Liberado),
+            ingresos);
+    }
 }

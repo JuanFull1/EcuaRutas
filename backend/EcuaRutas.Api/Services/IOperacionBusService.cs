@@ -16,4 +16,15 @@ public interface IOperacionBusService
 
     Task<OcupacionAsientoDto> LiberarAsientoAsync(
         long viajeId, long ocupacionId, long usuarioBusId, LiberarAsientoDto dto, CancellationToken ct = default);
+    Task<IReadOnlyList<AsientoMapaDto>> ObtenerMapaAsientosAsync(
+        long viajeId, long usuarioBusId, CancellationToken ct = default);
+
+    Task ExtenderBoletoAsync(
+        long viajeId, long ventaAsientoId, long usuarioBusId, ExtenderBoletoDto dto, CancellationToken ct = default);
+
+    Task<ReporteViajeDto> FinalizarViajeAsync(long viajeId, long usuarioBusId, CancellationToken ct = default);
+
+    Task<ReporteViajeDto> ObtenerReporteAsync(long viajeId, long usuarioBusId, CancellationToken ct = default);
+
+    Task<IReadOnlyList<ViajeAsignadoDto>> ListarHistorialAsync(long usuarioBusId, CancellationToken ct = default);
 }
