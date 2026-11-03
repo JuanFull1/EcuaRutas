@@ -24,6 +24,10 @@ public class BusesController : ControllerBase
         [FromQuery] string? estado,
         CancellationToken ct)
     {
+        var denegado = DenegarSiOtraCooperativa(cooperativaId);
+        if (denegado is not null)
+            return denegado;
+
         var buses = await _servicio.ListarAsync(cooperativaId, grupoBusId, estado, ct);
         return Ok(buses);
     }
@@ -88,5 +92,22 @@ public class BusesController : ControllerBase
             return NotFound();
 
         return NoContent();
+    }
+
+    // Devuelve 403 si un usuario que no es ADMIN intenta operar sobre otra cooperativa.
+    private ActionResult? DenegarSiOtraCooperativa(long cooperativaId)
+    {
+        try
+        {
+            var contexto = User.ObtenerCooperativaContexto();
+            if (contexto is null || contexto == cooperativaId)
+                return null;
+
+            return StatusCode(403, new { mensaje = "No puede operar sobre otra cooperativa." });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.StatusCode, new { mensaje = ex.Message });
+        }
     }
 }
