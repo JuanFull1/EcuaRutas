@@ -50,3 +50,11 @@ Todos los endpoints requieren un token JWT. Las consultas (GET) están permitida
 - `403`: el rol no tiene permiso o se intenta operar sobre otra cooperativa.
 - `404`: el recurso no existe.
 - `409`: conflicto con datos existentes (por ejemplo, una placa o un número de bus duplicado).
+
+## Aislamiento por cooperativa
+
+Un usuario con rol `COOPERATIVA` o `OFICINISTA` solo puede operar sobre los buses de su propia cooperativa. El identificador de la cooperativa se toma del token (claim `cooperativa_id`). El rol `ADMIN` puede operar sobre cualquier cooperativa.
+
+Si se intenta listar, consultar, crear, actualizar o dar de baja un bus de otra cooperativa, la API responde `403` con el mensaje "No puede operar sobre otra cooperativa.".
+
+Pendiente: aplicar la misma validación a los controladores de grupos y plantillas.
