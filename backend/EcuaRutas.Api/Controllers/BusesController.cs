@@ -75,6 +75,14 @@ public class BusesController : ControllerBase
     {
         try
         {
+            var existente = await _servicio.ObtenerAsync(id, ct);
+            if (existente is null)
+                return NotFound();
+
+            var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+            if (denegado is not null)
+                return denegado;
+
             var bus = await _servicio.ActualizarAsync(id, request, ct);
             if (bus is null)
                 return NotFound();
