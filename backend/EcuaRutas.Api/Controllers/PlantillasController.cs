@@ -134,6 +134,20 @@ public class PlantillasController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> DefinirDisposicion(
         long id, List<CrearAsientoPlantillaRequest> asientos, CancellationToken ct)
     {
+        var plantilla = await _servicio.ObtenerAsync(id, ct);
+
+        if (plantilla is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(plantilla.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         try
         {
             var resultado = await _servicio.DefinirDisposicionAsync(id, asientos, ct);
