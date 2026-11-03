@@ -36,6 +36,7 @@ builder.Services.AddScoped<DisponibilidadService>();
 builder.Services.AddScoped<VentasService>();
 builder.Services.AddHostedService<ReservasExpirationWorker>();
 builder.Services.AddScoped<ComprobantesStorageService>();
+builder.Services.AddScoped<IViajeService, ViajeService>();
 
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 
