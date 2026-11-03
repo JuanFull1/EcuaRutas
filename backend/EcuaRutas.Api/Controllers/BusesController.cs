@@ -48,6 +48,10 @@ public class BusesController : ControllerBase
     {
         try
         {
+            var denegado = DenegarSiOtraCooperativa(request.CooperativaId);
+            if (denegado is not null)
+                return denegado;
+
             var bus = await _servicio.CrearAsync(request, ct);
             return CreatedAtAction(nameof(Obtener), new { id = bus.Id }, bus);
         }
