@@ -67,4 +67,26 @@ public class ClienteController : ControllerBase
 
         return Ok(compras);
     }
+
+    [Authorize(Roles = "CLIENTE")]
+    [HttpGet("boletos")]
+    public async Task<IActionResult> ObtenerBoletos()
+    {
+        var identificador = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (!long.TryParse(identificador, out long usuarioId)
+            || usuarioId <= 0)
+        {
+            return Unauthorized(new
+            {
+                mensaje = "No se pudo identificar al cliente."
+            });
+        }
+
+        var boletos = await _clienteService
+            .ObtenerBoletosClienteAsync(usuarioId);
+
+        return Ok(boletos);
+    }
 }

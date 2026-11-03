@@ -153,4 +153,52 @@ public class ClienteService
 
         return compras;
     }
+
+    public async Task<List<DetalleBoletoClienteDto>>
+        ObtenerBoletosClienteAsync(long usuarioClienteId)
+    {
+        if (usuarioClienteId <= 0)
+        {
+            throw new ArgumentException(
+                "El identificador del cliente no es válido.");
+        }
+
+        var boletos = await _context.Boletos
+            .AsNoTracking()
+            .Where(b =>
+                b.VentaAsiento.Venta.UsuarioClienteId
+                    == usuarioClienteId)
+            .OrderByDescending(b => b.GeneradoEn)
+            .Select(b => new DetalleBoletoClienteDto
+            {
+                BoletoId = b.Id,
+
+                VentaId = b.VentaAsiento.VentaId,
+
+                CodigoVenta =
+                    b.VentaAsiento.Venta.Codigo,
+
+                CodigoBoleto = b.CodigoBoleto,
+
+                EstadoBoleto = b.Estado,
+
+                GeneradoEn = b.GeneradoEn,
+
+                ArchivoUrl = b.ArchivoUrl,
+
+                ViajeId = b.VentaAsiento.ViajeId,
+
+                SalidaProgramada =
+                    b.VentaAsiento.Viaje.SalidaProgramada,
+
+                PasajeroId = b.VentaAsiento.PasajeroId,
+
+                AsientoBusId = b.VentaAsiento.AsientoBusId,
+
+                PrecioFinal = b.VentaAsiento.PrecioFinal
+            })
+            .ToListAsync();
+
+        return boletos;
+    }
 }
