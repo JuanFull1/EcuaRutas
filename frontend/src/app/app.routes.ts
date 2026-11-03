@@ -115,6 +115,19 @@ export const routes: Routes = [
 
     ]
   },
+   {
+    path: 'viajes',
+    component: Layout,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMIN', 'COOPERATIVA'] },
+    children: [
+      {
+        path: '',
+        loadChildren: () =>
+          import('./viajes/viajes.routes').then(m => m.VIAJES_ROUTES)
+      }
+    ]
+  },
 
   {
     path: 'ventas',
