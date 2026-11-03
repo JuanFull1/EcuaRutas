@@ -58,3 +58,14 @@ Un usuario con rol `COOPERATIVA` o `OFICINISTA` solo puede operar sobre los buse
 Si se intenta listar, consultar, crear, actualizar o dar de baja un bus de otra cooperativa, la API responde `403` con el mensaje "No puede operar sobre otra cooperativa.".
 
 Pendiente: aplicar la misma validación a los controladores de grupos y plantillas.
+
+## Pantallas del rol COOPERATIVA
+
+| Pantalla | Ruta | Qué permite |
+|----------|------|-------------|
+| Inicio | `/cooperativas/inicio` | Muestra el total de buses (sin contar los dados de baja) y de plantillas activas |
+| Buses | `/cooperativas/buses` | Lista los buses, con acciones de editar y dar de baja |
+| Nuevo bus | `/cooperativas/buses/nuevo` | Registra un bus |
+| Editar bus | `/cooperativas/buses/:id/editar` | Modifica los datos y el estado de un bus |
+| Grupos | `/cooperativas/grupos` | Lista los grupos de buses |
+| Plantillas | `/cooperativas/plantillas` | Lista las plantillas de asientos |
