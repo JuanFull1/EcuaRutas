@@ -150,18 +150,104 @@ public class ViajeService : IViajeService
         }
     }
 
-    public Task<ViajeDto> ActualizarEstadoAsync(
+        public async Task<ViajeDto> ActualizarEstadoAsync(
         long id, ActualizarEstadoViajeDto dto, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        if (dto.Estado == EstadosViaje.Cancelado)
+            return await CancelarAsync(id, cooperativaContexto, ct);
+        if (dto.Estado is EstadosViaje.EnCurso or EstadosViaje.Finalizado)
+            throw new ReglaNegocioException(409, "Iniciar y finalizar el viaje lo realiza el personal del bus.");
 
-    public Task<ViajeDto> ReasignarUsuarioBusAsync(
+        var viaje = await CargarAsync(id, cooperativaContexto, ct);
+        if (!Transiciones.TryGetValue(viaje.Estado, out var permitidos) || !permitidos.Contains(dto.Estado))
+            throw new ReglaNegocioException(409, $"No se puede pasar de {viaje.Estado} a {dto.Estado}.");
+        if (dto.Estado == EstadosViaje.Abierto && viaje.UsuarioBusId is null)
+            throw new ReglaNegocioException(400, "Asigne un usuario del bus antes de abrir el viaje.");
+
+        viaje.Estado = dto.Estado;
+        await GuardarCambiosAsync(ct);
+        return Mapear(viaje);
+    }
+
+    public async Task<ViajeDto> ReasignarUsuarioBusAsync(
         long id, ReasignarUsuarioBusDto dto, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        var viaje = await CargarAsync(id, cooperativaContexto, ct);
+        if (viaje.Estado is not (EstadosViaje.Programado or EstadosViaje.Abierto))
+            throw new ReglaNegocioException(409, $"No se puede reasignar un viaje en estado {viaje.Estado}.");
 
-    public Task<ViajeDto> CancelarAsync(long id, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+        await ValidarUsuarioBusAsync(dto.UsuarioBusId, viaje.Bus.CooperativaId, ct);
+        viaje.UsuarioBusId = dto.UsuarioBusId;
+        await GuardarCambiosAsync(ct);
+        return Mapear(viaje);
+    }
 
-    public Task<IReadOnlyList<ViajeDto>> GenerarDesdeHojaRutaAsync(
+    public async Task<ViajeDto> CancelarAsync(long id, long? cooperativaContexto, CancellationToken ct = default)
+    {
+        var viaje = await CargarAsync(id, cooperativaContexto, ct);
+        if (viaje.Estado is not (EstadosViaje.Programado or EstadosViaje.Abierto))
+            throw new ReglaNegocioException(409, $"No se puede cancelar un viaje en estado {viaje.Estado}.");
+        if (await _db.Ventas.AnyAsync(v => v.ViajeId == id && EstadosVentaActivos.Contains(v.Estado), ct))
+            throw new ReglaNegocioException(409, "El viaje tiene ventas activas; deben anularse antes de cancelarlo.");
+
+        viaje.Estado = EstadosViaje.Cancelado;
+        await GuardarCambiosAsync(ct);
+        return Mapear(viaje);
+    }
+
+    private static readonly Dictionary<string, string[]> Transiciones = new()
+    {
+        [EstadosViaje.Programado] = new[] { EstadosViaje.Abierto },
+        [EstadosViaje.Abierto] = new[] { EstadosViaje.Programado }
+    };
+
+    private static readonly string[] EstadosVentaActivos =
+        { "RESERVADA", "PENDIENTE_PAGO", "EN_VALIDACION", "PAGADA" };
+
+    private async Task<Viaje> CargarAsync(long id, long? cooperativaContexto, CancellationToken ct)
+        => await _db.Viajes.Include(v => v.Bus)
+            .FirstOrDefaultAsync(v => v.Id == id
+                && (cooperativaContexto == null || v.Bus.CooperativaId == cooperativaContexto), ct)
+            ?? throw new ReglaNegocioException(404, "El viaje no existe.");
+
+        public async Task<IReadOnlyList<ViajeDto>> GenerarDesdeHojaRutaAsync(
         long hojaRutaId, long? cooperativaContexto, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        var hoja = await _db.HojasRuta
+            .Include(h => h.HojaRutaDetalles).ThenInclude(d => d.Viaje)
+            .FirstOrDefaultAsync(h => h.Id == hojaRutaId
+                && (cooperativaContexto == null || h.CooperativaId == cooperativaContexto), ct)
+            ?? throw new ReglaNegocioException(404, "La hoja de ruta no existe.");
+        if (hoja.Estado != EstadosHojaRuta.Publicada)
+            throw new ReglaNegocioException(409, "Solo se generan viajes desde una hoja PUBLICADA.");
+
+        var pendientes = hoja.HojaRutaDetalles
+            .Where(d => d.TipoAsignacion == TiposAsignacion.Servicio && d.Viaje is null)
+            .ToList();
+        if (pendientes.Count == 0)
+            throw new ReglaNegocioException(409, "La hoja no tiene servicios pendientes de generar viaje.");
+
+        var frecIds = pendientes.Select(d => d.FrecuenciaId!.Value).Distinct().ToList();
+        var horas = await _db.Frecuencias.AsNoTracking()
+            .Where(f => frecIds.Contains(f.Id))
+            .ToDictionaryAsync(f => f.Id, f => f.HoraSalida, ct);
+
+        var viajes = pendientes.Select(d => new Viaje
+        {
+            HojaRutaDetalleId = d.Id,
+            BusId = d.BusId,
+            FrecuenciaId = d.FrecuenciaId!.Value,
+            SalidaProgramada = SalidaEcuadorAUtc(hoja.Fecha, d.HoraProgramada ?? horas[d.FrecuenciaId!.Value]),
+            Estado = EstadosViaje.Programado
+        }).ToList();
+
+        _db.Viajes.AddRange(viajes);
+        await GuardarCambiosAsync(ct);
+        return viajes.Select(Mapear).ToList();
+    }
+
+    private static readonly TimeSpan OffsetEcuador = TimeSpan.FromHours(-5);
+
+    private static DateTime SalidaEcuadorAUtc(DateOnly fecha, TimeOnly hora)
+        => new DateTimeOffset(fecha.ToDateTime(hora), OffsetEcuador).UtcDateTime;
 }
