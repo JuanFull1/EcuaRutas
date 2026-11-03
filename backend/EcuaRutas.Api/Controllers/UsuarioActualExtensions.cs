@@ -15,4 +15,8 @@ public static class UsuarioActualExtensions
 
         throw new ReglaNegocioException(403, "El usuario no tiene una cooperativa asociada.");
     }
+    public static long ObtenerUsuarioId(this ClaimsPrincipal user)
+        => long.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
+            ? id
+            : throw new ReglaNegocioException(403, "No se pudo identificar al usuario autenticado.");
 }
