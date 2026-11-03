@@ -164,7 +164,8 @@ export class Layout {
             },
             {
               texto: 'Buscar viajes',
-              icono: 'bi-search'
+              icono: 'bi-search',
+              ruta: '/cliente/buscar-viajes'
             },
             {
               texto: 'Mis boletos',
