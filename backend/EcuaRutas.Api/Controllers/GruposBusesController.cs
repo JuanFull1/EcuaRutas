@@ -17,6 +17,25 @@ public class GruposBusesController : ControllerBase
         _servicio = servicio;
     }
 
+    private ActionResult? DenegarSiOtraCooperativa(long cooperativaId)
+    {
+        try
+        {
+            var contexto = User.ObtenerCooperativaContexto();
+
+            if (contexto is null || contexto == cooperativaId)
+            {
+                return null;
+            }
+
+            return StatusCode(403, new { mensaje = "No puede operar sobre otra cooperativa." });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.StatusCode, new { mensaje = ex.Message });
+        }
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<GrupoBusDto>>> Listar(
         [FromQuery] long cooperativaId, CancellationToken ct)
