@@ -96,6 +96,14 @@ export const routes: Routes = [
       },
 
       {
+        path: 'buses/:id/editar',
+
+        loadComponent: () =>
+          import('./cooperativas/buses/bus-formulario')
+            .then(m => m.BusFormulario)
+      },
+
+      {
         path: 'buses',
 
         loadComponent: () =>
