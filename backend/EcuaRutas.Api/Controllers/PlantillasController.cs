@@ -11,10 +11,12 @@ namespace EcuaRutas.Api.Controllers;
 public class PlantillasController : ControllerBase
 {
     private readonly IPlantillaService _servicio;
+    private readonly IBusService _busServicio;
 
-    public PlantillasController(IPlantillaService servicio)
+    public PlantillasController(IPlantillaService servicio, IBusService busServicio)
     {
         _servicio = servicio;
+        _busServicio = busServicio;
     }
 
     private ActionResult? DenegarSiOtraCooperativa(long? cooperativaId, bool permitirGeneral)
