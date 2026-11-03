@@ -39,6 +39,10 @@ public class BusesController : ControllerBase
         if (bus is null)
             return NotFound();
 
+        var denegado = DenegarSiOtraCooperativa(bus.CooperativaId);
+        if (denegado is not null)
+            return denegado;
+
         return Ok(bus);
     }
 
