@@ -17,6 +17,37 @@ public class PlantillasController : ControllerBase
         _servicio = servicio;
     }
 
+    private ActionResult? DenegarSiOtraCooperativa(long? cooperativaId, bool permitirGeneral)
+    {
+        try
+        {
+            var contexto = User.ObtenerCooperativaContexto();
+
+            if (contexto is null)
+            {
+                return null;
+            }
+
+            if (cooperativaId is null)
+            {
+                return permitirGeneral
+                    ? null
+                    : StatusCode(403, new { mensaje = "Solo un administrador puede operar sobre plantillas generales." });
+            }
+
+            if (cooperativaId == contexto)
+            {
+                return null;
+            }
+
+            return StatusCode(403, new { mensaje = "No puede operar sobre otra cooperativa." });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.StatusCode, new { mensaje = ex.Message });
+        }
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<PlantillaBusDto>>> Listar(
         [FromQuery] long? cooperativaId, CancellationToken ct)
