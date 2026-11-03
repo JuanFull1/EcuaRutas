@@ -1,0 +1,74 @@
+<section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-formulario">
+  <div class="card-header bg-white border-0 pt-3">
+    <h2 id="titulo-formulario" class="h5 mb-0">{{ lugar() === null ? 'Nuevo lugar' : 'Editar lugar' }}</h2>
+  </div>
+  <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate [attr.aria-busy]="guardando()">
+    <p class="text-secondary small">Los campos marcados con * son obligatorios.</p>
+    <fieldset [disabled]="guardando() || !autorizado()">
+      <div class="row g-3">
+        <div class="col-12 col-md-8">
+          <label for="lugar-nombre" class="form-label">Nombre *</label>
+          <input #nombreInput id="lugar-nombre" class="form-control" formControlName="nombre" required maxlength="150"
+            [class.is-invalid]="invalido('nombre')" [attr.aria-invalid]="invalido('nombre')" aria-describedby="error-nombre">
+          @if (invalido('nombre')) {
+            <div id="error-nombre" class="invalid-feedback">Ingresa un nombre de hasta 150 caracteres; no puede contener solo espacios.</div>
+          }
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="lugar-tipo" class="form-label">Tipo *</label>
+          <select id="lugar-tipo" class="form-select" formControlName="tipo" required
+            [class.is-invalid]="invalido('tipo')" [attr.aria-invalid]="invalido('tipo')" aria-describedby="error-tipo">
+            <option value="">Selecciona un tipo</option>
+            @for (tipo of tipos; track tipo) { <option [value]="tipo">{{ tipo }}</option> }
+          </select>
+          @if (invalido('tipo')) { <div id="error-tipo" class="invalid-feedback">Selecciona ciudad, terminal o parada.</div> }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="lugar-provincia" class="form-label">Provincia</label>
+          <input id="lugar-provincia" class="form-control" formControlName="provincia" maxlength="100"
+            [class.is-invalid]="invalido('provincia')" [attr.aria-invalid]="invalido('provincia')" aria-describedby="error-provincia">
+          @if (invalido('provincia')) { <div id="error-provincia" class="invalid-feedback">Máximo 100 caracteres.</div> }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="lugar-canton" class="form-label">Cantón</label>
+          <input id="lugar-canton" class="form-control" formControlName="canton" maxlength="100"
+            [class.is-invalid]="invalido('canton')" [attr.aria-invalid]="invalido('canton')" aria-describedby="error-canton">
+          @if (invalido('canton')) { <div id="error-canton" class="invalid-feedback">Máximo 100 caracteres.</div> }
+        </div>
+        <div class="col-12"><p id="ayuda-coordenadas" class="text-secondary small mb-0">Ubicación opcional en grados decimales (WGS84). Completa ambas coordenadas o deja ambas vacías para guardar sin ubicación.</p></div>
+        <div class="col-12 col-md-6">
+          <label for="lugar-latitud" class="form-label">Latitud</label>
+          <input id="lugar-latitud" type="number" step="any" min="-90" max="90" class="form-control" formControlName="latitud"
+            [class.is-invalid]="invalido('latitud')" [attr.aria-invalid]="invalido('latitud') || coordenadasIncompletas()" aria-describedby="ayuda-coordenadas error-latitud error-coordenadas">
+          @if (invalido('latitud')) { <div id="error-latitud" class="invalid-feedback">Ingresa un número entre -90 y 90.</div> }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="lugar-longitud" class="form-label">Longitud</label>
+          <input id="lugar-longitud" type="number" step="any" min="-180" max="180" class="form-control" formControlName="longitud"
+            [class.is-invalid]="invalido('longitud')" [attr.aria-invalid]="invalido('longitud') || coordenadasIncompletas()" aria-describedby="ayuda-coordenadas error-longitud error-coordenadas">
+          @if (invalido('longitud')) { <div id="error-longitud" class="invalid-feedback">Ingresa un número entre -180 y 180.</div> }
+        </div>
+        @if (coordenadasIncompletas()) {
+          <div id="error-coordenadas" class="col-12 text-danger small" role="alert">Debes completar ambas coordenadas o dejar ambas vacías.</div>
+        }
+        @if (lugar() !== null) {
+          <div class="col-12">
+            <div class="form-check">
+              <input id="lugar-activo" type="checkbox" class="form-check-input" formControlName="activo">
+              <label for="lugar-activo" class="form-check-label">Activo</label>
+            </div>
+          </div>
+        }
+      </div>
+    </fieldset>
+    @if (error(); as mensaje) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{ mensaje }}</div> }
+    @if (!autorizado()) { <div class="alert alert-warning mt-3" role="alert">La escritura requiere una sesión vigente con rol ADMIN.</div> }
+    <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+      <button type="button" class="btn btn-outline-secondary" [disabled]="guardando()" (click)="cancelar.emit()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="guardando() || !autorizado()">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        {{ guardando() ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </div>
+  </form>
+</section>
