@@ -29,10 +29,16 @@ export class HojaRutaDetalleVista implements OnInit {
 
   publicar(): void { this.actualizar(this.api.publicar(this.id), 'Hoja publicada.'); }
   cerrar(): void { this.actualizar(this.api.cerrar(this.id), 'Hoja cerrada.'); }
-  generarViajes(): void {
-    this.error.set(''); this.aviso.set('');
+   generarViajes(): void {
+    this.error.set(''); 
+    this.aviso.set('');
     this.viajesApi.generarDesdeHoja(this.id).subscribe({
-      next: v => this.aviso.set(`Se generaron ${v.length} viaje(s).`), error: e => this.error.set(mensajeError(e))
+      next: v => this.aviso.set(`Se generaron ${v.length} viaje(s).`), 
+      error: e => {
+        // Esto te dirá exactamente qué está fallando
+        console.error('Error del backend:', e);
+        this.error.set(mensajeError(e));
+      }
     });
   }
   iniciarSustitucion(detalleId: number): void { this.sustituyendoId = detalleId; this.reemplazo = { busReemplazoId: null, observacion: '' }; }

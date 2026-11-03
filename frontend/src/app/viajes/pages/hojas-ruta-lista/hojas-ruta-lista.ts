@@ -1,10 +1,12 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { mensajeError } from '../../../shared/http-error';
 import { HojaRutaResumen } from '../../models/hoja-ruta.model';
 import { HojasRutaApiService } from '../../services/hojas-ruta-api.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-hojas-ruta-lista',
@@ -14,16 +16,40 @@ import { HojasRutaApiService } from '../../services/hojas-ruta-api.service';
 })
 export class HojasRutaLista implements OnInit {
   private readonly api = inject(HojasRutaApiService);
+  private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   readonly hojas = signal<HojaRutaResumen[]>([]);
   readonly cargando = signal(false);
   readonly error = signal('');
   readonly aviso = signal('');
+  
+  grupos: any[] = [];
+  
   grupoBusId: number | null = null;
   desde = '';
   hasta = '';
   auto = { grupoBusId: null as number | null, fechaInicio: '', fechaFin: '', frecuencias: '' };
 
-  ngOnInit(): void { this.cargar(); }
+  ngOnInit(): void { 
+    this.cargarGrupos();
+    this.cargar(); 
+  }
+
+  cargarGrupos(): void {
+    const cooperativaId = this.authService.usuarioActual()?.cooperativaId;
+    if (!cooperativaId) return;
+    const params = new HttpParams().set('cooperativaId', cooperativaId);
+    
+    this.http.get<any[]>('http://localhost:5268/api/grupos-buses', { params }).subscribe({
+      next: res => { 
+        this.grupos = res; 
+        this.cdr.detectChanges(); 
+      },
+      error: (e) => console.error('Error grupos:', e)
+    });
+  }
 
   cargar(): void {
     this.cargando.set(true);

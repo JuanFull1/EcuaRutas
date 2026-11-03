@@ -1,5 +1,7 @@
 <div class="container-fluid px-0">
-  <a routerLink="/viajes/hojas-ruta" class="btn btn-link px-0 mb-2">&larr; Volver</a>
+  <a routerLink="/viajes/hojas-ruta" class="btn btn-outline-secondary btn-sm mb-3">
+  <i class="bi bi-arrow-left"></i> Volver
+</a>
   @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
   @if (aviso()) { <div class="alert alert-success">{{ aviso() }}</div> }
   @if (hoja(); as h) {
