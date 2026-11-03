@@ -97,11 +97,39 @@ public class PagosService
             CreadoEn = DateTime.UtcNow
         };
 
-        _context.Pagos.Add(pago);
-        await _context.SaveChangesAsync();
+    _context.Pagos.Add(pago);
 
-        return pago;
+    // Registrar aviso de pago pendiente de revisión.
+    if (venta.UsuarioClienteId.HasValue)
+    {
+        var correoCliente = await _context.Usuarios
+            .AsNoTracking()
+            .Where(u => u.Id == venta.UsuarioClienteId.Value)
+            .Select(u => u.Correo)
+            .FirstOrDefaultAsync();
+
+        if (!string.IsNullOrWhiteSpace(correoCliente) &&
+            correoCliente.Length <= 150)
+        {
+            _context.Notificaciones.Add(new Notificacione
+            {
+                UsuarioId = venta.UsuarioClienteId.Value,
+                VentaId = venta.Id,
+                CorreoDestino = correoCliente,
+                Tipo = "PAGO_REGISTRADO",
+                Asunto = $"El pago de tu reserva {venta.Codigo} fue registrado y está pendiente de revisión.",
+                Estado = "PENDIENTE",
+                CreadoEn = DateTime.UtcNow,
+                EnviadoEn = null
+            });
+        }
     }
+
+    await _context.SaveChangesAsync();
+
+    return pago;
+
+}
 
 public async Task<List<PagoRespuestaDto>> ObtenerPagosPorVentaAsync(
     long ventaId,

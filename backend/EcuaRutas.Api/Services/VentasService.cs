@@ -370,7 +370,6 @@ public class VentasService
             venta.ActualizadoEn = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-
             await transaction.CommitAsync();
 
             for (int i = 0;
@@ -485,6 +484,32 @@ public async Task CancelarReservaAsync(long ventaId)
         }
     }
 
+    // Registrar notificación de reserva cancelada
+    if (venta.UsuarioClienteId.HasValue)
+    {
+        var correoCliente = await _context.Usuarios
+            .AsNoTracking()
+            .Where(u => u.Id == venta.UsuarioClienteId.Value)
+            .Select(u => u.Correo)
+            .FirstOrDefaultAsync();
+
+        if (!string.IsNullOrWhiteSpace(correoCliente) &&
+            correoCliente.Length <= 150)
+        {
+            _context.Notificaciones.Add(new Notificacione
+            {
+                UsuarioId = venta.UsuarioClienteId.Value,
+                VentaId = venta.Id,
+                CorreoDestino = correoCliente,
+                Tipo = "RESERVA_CANCELADA",
+                Asunto = $"Tu reserva {venta.Codigo} fue cancelada.",
+                Estado = "PENDIENTE",
+                CreadoEn = DateTime.UtcNow,
+                EnviadoEn = null
+            });
+        }
+    }
+
     await _context.SaveChangesAsync();
 }
 
@@ -584,6 +609,31 @@ public async Task<ReservaResponse> ConfirmarVentaAsync(
             GeneradoEn = ahora
         });
         codigosBoletos.Add(codigoBoleto);
+    }
+
+    if (venta.UsuarioClienteId.HasValue)
+    {
+        var correoCliente = await _context.Usuarios
+            .AsNoTracking()
+            .Where(u => u.Id == venta.UsuarioClienteId.Value)
+            .Select(u => u.Correo)
+            .FirstOrDefaultAsync();
+
+        if (!string.IsNullOrWhiteSpace(correoCliente) &&
+            correoCliente.Length <= 150)
+        {
+            _context.Notificaciones.Add(new Notificacione
+            {
+                UsuarioId = venta.UsuarioClienteId.Value,
+                VentaId = venta.Id,
+                CorreoDestino = correoCliente,
+                Tipo = "VENTA_CONFIRMADA",
+                Asunto = $"Tu compra {venta.Codigo} fue confirmada y tus boletos están disponibles.",
+                Estado = "PENDIENTE",
+                CreadoEn = DateTime.UtcNow,
+                EnviadoEn = null
+            });
+        }
     }
 
     await _context.SaveChangesAsync();

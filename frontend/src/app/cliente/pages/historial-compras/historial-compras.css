@@ -1,0 +1,122 @@
+
+:host {
+  display: block;
+}
+
+/* =====================================
+   TARJETAS DEL SISTEMA ECUARUTAS
+===================================== */
+
+.card {
+  border-radius: 14px;
+}
+
+.card-body {
+  padding: 22px;
+}
+
+/* =====================================
+   FORMULARIOS Y FILTROS
+===================================== */
+
+.form-select {
+  min-height: 36px;
+  min-width: 130px;
+  border-radius: 8px;
+  border-color: #dce3eb;
+  font-size: 0.875rem;
+}
+
+.form-select:focus {
+  border-color: #1769aa;
+  box-shadow: 0 0 0 0.2rem rgba(23, 105, 170, 0.12);
+}
+
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* =====================================
+   TABLA DEL HISTORIAL
+===================================== */
+
+.table {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.table thead th {
+  background-color: #f5f7fa;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 14px 12px;
+  white-space: nowrap;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table tbody td {
+  padding: 16px 12px;
+  color: #334155;
+  font-size: 0.9rem;
+  vertical-align: middle;
+  border-color: #edf2f7;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover td {
+  background-color: #f5f7fa;
+}
+
+/* =====================================
+   ESTADOS
+===================================== */
+
+.badge {
+  font-weight: 500;
+  padding: 7px 10px;
+  border-radius: 6px;
+}
+
+/* =====================================
+   ESTADO SIN COMPRAS
+===================================== */
+
+.estado-vacio {
+  background-color: #ffffff;
+  border-radius: 12px;
+}
+
+.estado-vacio i {
+  opacity: 0.7;
+}
+
+/* =====================================
+   DISEÑO RESPONSIVE
+===================================== */
+
+@media (max-width: 991.98px) {
+  .table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .card-body {
+    padding: 18px;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 12px 10px;
+    font-size: 0.82rem;
+  }
+
+  .form-select {
+    min-width: 110px;
+  }
+}
