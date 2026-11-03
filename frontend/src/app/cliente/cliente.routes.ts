@@ -21,9 +21,14 @@ export const CLIENTE_ROUTES: Routes = [
         .then(m => m.HistorialCompras)
   },
   {
+  path: 'boletos',
+  loadComponent: () =>
+    import('./pages/mis-boletos/mis-boletos')
+      .then(m => m.MisBoletos)
+  },
+  {
     path: '',
     pathMatch: 'full',
     redirectTo: 'inicio'
   }
-
 ];

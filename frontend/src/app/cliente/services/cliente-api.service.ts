@@ -43,6 +43,21 @@ export interface ResumenCompraCliente {
   expiraEn: string | null;
 }
 
+export interface DetalleBoletoCliente {
+  boletoId: number;
+  ventaId: number;
+  codigoVenta: string;
+  codigoBoleto: string;
+  estadoBoleto: string;
+  generadoEn: string;
+  archivoUrl: string | null;
+  viajeId: number;
+  salidaProgramada: string;
+  pasajeroId: number;
+  asientoBusId: number;
+  precioFinal: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -56,6 +71,12 @@ export class ClienteApiService {
   obtenerLugares(): Observable<LugarCliente[]> {
     return this.http.get<LugarCliente[]>(
       `${this.disponibilidadUrl}/lugares`
+    );
+  }
+
+  obtenerBoletos(): Observable<DetalleBoletoCliente[]> {
+    return this.http.get<DetalleBoletoCliente[]>(
+      `${this.clienteUrl}/boletos`
     );
   }
 
@@ -81,4 +102,5 @@ export class ClienteApiService {
       `${this.clienteUrl}/historial`
     );
   }
+
 }

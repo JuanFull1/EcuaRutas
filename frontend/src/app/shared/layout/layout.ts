@@ -169,7 +169,8 @@ export class Layout {
             },
             {
               texto: 'Mis boletos',
-              icono: 'bi-ticket-perforated'
+              icono: 'bi-ticket-perforated',
+              ruta: '/cliente/boletos'
             },
             {
               texto: 'Mis viajes',
