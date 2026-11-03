@@ -25,13 +25,11 @@ public class NotificacionesCorreoWorker : BackgroundService
     protected override async Task ExecuteAsync(
         CancellationToken stoppingToken)
     {
-        // Revisar las notificaciones cada minuto.
         using var temporizador = new PeriodicTimer(
             TimeSpan.FromMinutes(1));
 
         try
         {
-            // Primera revisión y posteriores revisiones periódicas.
             do
             {
                 if (_opciones.CurrentValue.Habilitado)
@@ -49,7 +47,7 @@ public class NotificacionesCorreoWorker : BackgroundService
                     {
                         _logger.LogError(
                             ex,
-                            "Error al procesar notificaciones pendientes.");
+                            "Error general en el procesamiento de correos.");
                     }
                 }
             }
@@ -59,7 +57,7 @@ public class NotificacionesCorreoWorker : BackgroundService
         catch (OperationCanceledException)
             when (stoppingToken.IsCancellationRequested)
         {
-            // Finalización normal.
+            // Detención normal de la aplicación.
         }
     }
 
@@ -68,7 +66,6 @@ public class NotificacionesCorreoWorker : BackgroundService
     {
         List<long> identificadores;
 
-        // Obtener los ID de las primeras 20 notificaciones.
         using (var scope = _scopeFactory.CreateScope())
         {
             var context = scope.ServiceProvider
@@ -88,7 +85,6 @@ public class NotificacionesCorreoWorker : BackgroundService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Cada correo tiene su propio contexto.
             using var scope = _scopeFactory.CreateScope();
 
             var context = scope.ServiceProvider
@@ -97,50 +93,92 @@ public class NotificacionesCorreoWorker : BackgroundService
             var servicioCorreo = scope.ServiceProvider
                 .GetRequiredService<CorreoSmtpService>();
 
-            var notificacion = await context.Notificaciones
-                .FirstOrDefaultAsync(
-                    n => n.Id == id &&
-                         n.Estado == "PENDIENTE",
-                    cancellationToken);
+            // Reclamar el registro de forma atómica.
+            // Solamente un trabajador podrá cambiarlo
+            // de PENDIENTE a PROCESANDO.
+            var registrosActualizados =
+                await context.Notificaciones
+                    .Where(n =>
+                        n.Id == id &&
+                        n.Estado == "PENDIENTE")
+                    .ExecuteUpdateAsync(
+                        actualizacion => actualizacion
+                            .SetProperty(
+                                n => n.Estado,
+                                "PROCESANDO"),
+                        cancellationToken);
 
-            if (notificacion == null)
+            if (registrosActualizados != 1)
             {
                 continue;
             }
 
             try
             {
+                var notificacion = await context.Notificaciones
+                    .AsNoTracking()
+                    .FirstAsync(
+                        n => n.Id == id,
+                        cancellationToken);
+
                 await servicioCorreo.EnviarAsync(
                     notificacion.CorreoDestino,
                     notificacion.Asunto,
                     notificacion.Asunto,
                     cancellationToken);
 
-                // SMTP aceptó el correo.
-                notificacion.Estado = "ENVIADO";
-                notificacion.EnviadoEn = DateTime.UtcNow;
-
-                await context.SaveChangesAsync(
-                    cancellationToken);
+                // SMTP aceptó el mensaje.
+                await context.Notificaciones
+                    .Where(n =>
+                        n.Id == id &&
+                        n.Estado == "PROCESANDO")
+                    .ExecuteUpdateAsync(
+                        actualizacion => actualizacion
+                            .SetProperty(
+                                n => n.Estado,
+                                "ENVIADO")
+                            .SetProperty(
+                                n => n.EnviadoEn,
+                                DateTime.UtcNow),
+                        cancellationToken);
 
                 _logger.LogInformation(
-                    "Notificación {Id} procesada correctamente.",
-                    notificacion.Id);
+                    "Notificación {Id} aceptada por SMTP.",
+                    id);
             }
             catch (OperationCanceledException)
                 when (cancellationToken.IsCancellationRequested)
             {
+                // El estado queda PROCESANDO para revisión.
                 throw;
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Error al enviar la notificación {Id}.",
-                    notificacion.Id);
+                    "No se pudo completar la notificación {Id}.",
+                    id);
 
-                // El registro continúa pendiente para
-                // un próximo intento.
+                try
+                {
+                    await context.Notificaciones
+                        .Where(n =>
+                            n.Id == id &&
+                            n.Estado == "PROCESANDO")
+                        .ExecuteUpdateAsync(
+                            actualizacion => actualizacion
+                                .SetProperty(
+                                    n => n.Estado,
+                                    "ERROR"),
+                            cancellationToken);
+                }
+                catch (Exception errorRegistro)
+                {
+                    _logger.LogError(
+                        errorRegistro,
+                        "No se pudo registrar el error de la notificación {Id}.",
+                        id);
+                }
             }
         }
     }
