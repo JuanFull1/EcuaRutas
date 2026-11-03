@@ -68,7 +68,20 @@ public class PlantillasController : ControllerBase
     public async Task<ActionResult<PlantillaBusDto>> Obtener(long id, CancellationToken ct)
     {
         var plantilla = await _servicio.ObtenerAsync(id, ct);
-        return plantilla is null ? NotFound() : Ok(plantilla);
+
+        if (plantilla is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(plantilla.CooperativaId, permitirGeneral: true);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        return Ok(plantilla);
     }
 
     [Authorize(Roles = "ADMIN,COOPERATIVA")]
