@@ -58,6 +58,16 @@ export interface DetalleBoletoCliente {
   precioFinal: number;
 }
 
+export interface NotificacionCliente {
+  id: number;
+  ventaId: number | null;
+  tipo: string;
+  asunto: string;
+  estado: string;
+  creadoEn: string;
+  enviadoEn: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -77,6 +87,12 @@ export class ClienteApiService {
   obtenerBoletos(): Observable<DetalleBoletoCliente[]> {
     return this.http.get<DetalleBoletoCliente[]>(
       `${this.clienteUrl}/boletos`
+    );
+  }
+
+  obtenerNotificaciones(): Observable<NotificacionCliente[]> {
+    return this.http.get<NotificacionCliente[]>(
+      `${API_URL}/notificaciones`
     );
   }
 

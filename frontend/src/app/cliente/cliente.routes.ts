@@ -27,6 +27,12 @@ export const CLIENTE_ROUTES: Routes = [
       .then(m => m.MisBoletos)
   },
   {
+    path: 'notificaciones',
+    loadComponent: () =>
+      import('./pages/notificaciones/notificaciones')
+        .then(m => m.NotificacionesCliente)
+  },
+  {
     path: '',
     pathMatch: 'full',
     redirectTo: 'inicio'

@@ -1,0 +1,116 @@
+
+:host {
+  display: block;
+}
+
+/* Tarjetas generales */
+
+.card {
+  border-radius: 14px;
+}
+
+.card-body {
+  padding: 22px;
+}
+
+/* Campos de búsqueda y filtros */
+
+.form-control,
+.form-select {
+  min-height: 44px;
+  border-radius: 8px;
+  border-color: #dce3eb;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #1769aa;
+  box-shadow: 0 0 0 0.2rem rgba(23, 105, 170, 0.12);
+}
+
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Listado de notificaciones */
+
+.lista-notificaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notificacion-item {
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #fff;
+
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.notificacion-item:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Icono de cada notificación */
+
+.notificacion-icono {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  color: #1769aa;
+  background-color: #eaf3fb;
+}
+
+/* Textos */
+
+.notificacion-item h6 {
+  color: #152f4d;
+  overflow-wrap: anywhere;
+}
+
+.min-width-0 {
+  min-width: 0;
+}
+
+.badge {
+  padding: 7px 10px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+/* Estado vacío */
+
+.estado-vacio {
+  border-radius: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 767.98px) {
+
+  .card-body {
+    padding: 18px;
+  }
+
+  .notificacion-item {
+    padding: 16px;
+  }
+
+  .notificacion-icono {
+    width: 40px;
+    height: 40px;
+  }
+
+}

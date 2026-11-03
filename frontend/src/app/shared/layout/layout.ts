@@ -179,7 +179,8 @@ export class Layout {
             },
             {
               texto: 'Notificaciones',
-              icono: 'bi-bell'
+              icono: 'bi-bell',
+              ruta: '/cliente/notificaciones'
             }
           ];
 
