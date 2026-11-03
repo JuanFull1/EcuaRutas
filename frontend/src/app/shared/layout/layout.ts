@@ -164,19 +164,23 @@ export class Layout {
             },
             {
               texto: 'Buscar viajes',
-              icono: 'bi-search'
+              icono: 'bi-search',
+              ruta: '/cliente/buscar-viajes'
             },
             {
               texto: 'Mis boletos',
-              icono: 'bi-ticket-perforated'
+              icono: 'bi-ticket-perforated',
+              ruta: '/cliente/boletos'
             },
             {
               texto: 'Mis viajes',
-              icono: 'bi-clock-history'
+              icono: 'bi-clock-history',
+              ruta: '/cliente/historial'
             },
             {
               texto: 'Notificaciones',
-              icono: 'bi-bell'
+              icono: 'bi-bell',
+              ruta: '/cliente/notificaciones'
             }
           ];
 
