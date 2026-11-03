@@ -103,6 +103,14 @@ public class BusesController : ControllerBase
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> DarDeBaja(long id, CancellationToken ct)
     {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+        if (existente is null)
+            return NotFound();
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+        if (denegado is not null)
+            return denegado;
+
         var dadoDeBaja = await _servicio.DarDeBajaAsync(id, ct);
         if (!dadoDeBaja)
             return NotFound();
