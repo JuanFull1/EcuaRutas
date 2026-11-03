@@ -34,8 +34,14 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PagosService>();
 builder.Services.AddScoped<DisponibilidadService>();
 builder.Services.AddScoped<VentasService>();
+builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<NotificacionesService>();
 builder.Services.AddHostedService<ReservasExpirationWorker>();
 builder.Services.AddScoped<ComprobantesStorageService>();
+builder.Services.AddScoped<IViajeService, ViajeService>();
+builder.Services.AddScoped<IOperacionBusService, OperacionBusService>();
+builder.Services.AddSingleton<IPosicionBusNotifier, SinNotificacionPosicionBus>();
+builder.Services.AddScoped<IPosicionBusService, PosicionBusService>();
 
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 
