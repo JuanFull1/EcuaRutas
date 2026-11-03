@@ -169,6 +169,20 @@ public class PlantillasController : ControllerBase
     [HttpPut("/api/buses/{busId:long}/plantilla/{plantillaId:long}")]
     public async Task<IActionResult> AsignarABus(long busId, long plantillaId, CancellationToken ct)
     {
+        var bus = await _busServicio.ObtenerAsync(busId, ct);
+
+        if (bus is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(bus.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         try
         {
             var asignada = await _servicio.AsignarABusAsync(busId, plantillaId, ct);
