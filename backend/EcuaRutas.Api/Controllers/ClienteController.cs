@@ -2,7 +2,8 @@
 using EcuaRutas.Api.DTOs.Cliente;
 using EcuaRutas.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
@@ -43,5 +44,27 @@ public class ClienteController : ControllerBase
                 mensaje = ex.Message
             });
         }
+    }
+
+    [Authorize(Roles = "CLIENTE")]
+    [HttpGet("historial")]
+    public async Task<IActionResult> ObtenerHistorial()
+    {
+        var identificador = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (!long.TryParse(identificador, out long usuarioId)
+            || usuarioId <= 0)
+        {
+            return Unauthorized(new
+            {
+                mensaje = "No se pudo identificar al cliente."
+            });
+        }
+
+        var compras = await _clienteService
+            .ObtenerHistorialComprasAsync(usuarioId);
+
+        return Ok(compras);
     }
 }

@@ -1,17 +1,22 @@
 
 using EcuaRutas.Api.DTOs.Cliente;
 using EcuaRutas.Api.DTOs.Ventas;
+using EcuaRutas.Api.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace EcuaRutas.Api.Services;
 
 public class ClienteService
 {
     private readonly DisponibilidadService _disponibilidadService;
+    private readonly EcuaRutasDbContext _context;
 
     public ClienteService(
-        DisponibilidadService disponibilidadService)
+        DisponibilidadService disponibilidadService,
+        EcuaRutasDbContext context)
     {
         _disponibilidadService = disponibilidadService;
+        _context = context;
     }
 
     public async Task<List<ViajeClienteDto>> BuscarViajesAsync(
@@ -114,5 +119,38 @@ public class ClienteService
             .OrderBy(v => v.SalidaProgramada)
             .ThenBy(v => v.PrecioBase)
             .ToList();
+    }
+
+    public async Task<List<ResumenCompraClienteDto>>
+        ObtenerHistorialComprasAsync(long usuarioClienteId)
+    {
+        if (usuarioClienteId <= 0)
+        {
+            throw new ArgumentException(
+                "El identificador del cliente no es válido.");
+        }
+
+        var compras = await _context.Ventas
+            .AsNoTracking()
+            .Where(v =>
+                v.UsuarioClienteId == usuarioClienteId)
+            .OrderByDescending(v => v.CreadoEn)
+            .ThenByDescending(v => v.Id)
+            .Select(v => new ResumenCompraClienteDto
+            {
+                VentaId = v.Id,
+                Codigo = v.Codigo,
+                ViajeId = v.ViajeId,
+                Estado = v.Estado,
+                Canal = v.Canal,
+                Subtotal = v.Subtotal,
+                DescuentoTotal = v.DescuentoTotal,
+                Total = v.Total,
+                CreadoEn = v.CreadoEn,
+                ExpiraEn = v.ExpiraEn
+            })
+            .ToListAsync();
+
+        return compras;
     }
 }
