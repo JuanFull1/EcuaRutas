@@ -89,6 +89,13 @@ public class PlantillasController : ControllerBase
     public async Task<ActionResult<PlantillaBusDto>> Crear(
         CrearPlantillaBusRequest request, CancellationToken ct)
     {
+        var denegado = DenegarSiOtraCooperativa(request.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         try
         {
             var plantilla = await _servicio.CrearAsync(request, ct);
