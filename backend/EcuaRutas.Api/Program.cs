@@ -37,6 +37,21 @@ builder.Services.AddScoped<
 >();
 
 builder.Services.AddScoped<
+    ILugarService,
+    LugarService
+>();
+
+builder.Services.AddScoped<
+    IRutaService,
+    RutaService
+>();
+
+builder.Services.AddScoped<
+    IRutaParadaService,
+    RutaParadaService
+>();
+
+builder.Services.AddScoped<
     IHojaRutaService,
     HojaRutaService
 >();
