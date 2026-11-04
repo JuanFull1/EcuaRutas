@@ -1,11 +1,22 @@
 <div class="container-fluid py-3">
   <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Nuevo bus</h5>
+      <h5 class="mb-0">{{ esEdicion() ? 'Editar bus' : 'Nuevo bus' }}</h5>
       <a routerLink="/cooperativas/buses" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left"></i> Volver
       </a>
     </div>
+
+    @if (cargandoBus()) {
+      <div class="card-body text-secondary">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Cargando bus...
+      </div>
+    }
+
+    @if (errorCargar(); as mensaje) {
+      <div class="alert alert-danger m-3">{{ mensaje }}</div>
+    }
 
     <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
       <div class="row g-3">
@@ -99,6 +110,17 @@
           </div>
         </div>
 
+        @if (esEdicion()) {
+          <div class="col-md-3">
+            <label class="form-label" for="estado">Estado *</label>
+            <select id="estado" class="form-select" formControlName="estado">
+              <option value="ACTIVO">Activo</option>
+              <option value="MANTENIMIENTO">En mantenimiento</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+          </div>
+        }
+
         <div class="col-12">
           <label class="form-label" for="fotoUrl">URL de la foto</label>
           <input id="fotoUrl" class="form-control" formControlName="fotoUrl"
@@ -116,7 +138,7 @@
           @if (guardando()) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
-          Guardar
+          {{ esEdicion() ? 'Guardar cambios' : 'Guardar' }}
         </button>
       </div>
     </form>
