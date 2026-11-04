@@ -86,7 +86,9 @@ public class CooperativasController
     [HttpPost("admin")]
     [Authorize(Roles = "ADMIN")]
     public async Task<
-        ActionResult<CooperativaDto>
+        ActionResult<
+            CrearCooperativaResponse
+        >
     > Crear(
         [FromBody]
         CrearCooperativaRequest
@@ -95,7 +97,7 @@ public class CooperativasController
     {
         try
         {
-            var cooperativa =
+            var respuesta =
                 await _cooperativasService
                     .CrearAsync(
                         request
@@ -106,9 +108,11 @@ public class CooperativasController
                 new
                 {
                     id =
-                        cooperativa.Id
+                        respuesta
+                            .Cooperativa
+                            .Id
                 },
-                cooperativa
+                respuesta
             );
         }
         catch (

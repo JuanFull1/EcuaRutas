@@ -13,7 +13,7 @@ public interface ICooperativasService
         long id
     );
 
-    Task<CooperativaDto> CrearAsync(
+    Task<CrearCooperativaResponse> CrearAsync(
         CrearCooperativaRequest request
     );
 

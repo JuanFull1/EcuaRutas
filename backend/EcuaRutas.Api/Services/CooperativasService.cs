@@ -1,6 +1,7 @@
 using System.Text.Json;
 using EcuaRutas.Api.Data;
 using EcuaRutas.Api.DTOs.Cooperativas;
+using EcuaRutas.Api.DTOs.Usuarios;
 using EcuaRutas.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,11 +12,16 @@ public class CooperativasService
 {
     private readonly EcuaRutasDbContext _context;
 
+    private readonly IUsuariosService
+        _usuariosService;
+
     public CooperativasService(
-        EcuaRutasDbContext context
+        EcuaRutasDbContext context,
+        IUsuariosService usuariosService
     )
     {
         _context = context;
+        _usuariosService = usuariosService;
     }
 
     public async Task<
@@ -196,7 +202,7 @@ public class CooperativasService
     }
 
     public async Task<
-        CooperativaDto
+        CrearCooperativaResponse
     > CrearAsync(
         CrearCooperativaRequest request
     )
@@ -221,6 +227,16 @@ public class CooperativasService
         }
 
         if (
+            request.UsuarioPassword !=
+            request.UsuarioConfirmarPassword
+        )
+        {
+            throw new InvalidOperationException(
+                "Las contraseñas no coinciden."
+            );
+        }
+
+        if (
             ruc != null &&
             await _context
                 .Cooperativas
@@ -235,60 +251,143 @@ public class CooperativasService
             );
         }
 
-        var cooperativa =
-            new Cooperativa
+        var rolCooperativa =
+            await _context
+                .Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    r =>
+                        r.Codigo ==
+                        "COOPERATIVA"
+                );
+
+        if (rolCooperativa == null)
+        {
+            throw new InvalidOperationException(
+                "No se encontró el rol COOPERATIVA."
+            );
+        }
+
+        await using var transaccion =
+            await _context
+                .Database
+                .BeginTransactionAsync();
+
+        try
+        {
+            var cooperativa =
+                new Cooperativa
+                {
+                    Nombre =
+                        nombre,
+
+                    Ruc =
+                        ruc,
+
+                    Descripcion =
+                        null,
+
+                    Telefono =
+                        null,
+
+                    Correo =
+                        null,
+
+                    Direccion =
+                        null,
+
+                    LogoUrl =
+                        null,
+
+                    ColorPrimario =
+                        null,
+
+                    ColorSecundario =
+                        null,
+
+                    RedesSociales =
+                        "{}",
+
+                    InformacionSoporte =
+                        null,
+
+                    Activa =
+                        true,
+
+                    CreadoEn =
+                        DateTime.UtcNow
+                };
+
+            _context.Cooperativas.Add(
+                cooperativa
+            );
+
+            await _context
+                .SaveChangesAsync();
+
+            var usuario =
+                await _usuariosService
+                    .CrearAsync(
+                        new CrearUsuarioRequest
+                        {
+                            Cedula =
+                                null,
+
+                            Nombres =
+                                request
+                                    .UsuarioNombres
+                                    .Trim(),
+
+                            Apellidos =
+                                request
+                                    .UsuarioApellidos
+                                    .Trim(),
+
+                            Correo =
+                                request
+                                    .UsuarioCorreo
+                                    .Trim(),
+
+                            Telefono =
+                                null,
+
+                            Password =
+                                request
+                                    .UsuarioPassword,
+
+                            RolId =
+                                rolCooperativa.Id,
+
+                            CooperativaId =
+                                cooperativa.Id,
+
+                            Activo =
+                                true
+                        }
+                    );
+
+            await transaccion
+                .CommitAsync();
+
+            return new CrearCooperativaResponse
             {
-                Nombre =
-                    nombre,
+                Cooperativa =
+                    Mapear(
+                        cooperativa,
+                        1
+                    ),
 
-                Ruc =
-                    ruc,
-
-                Descripcion =
-                    null,
-
-                Telefono =
-                    null,
-
-                Correo =
-                    null,
-
-                Direccion =
-                    null,
-
-                LogoUrl =
-                    null,
-
-                ColorPrimario =
-                    null,
-
-                ColorSecundario =
-                    null,
-
-                RedesSociales =
-                    "{}",
-
-                InformacionSoporte =
-                    null,
-
-                Activa =
-                    true,
-
-                CreadoEn =
-                    DateTime.UtcNow
+                Usuario =
+                    usuario
             };
+        }
+        catch
+        {
+            await transaccion
+                .RollbackAsync();
 
-        _context.Cooperativas.Add(
-            cooperativa
-        );
-
-        await _context
-            .SaveChangesAsync();
-
-        return Mapear(
-            cooperativa,
-            0
-        );
+            throw;
+        }
     }
 
     public async Task<
