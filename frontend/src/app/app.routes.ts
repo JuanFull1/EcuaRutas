@@ -149,6 +149,40 @@ export const routes: Routes = [
   },
 
   {
+    path: 'viajes',
+
+    component: Layout,
+
+    canActivate: [
+      authGuard,
+      roleGuard
+    ],
+
+    data: {
+      roles: [
+        'ADMIN',
+        'COOPERATIVA'
+      ]
+    },
+
+    children: [
+
+      {
+        path: '',
+
+        loadChildren: () =>
+          import(
+            './viajes/viajes.routes'
+          )
+            .then(
+              m => m.VIAJES_ROUTES
+            )
+      }
+
+    ]
+  },
+
+  {
     path: 'ventas',
 
     component: Layout,
@@ -196,21 +230,15 @@ export const routes: Routes = [
     children: [
 
       {
-        path: 'inicio',
+        path: '',
 
-        loadComponent: () =>
+        loadChildren: () =>
           import(
-            './cliente/inicio/inicio-cliente'
+            './cliente/cliente.routes'
           )
             .then(
-              m => m.InicioCliente
+              m => m.CLIENTE_ROUTES
             )
-      },
-
-      {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: 'inicio'
       }
 
     ]
