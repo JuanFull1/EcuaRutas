@@ -1,4 +1,6 @@
-import { CommonModule } from '@angular/common';
+import {
+  CommonModule
+} from '@angular/common';
 
 import {
   Component,
@@ -106,23 +108,28 @@ export class Layout {
 
             {
               texto: 'Cooperativas',
-              icono: 'bi-building'
+              icono: 'bi-building',
+              ruta: '/admin/cooperativas'
             },
+
             {
               texto: 'Lugares',
               icono: 'bi-geo-alt',
               ruta: '/admin/lugares'
             },
+
             {
               texto: 'Rutas',
               icono: 'bi-signpost-2',
               ruta: '/admin/rutas'
             },
+
             {
               texto: 'Paradas',
               icono: 'bi-pin-map',
               ruta: '/admin/paradas'
             },
+
             {
               texto: 'Mapa de lugares',
               icono: 'bi-map',
@@ -153,13 +160,22 @@ export class Layout {
             {
               texto: 'Inicio',
               icono: 'bi-grid',
-              ruta: '/cooperativas/inicio'
+              ruta:
+                '/cooperativas/inicio'
+            },
+
+            {
+              texto: 'Mi cooperativa',
+              icono: 'bi-building-gear',
+              ruta:
+                '/cooperativas/configuracion'
             },
 
             {
               texto: 'Buses',
               icono: 'bi-bus-front',
-              ruta: '/cooperativas/buses'
+              ruta:
+                '/cooperativas/buses'
             },
 
             {
@@ -176,13 +192,17 @@ export class Layout {
             {
               texto: 'Hojas de Ruta',
               icono: 'bi-calendar-check',
-              ruta: '/viajes/hojas-ruta'
+              ruta:
+                '/viajes/hojas-ruta'
             },
+
             {
               texto: 'Viajes',
               icono: 'bi-map',
-              ruta: '/viajes/lista'
+              ruta:
+                '/viajes/lista'
             },
+
             {
               texto: 'Rutas',
               icono: 'bi-signpost-2'
@@ -202,19 +222,23 @@ export class Layout {
             {
               texto: 'Inicio',
               icono: 'bi-grid',
-              ruta: '/ventas/inicio'
+              ruta:
+                '/ventas/inicio'
             },
 
             {
               texto: 'Disponibilidad',
               icono: 'bi-search',
-              ruta: '/ventas/disponibilidad'
+              ruta:
+                '/ventas/disponibilidad'
             },
 
             {
               texto: 'Venta de boletos',
-              icono: 'bi-ticket-perforated',
-              ruta: '/ventas/gestion'
+              icono:
+                'bi-ticket-perforated',
+              ruta:
+                '/ventas/gestion'
             },
 
             {
@@ -228,7 +252,8 @@ export class Layout {
             },
 
             {
-              texto: 'Validación de pagos',
+              texto:
+                'Validación de pagos',
               icono: 'bi-check-circle'
             }
 
@@ -241,31 +266,38 @@ export class Layout {
             {
               texto: 'Inicio',
               icono: 'bi-house',
-              ruta: '/cliente/inicio'
+              ruta:
+                '/cliente/inicio'
             },
 
             {
               texto: 'Buscar viajes',
               icono: 'bi-search',
-              ruta: '/cliente/buscar-viajes'
+              ruta:
+                '/cliente/buscar-viajes'
             },
 
             {
               texto: 'Mis boletos',
-              icono: 'bi-ticket-perforated',
-              ruta: '/cliente/boletos'
+              icono:
+                'bi-ticket-perforated',
+              ruta:
+                '/cliente/boletos'
             },
 
             {
               texto: 'Mis viajes',
-              icono: 'bi-clock-history',
-              ruta: '/cliente/historial'
+              icono:
+                'bi-clock-history',
+              ruta:
+                '/cliente/historial'
             },
 
             {
               texto: 'Notificaciones',
               icono: 'bi-bell',
-              ruta: '/cliente/notificaciones'
+              ruta:
+                '/cliente/notificaciones'
             }
 
           ];
@@ -277,12 +309,15 @@ export class Layout {
             {
               texto: 'Inicio',
               icono: 'bi-grid',
-              ruta: '/personal-bus/inicio'
+              ruta:
+                '/personal-bus/inicio'
             },
 
             {
-              texto: 'Validar boletos',
-              icono: 'bi-qr-code-scan'
+              texto:
+                'Validar boletos',
+              icono:
+                'bi-qr-code-scan'
             },
 
             {
@@ -292,7 +327,8 @@ export class Layout {
 
             {
               texto: 'Historial',
-              icono: 'bi-clock-history'
+              icono:
+                'bi-clock-history'
             }
 
           ];

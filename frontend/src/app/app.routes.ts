@@ -55,48 +55,120 @@ export const routes: Routes = [
       },
 
       {
-        path: 'lugares',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
+        path: 'cooperativas',
+
         loadComponent: () =>
-          import('./admin/lugares/lugares-lista')
-            .then(m => m.LugaresLista)
+          import(
+            './admin/cooperativas/cooperativas-admin'
+          )
+            .then(
+              m => m.CooperativasAdmin
+            )
+      },
+
+      {
+        path: 'lugares',
+
+        canActivate: [
+          authGuard,
+          roleGuard
+        ],
+
+        data: {
+          roles: ['ADMIN']
+        },
+
+        loadComponent: () =>
+          import(
+            './admin/lugares/lugares-lista'
+          )
+            .then(
+              m => m.LugaresLista
+            )
       },
 
       {
         path: 'rutas',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
+
+        canActivate: [
+          authGuard,
+          roleGuard
+        ],
+
+        data: {
+          roles: ['ADMIN']
+        },
+
         loadComponent: () =>
-          import('./admin/rutas/rutas-lista')
-            .then(m => m.RutasLista)
+          import(
+            './admin/rutas/rutas-lista'
+          )
+            .then(
+              m => m.RutasLista
+            )
       },
 
       {
         path: 'mapas/lugares',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
+
+        canActivate: [
+          authGuard,
+          roleGuard
+        ],
+
+        data: {
+          roles: ['ADMIN']
+        },
+
         loadComponent: () =>
-          import('./admin/mapas/lugares/lugares-mapa')
-            .then(m => m.LugaresMapa)
+          import(
+            './admin/mapas/lugares/lugares-mapa'
+          )
+            .then(
+              m => m.LugaresMapa
+            )
       },
 
       {
         path: 'mapas/rutas',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
+
+        canActivate: [
+          authGuard,
+          roleGuard
+        ],
+
+        data: {
+          roles: ['ADMIN']
+        },
+
         loadComponent: () =>
-          import('./admin/mapas/rutas/rutas-mapa')
-            .then(m => m.RutasMapa)
+          import(
+            './admin/mapas/rutas/rutas-mapa'
+          )
+            .then(
+              m => m.RutasMapa
+            )
       },
 
       {
         path: 'paradas',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
+
+        canActivate: [
+          authGuard,
+          roleGuard
+        ],
+
+        data: {
+          roles: ['ADMIN']
+        },
+
         loadComponent: () =>
-          import('./admin/paradas/paradas-lista')
-            .then(m => m.ParadasLista)
+          import(
+            './admin/paradas/paradas-lista'
+          )
+            .then(
+              m => m.ParadasLista
+            )
       },
 
       {
@@ -161,6 +233,18 @@ export const routes: Routes = [
       },
 
       {
+        path: 'configuracion',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/configuracion/mi-cooperativa'
+          )
+            .then(
+              m => m.MiCooperativa
+            )
+      },
+
+      {
         path: 'buses/nuevo',
 
         loadComponent: () =>
@@ -176,8 +260,12 @@ export const routes: Routes = [
         path: 'buses/:id/editar',
 
         loadComponent: () =>
-          import('./cooperativas/buses/bus-formulario')
-            .then(m => m.BusFormulario)
+          import(
+            './cooperativas/buses/bus-formulario'
+          )
+            .then(
+              m => m.BusFormulario
+            )
       },
 
       {
@@ -196,16 +284,24 @@ export const routes: Routes = [
         path: 'grupos',
 
         loadComponent: () =>
-          import('./cooperativas/grupos/grupos-lista')
-            .then(m => m.GruposLista)
+          import(
+            './cooperativas/grupos/grupos-lista'
+          )
+            .then(
+              m => m.GruposLista
+            )
       },
 
       {
         path: 'plantillas',
 
         loadComponent: () =>
-          import('./cooperativas/plantillas/plantillas-lista')
-            .then(m => m.PlantillasLista)
+          import(
+            './cooperativas/plantillas/plantillas-lista'
+          )
+            .then(
+              m => m.PlantillasLista
+            )
       },
 
       {
