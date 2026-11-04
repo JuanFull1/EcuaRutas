@@ -1,6 +1,7 @@
 import { Component, DestroyRef, ElementRef, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { mensajeErrorLugar as mensajeErrorRuta } from '../lugares/lugar-error';
@@ -13,7 +14,7 @@ import { RutaService } from './ruta.service';
 @Component({
   selector: 'app-rutas-lista',
   standalone: true,
-  imports: [RutaFormulario],
+  imports: [RutaFormulario, RouterLink],
   templateUrl: './rutas-lista.html',
   styleUrl: './rutas-lista.css'
 })
