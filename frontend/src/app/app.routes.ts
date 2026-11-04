@@ -254,6 +254,30 @@ export const routes: Routes = [
       },
 
       {
+        path: 'plantillas/nueva',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/plantillas/plantilla-formulario'
+          )
+            .then(
+              m => m.PlantillaFormulario
+            )
+      },
+
+      {
+        path: 'plantillas/:id/disposicion',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/plantillas/plantilla-formulario'
+          )
+            .then(
+              m => m.PlantillaFormulario
+            )
+      },
+
+      {
         path: 'plantillas',
 
         loadComponent: () =>
