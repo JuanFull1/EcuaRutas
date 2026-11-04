@@ -1,0 +1,127 @@
+<div class="container-fluid px-0">
+  <section class="bg-white border rounded-4 p-4 mb-4">
+    <span class="badge text-bg-primary mb-3">Administrador</span>
+    <h1 class="h3 fw-bold">Gestión de rutas</h1>
+    <p class="text-secondary mb-0">Administra las rutas de EcuaRutas, sus lugares de origen y destino y su tipo de viaje.</p>
+    @if (puedeEscribir()) {
+      <button type="button" class="btn btn-primary mt-3" [disabled]="ocupado() || formularioVisible()" (click)="nueva()">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva ruta
+      </button>
+    }
+  </section>
+
+  @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+  @if (error(); as mensaje) {
+    <div class="alert alert-danger d-flex flex-wrap justify-content-between align-items-center gap-3" role="alert">
+      <span>{{ mensaje }}</span>
+      <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="ocupado()" (click)="cargar()">Actualizar listado</button>
+    </div>
+  }
+  @if (errorLugares() && !formularioVisible()) {
+    <div class="alert alert-warning" role="alert">
+      No se pudo actualizar el catálogo de lugares. {{ errorLugares() }}
+      <button type="button" class="btn btn-outline-secondary btn-sm ms-2" [disabled]="ocupado()" (click)="cargarLugares()">Reintentar lugares</button>
+    </div>
+  }
+  @if (cargandoLugares() && !formularioVisible()) {
+    <p class="text-secondary" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando nombres de lugares...</p>
+  }
+  @if (cargandoDetalle()) {
+    <p class="text-secondary" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando datos de la ruta...</p>
+  }
+  @if (formularioVisible()) {
+    <app-ruta-formulario [ruta]="seleccionada()" [lugares]="lugares()" [cargandoLugares]="cargandoLugares()" [errorLugares]="errorLugares()"
+      [guardando]="guardando()" [error]="errorFormulario()" [autorizado]="puedeEscribir()"
+      (guardarRuta)="guardar($event)" (cancelar)="cerrarFormulario()" (reintentarLugares)="cargarLugares()" />
+  }
+
+  <section class="card border-0 shadow-sm" aria-labelledby="titulo-listado-rutas" [attr.aria-busy]="cargando()">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <h2 id="titulo-listado-rutas" class="h5 mb-0">Rutas registradas</h2>
+        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="ocupado()" (click)="cargar()">
+          <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Actualizar
+        </button>
+      </div>
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6">
+          <label for="buscar-ruta" class="form-label">Buscar por nombre</label>
+          <input #buscar id="buscar-ruta" type="search" class="form-control" placeholder="Nombre de la ruta"
+            [value]="busqueda()" (input)="busqueda.set(buscar.value)">
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <label for="estado-ruta" class="form-label">Estado</label>
+          <select #estado id="estado-ruta" class="form-select" [value]="filtroEstado()" (change)="filtroEstado.set(estado.value)">
+            <option value="">Todas</option><option value="activa">Activas</option><option value="inactiva">Inactivas</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Limpiar filtros</button>
+        </div>
+      </div>
+    </div>
+    @if (cargando()) {
+      <div class="text-center text-secondary py-5" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando rutas...</div>
+    } @else if (!error() && rutas().length === 0) {
+      <p class="text-center text-secondary py-5 mb-0" role="status">No hay rutas registradas.</p>
+    } @else if (!error() && rutasFiltradas().length === 0) {
+      <p class="text-center text-secondary py-5 mb-0" role="status">No hay rutas que coincidan con la búsqueda y el estado seleccionados.</p>
+    } @else if (rutasFiltradas().length > 0) {
+      @if (error()) { <p class="text-secondary small px-3">Se muestran los últimos datos consultados; podrían estar desactualizados.</p> }
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla de rutas, desplazamiento horizontal disponible">
+        <table class="table table-hover align-middle mb-0">
+          <caption class="visually-hidden">Rutas con origen, destino, tipo de viaje, estado y acciones disponibles.</caption>
+          <thead class="table-light"><tr>
+            <th scope="col">ID</th><th scope="col">Nombre</th><th scope="col">Origen</th><th scope="col">Destino</th>
+            <th scope="col">Tipo de viaje</th><th scope="col">Estado</th>
+            @if (puedeEscribir()) { <th scope="col">Acciones</th> }
+          </tr></thead>
+          <tbody>
+            @for (ruta of rutasFiltradas(); track ruta.id) {
+              <tr>
+                <td>{{ ruta.id }}</td><th scope="row" class="fw-semibold">{{ ruta.nombre }}</th>
+                <td>{{ nombreLugar(ruta.origenLugarId) }}
+                  @if (lugaresPorId().get(ruta.origenLugarId)?.activo === false) { <span class="d-block small text-secondary">Lugar inactivo</span> }
+                </td>
+                <td>{{ nombreLugar(ruta.destinoLugarId) }}
+                  @if (lugaresPorId().get(ruta.destinoLugarId)?.activo === false) { <span class="d-block small text-secondary">Lugar inactivo</span> }
+                </td>
+                <td>{{ ruta.tipoViaje === 'DIRECTO' ? 'Directo' : 'Con paradas' }}</td>
+                <td><span class="badge" [class.text-bg-success]="ruta.activa" [class.text-bg-secondary]="!ruta.activa">{{ ruta.activa ? 'Activa' : 'Inactiva' }}</span></td>
+                @if (puedeEscribir()) {
+                  <td><div class="d-flex flex-wrap gap-2 acciones">
+                    <a class="btn btn-sm btn-outline-secondary" routerLink="/admin/mapas/rutas" [queryParams]="{ rutaId: ruta.id }"
+                      [attr.aria-label]="'Ver en mapa ' + ruta.nombre"><i class="bi bi-map me-1" aria-hidden="true"></i>Ver en mapa</a>
+                    <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || formularioVisible()"
+                      [attr.aria-label]="'Editar ' + ruta.nombre" (click)="editar(ruta)"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar</button>
+                    @if (ruta.activa) {
+                      <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || formularioVisible()"
+                        [attr.aria-label]="'Desactivar ' + ruta.nombre" (click)="solicitarBaja(ruta)"><i class="bi bi-slash-circle me-1" aria-hidden="true"></i>Desactivar</button>
+                    }
+                  </div></td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="text-secondary small p-3 mb-0" role="status">Mostrando {{ rutasFiltradas().length }} de {{ rutas().length }} rutas.</p>
+    }
+  </section>
+</div>
+
+<dialog #dialogoBaja class="border-0 rounded-4 shadow p-4" aria-labelledby="titulo-baja-ruta" aria-describedby="descripcion-baja-ruta"
+  [attr.aria-busy]="desactivando()" (cancel)="cancelarBaja($event)">
+  <h2 id="titulo-baja-ruta" class="h5">Desactivar ruta</h2>
+  <p id="descripcion-baja-ruta">¿Deseas desactivar <strong>{{ pendienteBaja()?.nombre }}</strong>? La ruta quedará inactiva y conservará su registro; no se eliminará físicamente.</p>
+  @if (errorBaja(); as mensaje) { <div class="alert alert-danger" role="alert">{{ mensaje }}</div> }
+  <div class="d-flex flex-wrap justify-content-end gap-2">
+    <button type="button" class="btn btn-outline-secondary" autofocus [disabled]="desactivando()" (click)="cancelarBaja()">Cancelar</button>
+    @if (puedeEscribir()) {
+      <button type="button" class="btn btn-danger" [disabled]="desactivando()" (click)="confirmarBaja()">
+        @if (desactivando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        {{ desactivando() ? 'Desactivando...' : 'Desactivar' }}
+      </button>
+    }
+  </div>
+</dialog>

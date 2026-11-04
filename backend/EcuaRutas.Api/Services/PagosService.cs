@@ -3,17 +3,24 @@ using EcuaRutas.Api.Data;
 using EcuaRutas.Api.DTOs.Pagos;
 using EcuaRutas.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace EcuaRutas.Api.Services;
 
 public class PagosService
 {
-    private readonly EcuaRutasDbContext _context;
 
-    public PagosService(EcuaRutasDbContext context)
+    private readonly EcuaRutasDbContext _context;
+    private readonly ComprobantesStorageService _comprobantesStorage;
+
+    public PagosService(
+        EcuaRutasDbContext context,
+        ComprobantesStorageService comprobantesStorage)
     {
         _context = context;
+        _comprobantesStorage = comprobantesStorage;
     }
+
 
     public async Task<Pago> RegistrarPagoAsync(
         RegistrarPagoDto dto,
@@ -90,12 +97,40 @@ public class PagosService
             CreadoEn = DateTime.UtcNow
         };
 
-        _context.Pagos.Add(pago);
-        await _context.SaveChangesAsync();
+    _context.Pagos.Add(pago);
 
-        return pago;
+    // Registrar aviso de pago pendiente de revisión.
+    if (venta.UsuarioClienteId.HasValue)
+    {
+        var correoCliente = await _context.Usuarios
+            .AsNoTracking()
+            .Where(u => u.Id == venta.UsuarioClienteId.Value)
+            .Select(u => u.Correo)
+            .FirstOrDefaultAsync();
+
+        if (!string.IsNullOrWhiteSpace(correoCliente) &&
+            correoCliente.Length <= 150)
+        {
+            _context.Notificaciones.Add(new Notificacione
+            {
+                UsuarioId = venta.UsuarioClienteId.Value,
+                VentaId = venta.Id,
+                CorreoDestino = correoCliente,
+                Tipo = "PAGO_REGISTRADO",
+                Asunto = $"El pago de tu reserva {venta.Codigo} fue registrado y está pendiente de revisión.",
+                Estado = "PENDIENTE",
+                CreadoEn = DateTime.UtcNow,
+                EnviadoEn = null
+            });
+        }
     }
-    
+
+    await _context.SaveChangesAsync();
+
+    return pago;
+
+}
+
 public async Task<List<PagoRespuestaDto>> ObtenerPagosPorVentaAsync(
     long ventaId,
     long usuarioId)
@@ -135,5 +170,120 @@ public async Task<List<PagoRespuestaDto>> ObtenerPagosPorVentaAsync(
         })
         .ToListAsync();
 }
+
+    public async Task<PagoRespuestaDto> SubirComprobanteAsync(
+        long pagoId,
+        long usuarioId,
+        IFormFile archivo)
+    {
+        if (pagoId <= 0)
+        {
+            throw new ArgumentException(
+                "El identificador del pago no es válido.");
+        }
+
+        await using var transaccion =
+            await _context.Database.BeginTransactionAsync();
+
+
+        var pagosEncontrados = await _context.Pagos
+            .FromSqlInterpolated(
+                $"SELECT * FROM pagos WHERE id = {pagoId} FOR UPDATE")
+            .ToListAsync();
+
+        var pago = pagosEncontrados.FirstOrDefault();
+
+        if (pago is null)
+        {
+            throw new KeyNotFoundException("El pago no existe.");
+        }
+
+        await _context.Entry(pago)
+            .Reference(p => p.Venta)
+            .LoadAsync();
+
+        if (pago.Venta.UsuarioClienteId != usuarioId)
+            throw new KeyNotFoundException("El pago no existe.");
+
+        if (pago.Estado != "PENDIENTE" ||
+            !string.IsNullOrWhiteSpace(pago.ComprobanteUrl))
+        {
+            throw new ConflictoException(
+                "Este pago no permite adjuntar un comprobante.");
+        }
+
+        string? nombreArchivo = null;
+
+        try
+        {
+            nombreArchivo =
+                await _comprobantesStorage.GuardarAsync(archivo);
+
+            pago.ComprobanteUrl = nombreArchivo;
+            pago.Estado = "EN_REVISION";
+
+            // Registrar notificación cuando se recibe el comprobante.
+            var correoCliente = await _context.Usuarios
+                .AsNoTracking()
+                .Where(u => u.Id == usuarioId)
+                .Select(u => u.Correo)
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(correoCliente) &&
+                correoCliente.Length <= 150)
+            {
+                _context.Notificaciones.Add(new Notificacione
+                {
+                    UsuarioId = usuarioId,
+                    VentaId = pago.VentaId,
+                    CorreoDestino = correoCliente,
+                    Tipo = "COMPROBANTE_RECIBIDO",
+                    Asunto = $"El comprobante de tu pago para la reserva {pago.Venta.Codigo} fue recibido y está pendiente de revisión.",
+                    Estado = "PENDIENTE",
+                    CreadoEn = DateTime.UtcNow,
+                    EnviadoEn = null
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            await transaccion.CommitAsync();
+        }
+        catch
+        {
+            await transaccion.RollbackAsync();
+
+            if (nombreArchivo is not null)
+            {
+                try
+                {
+                    _comprobantesStorage.Eliminar(nombreArchivo);
+                }
+                catch (IOException)
+                {
+
+                }
+                catch (UnauthorizedAccessException)
+                {
+
+                }
+            }
+
+            throw;
+        }
+
+        return new PagoRespuestaDto
+        {
+            Id = pago.Id,
+            VentaId = pago.VentaId,
+            Metodo = pago.Metodo,
+            Monto = pago.Monto,
+            Estado = pago.Estado,
+            CreadoEn = pago.CreadoEn
+        };
+    }
+
+
+
+
 
 }

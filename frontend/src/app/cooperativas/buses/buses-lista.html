@@ -14,6 +14,10 @@
       Consulta y administra los buses de la cooperativa.
     </p>
 
+    <a routerLink="/cooperativas/buses/nuevo" class="btn btn-primary mt-3">
+      <i class="bi bi-plus-lg"></i> Nuevo bus
+    </a>
+
   </section>
 
   @if (error(); as mensaje) {
@@ -31,6 +35,10 @@
         Reintentar
       </button>
     </div>
+  }
+
+  @if (errorAccion(); as mensaje) {
+    <div class="alert alert-danger" role="alert">{{ mensaje }}</div>
   }
 
   <div class="card border-0 shadow-sm">
@@ -68,13 +76,14 @@
             <th class="text-center">Pisos</th>
             <th class="text-center">Capacidad</th>
             <th>Estado</th>
+            <th class="text-end">Acciones</th>
           </tr>
         </thead>
 
         <tbody>
           @if (cargando()) {
             <tr>
-              <td colspan="7" class="text-center text-secondary py-4">
+              <td colspan="8" class="text-center text-secondary py-4">
                 <span
                   class="spinner-border spinner-border-sm me-2"
                   aria-hidden="true"
@@ -84,7 +93,7 @@
             </tr>
           } @else if (!error() && buses().length === 0) {
             <tr>
-              <td colspan="7" class="text-center text-secondary py-4">
+              <td colspan="8" class="text-center text-secondary py-4">
                 @if (filtroEstado()) {
                   No hay buses con estado {{ filtroEstado() }}.
                 } @else {
@@ -106,6 +115,23 @@
                 <span class="badge" [class]="'badge ' + claseEstado(bus.estado)">
                   {{ bus.estado }}
                 </span>
+              </td>
+              <td class="text-end">
+                <a
+                  [routerLink]="['/cooperativas/buses', bus.id, 'editar']"
+                  class="btn btn-sm btn-outline-primary"
+                >
+                  <i class="bi bi-pencil"></i> Editar
+                </a>
+                @if (bus.estado !== 'INACTIVO') {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    (click)="darDeBaja(bus)"
+                  >
+                    <i class="bi bi-trash"></i> Dar de baja
+                  </button>
+                }
               </td>
             </tr>
           }

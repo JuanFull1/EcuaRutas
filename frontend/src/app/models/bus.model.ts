@@ -22,6 +22,7 @@ export interface Bus {
 
 export interface CrearBusRequest {
   cooperativaId: number;
+  grupoBusId?: number | null;
   numeroInterno: string;
   placa: string;
   color?: string;

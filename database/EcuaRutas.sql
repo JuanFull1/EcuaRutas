@@ -402,7 +402,7 @@ BEGIN
 
     -- Durante el viaje, si el pasajero sigue abordado, el asiento no puede
     -- venderse nuevamente hasta que el personal BUS lo libere explícitamente.
-    IF EXISTS (
+    IF TG_OP= 'INSERT' AND EXISTS (
         SELECT 1
         FROM ocupaciones_asiento oa
         WHERE oa.viaje_id = NEW.viaje_id
@@ -670,7 +670,14 @@ CREATE TABLE notificaciones (
     tipo VARCHAR(50) NOT NULL,
     asunto VARCHAR(200) NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
-        CHECK (estado IN ('PENDIENTE', 'ENVIADA', 'ERROR')),
+
+CHECK (estado IN (
+    'PENDIENTE',
+    'PROCESANDO',
+    'ENVIADO',
+    'ERROR'
+))
+
     creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     enviado_en TIMESTAMPTZ
 );

@@ -1,0 +1,92 @@
+<main class="gestion-container">
+  <header class="encabezado">
+    <div>
+      <h1>Venta de boletos</h1>
+      <p>Consulte las reservas temporales y las ventas registradas.</p>
+    </div>
+    <span class="contador">{{ total }} registro(s)</span>
+  </header>
+
+  <form class="filtros" (ngSubmit)="pagina = 1; buscar()">
+    <label class="campo campo-busqueda">Código o cédula
+      <input name="busqueda" [(ngModel)]="busqueda" placeholder="Venta, boleto o cédula" />
+    </label>
+    <label class="campo">Estado
+      <select name="estado" [(ngModel)]="estado">
+        <option value="">Todos</option>
+        <option value="RESERVADA">Reserva temporal</option>
+        <option value="PAGADA">Pagada</option>
+        <option value="PENDIENTE_PAGO">Pendiente de pago</option>
+        <option value="CANCELADA">Cancelada</option>
+        <option value="EXPIRADA">Expirada</option>
+      </select>
+    </label>
+    <label class="campo">Desde<input type="date" name="desde" [(ngModel)]="desde" /></label>
+    <label class="campo">Hasta<input type="date" name="hasta" [(ngModel)]="hasta" /></label>
+    <div class="acciones-filtro">
+      <button class="principal" type="submit" [disabled]="cargando">{{ cargando ? 'Buscando…' : 'Buscar' }}</button>
+      <button type="button" class="secundario" (click)="limpiarFiltros()">Limpiar</button>
+    </div>
+  </form>
+
+  @if (error) { <p class="alerta error" role="alert">{{ error }}</p> }
+  @if (mensaje) { <p class="alerta exito" role="status">{{ mensaje }}</p> }
+  @if (cargando) { <p class="vacio">Cargando registros…</p> }
+  @else if (ventas.length === 0) { <p class="vacio">No hay reservas o ventas que coincidan con los filtros.</p> }
+  @else {
+    <section class="lista" aria-label="Reservas y ventas">
+      @for (venta of ventas; track venta.ventaId) {
+        <article class="venta-card">
+          <div class="venta-cabecera">
+            <div><span class="etiqueta">Código</span><strong>{{ venta.codigo }}</strong></div>
+            <span class="estado" [class]="'estado estado-' + venta.estado.toLowerCase()">{{ venta.estado }}</span>
+          </div>
+          <div class="venta-detalle">
+            <div><span class="etiqueta">Ruta</span><strong>{{ venta.rutaNombre }}</strong><span>{{ venta.origen }} → {{ venta.destino }}</span></div>
+            <div><span class="etiqueta">Viaje / Pago</span><strong>{{ venta.salidaProgramada | date:'short' }}</strong><span>Creada {{ venta.creadoEn | date:'short' }}</span>@if (venta.estadoPago) { <span>{{ venta.metodoPago }} · {{ venta.estadoPago }}</span> }</div>
+            <div><span class="etiqueta">Pasajero(s) y asiento(s)</span>
+              @for (asiento of venta.asientos; track asiento.numeroAsiento + asiento.documento) {
+                <span>{{ asiento.pasajero }} · {{ asiento.documento }}@if (!asiento.codigoBoleto) { · Asiento {{ asiento.numeroAsiento }} }</span>
+              }
+            </div>
+            <div class="importe"><span class="etiqueta">Total</span><strong>{{ venta.total | currency:'USD':'symbol':'1.2-2' }}</strong></div>
+          </div>
+          @if (tieneBoletos(venta)) {
+            <section class="boletos-emitidos" aria-label="Boletos emitidos">
+              <div class="boletos-encabezado">
+                <strong>Boletos emitidos</strong>
+                <button class="ocultar-impresion" type="button" (click)="imprimirBoletos(venta)">Imprimir</button>
+              </div>
+              @for (asiento of venta.asientos; track asiento.numeroAsiento + asiento.documento) {
+                @if (asiento.codigoBoleto) {
+                  <div class="boleto-fila">
+                    <span>Asiento {{ asiento.numeroAsiento }}</span>
+                    <strong>{{ asiento.codigoBoleto }}</strong>
+                    <span class="estado-boleto">{{ asiento.estadoBoleto }}</span>
+                  </div>
+                }
+              }
+            </section>
+          }
+          @if (venta.estado === 'RESERVADA') {
+            <div class="reserva-pie">
+              <span>Vence {{ venta.expiraEn | date:'short' }}</span>
+              @if (venta.estadoPago === 'PENDIENTE' || venta.estadoPago === 'EN_REVISION' || venta.estadoPago === 'APROBADO') {
+                <span class="aviso-pago">Ya existe un pago {{ venta.estadoPago.toLowerCase() }} por {{ venta.metodoPago }}. Revíselo en el flujo de pagos antes de continuar.</span>
+              }
+              <div class="acciones-venta">
+                <button class="principal" type="button" [disabled]="ventaProcesando !== null || (venta.estadoPago === 'PENDIENTE' || venta.estadoPago === 'EN_REVISION' || venta.estadoPago === 'APROBADO')" (click)="confirmar(venta)">Registrar efectivo y emitir boletos</button>
+                <button class="peligro" type="button" [disabled]="ventaProcesando !== null || (venta.estadoPago === 'PENDIENTE' || venta.estadoPago === 'EN_REVISION' || venta.estadoPago === 'APROBADO')" (click)="cancelar(venta)">Cancelar reserva</button>
+              </div>
+            </div>
+          }
+        </article>
+      }
+    </section>
+    <nav class="paginacion" aria-label="Paginación">
+      <button type="button" (click)="cambiarPagina(pagina - 1)" [disabled]="pagina <= 1 || cargando">Anterior</button>
+      <span>Página {{ pagina }} de {{ totalPaginas }}</span>
+      <button type="button" (click)="cambiarPagina(pagina + 1)" [disabled]="pagina >= totalPaginas || cargando">Siguiente</button>
+    </nav>
+  }
+</main>

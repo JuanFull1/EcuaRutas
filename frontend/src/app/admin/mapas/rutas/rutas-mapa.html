@@ -1,0 +1,98 @@
+<div class="container-fluid px-0">
+  <section class="bg-white border rounded-4 p-4 mb-4">
+    <span class="badge text-bg-primary mb-3">Consulta geográfica</span>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+      <div><h1 class="h3 fw-bold">Mapa de rutas y paradas</h1><p class="text-secondary mb-0">Consulta el origen, el destino y las paradas de cada ruta de EcuaRutas.</p></div>
+      <button type="button" class="btn btn-outline-primary" [disabled]="cargando()" (click)="actualizar()"><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Actualizar</button>
+    </div>
+  </section>
+  <nav class="d-flex flex-wrap gap-2 mb-3" aria-label="Volver a la gestión">
+    <a class="btn btn-outline-secondary btn-sm" routerLink="/admin/rutas"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Gestión de rutas</a>
+    <a class="btn btn-outline-secondary btn-sm" routerLink="/admin/paradas">Gestión de paradas</a>
+  </nav>
+  @if (avisoNavegacion(); as mensaje) { <p class="alert alert-warning" role="status">{{ mensaje }}</p> }
+  @if (avisoParada(); as mensaje) { <p class="alert alert-warning" role="status">{{ mensaje }}</p> }
+  <section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-selector-recorrido">
+    <div class="card-body">
+      <h2 id="titulo-selector-recorrido" class="h5">Seleccionar ruta</h2>
+      <div class="row g-3">
+        <div class="col-12 col-md-5"><label for="buscar-ruta-mapa" class="form-label">Buscar por nombre</label><input #buscar id="buscar-ruta-mapa" type="search" class="form-control" [value]="busqueda()" (input)="busqueda.set(buscar.value)" placeholder="Nombre de la ruta"></div>
+        <div class="col-12 col-md-7">
+          <label for="ruta-mapa-selector" class="form-label">Ruta</label>
+          <select id="ruta-mapa-selector" class="form-select" [ngModel]="rutaId() ?? ''" [disabled]="cargandoRutas()" (ngModelChange)="cambiarRuta($event)">
+            <option value="">Selecciona una ruta</option>
+            @if (seleccionFueraBusqueda() && rutaSeleccionada(); as actual) { <option [value]="actual.id">{{ actual.nombre }} · #{{ actual.id }} · Seleccionada</option> }
+            @for (ruta of rutasFiltradas(); track ruta.id) { <option [value]="ruta.id">{{ ruta.nombre }} · #{{ ruta.id }} · {{ ruta.activa ? 'Activa' : 'Inactiva' }}</option> }
+          </select>
+        </div>
+      </div>
+      @if (cargandoRutas()) { <p class="text-secondary mt-3 mb-0" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando rutas...</p> }
+      @else if (!errorRutas() && rutas().length === 0) { <p class="text-secondary mt-3 mb-0" role="status">No hay rutas registradas.</p> }
+      @else if (!errorRutas() && rutasFiltradas().length === 0) { <p class="text-secondary mt-3 mb-0" role="status">No hay rutas que coincidan con la búsqueda.</p> }
+      @if (rutaSeleccionada(); as ruta) {
+        <div class="border-top mt-3 pt-3">
+          <h3 class="h6 fw-semibold">{{ ruta.nombre }} <span class="badge ms-2" [class.text-bg-success]="ruta.activa" [class.text-bg-secondary]="!ruta.activa">{{ ruta.activa ? 'Activa' : 'Inactiva' }}</span></h3>
+          <p class="small text-secondary mb-1">{{ ruta.tipoViaje === 'DIRECTO' ? 'Directo' : 'Con paradas' }}</p>
+          <dl class="row small mb-0"><dt class="col-4 col-sm-2">Origen</dt><dd class="col-8 col-sm-10">{{ nombreLugar(ruta.origenLugarId) }}</dd><dt class="col-4 col-sm-2">Destino</dt><dd class="col-8 col-sm-10 mb-0">{{ nombreLugar(ruta.destinoLugarId) }}</dd></dl>
+        </div>
+      }
+    </div>
+  </section>
+  @if (errorRutas(); as mensaje) { <div class="alert alert-danger" role="alert">{{ mensaje }} <button type="button" class="btn btn-sm btn-outline-danger ms-2" [disabled]="cargandoRutas()" (click)="cargarRutas()">Reintentar rutas</button></div> }
+  @if (errorLugares(); as mensaje) { <div class="alert alert-warning" role="alert">No se pudieron consultar los lugares. {{ mensaje }} <button type="button" class="btn btn-sm btn-outline-secondary ms-2" [disabled]="cargandoLugares()" (click)="cargarLugares()">Reintentar lugares</button></div> }
+  @if (cargandoLugares()) { <p class="text-secondary" role="status">Cargando ubicaciones de lugares...</p> }
+  @if (errorMapa(); as mensaje) { <div class="alert alert-warning" role="alert">{{ mensaje }}</div> }
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-8">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h2 class="h5 mb-0">Puntos del recorrido</h2>
+        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!mapaDisponible() || cantidadGeografica() === 0" (click)="mostrarRecorrido()"><i class="bi bi-arrows-fullscreen me-1" aria-hidden="true"></i>Mostrar recorrido completo</button>
+      </div>
+      <app-mapa etiqueta="Mapa de rutas y paradas de EcuaRutas" (mapaListo)="alPrepararMapa($event)" />
+      <p class="small mt-2 mb-3"><span class="badge text-bg-success">O · Origen</span> <span class="badge text-bg-primary">Orden de parada</span> <span class="badge text-bg-danger">D · Destino</span> <span class="badge text-bg-warning">Seleccionado</span></p>
+      <div class="alert alert-info small" role="note"><strong>Trazado referencial.</strong> La línea une puntos conocidos en su orden; no representa un recorrido real por calles o carreteras. No se calculan distancias viales ni tiempos de viaje.</div>
+      @if (recorrido(); as datos) {
+        @for (aviso of datos.avisos; track aviso) { <p class="alert alert-warning small" role="status">{{ aviso }}</p> }
+        @if (!datos.linea) { <p class="text-secondary small" role="status">No se dibuja una línea: faltan coordenadas distintas suficientes o existe una secuencia inconsistente.</p> }
+      }
+      <section class="card border-0 shadow-sm" aria-labelledby="detalle-punto-titulo"><div class="card-body">
+        <h2 id="detalle-punto-titulo" class="h5">Información del punto</h2>
+        @if (puntoSeleccionado(); as punto) {
+          <h3 class="h6 fw-semibold">{{ punto.lugar?.nombre ?? ('Lugar #' + punto.lugarId) }}</h3>
+          <p class="small text-secondary">{{ punto.etiqueta }} · Lugar #{{ punto.lugarId }}</p>
+          @if (punto.lugar; as lugar) { <p class="small">{{ lugar.tipo }} · {{ lugar.activo ? 'Lugar activo' : 'Lugar inactivo' }} · Provincia: {{ lugar.provincia ?? 'Sin dato' }} · Cantón: {{ lugar.canton ?? 'Sin dato' }}</p> }
+          @if (punto.parada; as parada) {
+            <dl class="row small mb-0"><dt class="col-6">ID de parada</dt><dd class="col-6">{{ parada.id }}</dd><dt class="col-6">Orden</dt><dd class="col-6">{{ parada.orden }}</dd><dt class="col-6">Km acumulados</dt><dd class="col-6">{{ parada.kmAcumulado ?? 'Sin dato' }}</dd><dt class="col-6">Minutos acumulados</dt><dd class="col-6">{{ parada.minutosAcumulados ?? 'Sin dato' }}</dd><dt class="col-6">Permite ascenso</dt><dd class="col-6">{{ parada.permiteAscenso ? 'Sí' : 'No' }}</dd><dt class="col-6">Permite descenso</dt><dd class="col-6">{{ parada.permiteDescenso ? 'Sí' : 'No' }}</dd></dl>
+          }
+          @if (punto.coordenadas; as coordenadas) {
+            <p class="small mt-2">Longitud: {{ coordenadas[0] }} · Latitud: {{ coordenadas[1] }}</p>
+            <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!mapaDisponible()" (click)="seleccionarPunto(punto.clave)"><i class="bi bi-crosshair me-1" aria-hidden="true"></i>Centrar punto</button>
+          } @else { <p class="text-secondary small mb-0">Este punto no tiene coordenadas válidas; sus datos se conservan sin inventar una ubicación.</p> }
+        } @else { <p class="text-secondary mb-0">Selecciona un origen, destino o parada desde la lista o el mapa.</p> }
+      </div></section>
+    </div>
+    <div class="col-12 col-xl-4">
+      <section class="card border-0 shadow-sm" aria-labelledby="lista-recorrido-titulo" [attr.aria-busy]="cargandoParadas()">
+        <div class="card-body"><h2 id="lista-recorrido-titulo" class="h5 mb-0">Recorrido registrado</h2></div>
+        @if (!rutaSeleccionada()) { <p class="text-secondary text-center p-4 mb-0" role="status">Selecciona una ruta para consultar sus paradas.</p> }
+        @else if (cargandoParadas()) { <p class="text-secondary text-center p-4 mb-0" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando paradas...</p> }
+        @else if (errorParadas(); as mensaje) { <div class="alert alert-danger mx-3" role="alert">{{ mensaje }} <button type="button" class="btn btn-sm btn-outline-danger mt-2" (click)="cargarParadas()">Reintentar paradas</button></div> }
+        @if (recorrido(); as datos) {
+          <p class="text-secondary small px-3" role="status">{{ paradas()?.length }} paradas · {{ cantidadGeografica() }} lugares con coordenadas.</p>
+          @if (paradas()?.length === 0) { <p class="text-secondary small px-3" role="status">Esta ruta no tiene paradas registradas; se muestran sus extremos.</p> }
+          <ul class="list-group list-group-flush lista-recorrido">
+            @for (punto of datos.puntos; track punto.clave) {
+              <li class="list-group-item p-0"><button type="button" class="punto-opcion w-100 text-start border-0 p-3" [class.seleccionado]="seleccionada() === punto.clave" [attr.aria-pressed]="seleccionada() === punto.clave" [attr.data-punto]="punto.clave" (click)="seleccionarPunto(punto.clave)">
+                <span class="d-block fw-semibold text-break">{{ punto.lugar?.nombre ?? ('Lugar #' + punto.lugarId + ' (no disponible)') }}</span>
+                <span class="badge mt-1" [class.text-bg-success]="punto.funcion === 'ORIGEN'" [class.text-bg-danger]="punto.funcion === 'DESTINO'" [class.text-bg-primary]="punto.funcion === 'PARADA'">{{ punto.etiqueta }}</span>
+                @if (punto.parada; as parada) { <span class="d-block small text-secondary mt-2">Km: {{ parada.kmAcumulado ?? 'Sin dato' }} · Minutos: {{ parada.minutosAcumulados ?? 'Sin dato' }}</span><span class="d-block small text-secondary">Ascenso: {{ parada.permiteAscenso ? 'Sí' : 'No' }} · Descenso: {{ parada.permiteDescenso ? 'Sí' : 'No' }}</span> }
+                @if (!punto.coordenadas) { <span class="d-block small text-secondary mt-1">Sin coordenadas válidas</span> }
+              </button></li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  </div>
+</div>
