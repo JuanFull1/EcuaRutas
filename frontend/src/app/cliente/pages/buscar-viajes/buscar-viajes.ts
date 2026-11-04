@@ -2,8 +2,10 @@
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   OnInit,
-  inject
+  inject,
+  viewChild
 } from '@angular/core';
 
 import {
@@ -13,11 +15,14 @@ import {
 } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import {
   ClienteApiService,
   LugarCliente,
-  ViajeCliente
+  ViajeCliente,
+  AsientoDisponibleCliente,
+  ReservaClienteResponse
 } from '../../services/cliente-api.service';
 
 @Component({
@@ -26,6 +31,7 @@ import {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     DatePipe,
     DecimalPipe
   ],
@@ -36,6 +42,7 @@ export class BuscarViajes implements OnInit {
 
   private readonly clienteApi = inject(ClienteApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogoReserva = viewChild.required<ElementRef<HTMLDialogElement>>('dialogoReserva');
 
   lugares: LugarCliente[] = [];
   viajes: ViajeCliente[] = [];
@@ -53,6 +60,14 @@ export class BuscarViajes implements OnInit {
   busquedaRealizada = false;
 
   error = '';
+  viajeSeleccionado: ViajeCliente | null = null;
+  asientosDisponibles: AsientoDisponibleCliente[] = [];
+  asientoSeleccionadoId: number | null = null;
+  documento = '';
+  cargandoAsientos = false;
+  reservando = false;
+  errorReserva = '';
+  reservaCreada: ReservaClienteResponse | null = null;
 
   ngOnInit(): void {
     this.cargarLugares();
@@ -142,5 +157,61 @@ export class BuscarViajes implements OnInit {
   limpiarFiltros(): void {
     this.cooperativaFiltro = '';
     this.precioMaximo = null;
+  }
+
+  abrirReserva(viaje: ViajeCliente): void {
+    this.viajeSeleccionado = viaje;
+    this.asientosDisponibles = [];
+    this.asientoSeleccionadoId = null;
+    this.errorReserva = '';
+    this.reservaCreada = null;
+    this.dialogoReserva().nativeElement.showModal();
+    this.cargandoAsientos = true;
+    this.clienteApi.obtenerAsientosDisponibles(viaje).subscribe({
+      next: respuesta => {
+        this.asientosDisponibles = respuesta.asientos;
+        this.cargandoAsientos = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.errorReserva = 'No se pudieron consultar los asientos. Actualiza e inténtalo de nuevo.';
+        this.cargandoAsientos = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  cerrarReserva(): void {
+    if (this.reservando) return;
+    this.dialogoReserva().nativeElement.close();
+  }
+
+  reservar(): void {
+    if (!this.viajeSeleccionado || !this.asientoSeleccionadoId || this.reservando) return;
+    if (!/^\d{10}$/.test(this.documento.trim())) {
+      this.errorReserva = 'Ingresa tu cédula de 10 dígitos.';
+      return;
+    }
+    this.reservando = true;
+    this.errorReserva = '';
+    this.clienteApi.crearReservaCliente({
+      viajeId: this.viajeSeleccionado.viajeId,
+      asientoBusId: this.asientoSeleccionadoId,
+      origenRutaParadaId: this.viajeSeleccionado.origenRutaParadaId,
+      destinoRutaParadaId: this.viajeSeleccionado.destinoRutaParadaId,
+      documento: this.documento.trim()
+    }).subscribe({
+      next: reserva => {
+        this.reservaCreada = reserva;
+        this.reservando = false;
+        this.asientosDisponibles = [];
+        this.cdr.markForCheck();
+      },
+      error: error => {
+        this.errorReserva = error?.error?.mensaje ?? 'No se pudo crear la reserva. Puede que el asiento ya no esté disponible.';
+        this.reservando = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 }
