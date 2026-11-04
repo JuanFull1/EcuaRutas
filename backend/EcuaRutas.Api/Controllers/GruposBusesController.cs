@@ -17,10 +17,36 @@ public class GruposBusesController : ControllerBase
         _servicio = servicio;
     }
 
+    private ActionResult? DenegarSiOtraCooperativa(long cooperativaId)
+    {
+        try
+        {
+            var contexto = User.ObtenerCooperativaContexto();
+
+            if (contexto is null || contexto == cooperativaId)
+            {
+                return null;
+            }
+
+            return StatusCode(403, new { mensaje = "No puede operar sobre otra cooperativa." });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.StatusCode, new { mensaje = ex.Message });
+        }
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<GrupoBusDto>>> Listar(
         [FromQuery] long cooperativaId, CancellationToken ct)
     {
+        var denegado = DenegarSiOtraCooperativa(cooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         return Ok(await _servicio.ListarAsync(cooperativaId, ct));
     }
 
@@ -28,7 +54,20 @@ public class GruposBusesController : ControllerBase
     public async Task<ActionResult<GrupoBusDto>> Obtener(long id, CancellationToken ct)
     {
         var grupo = await _servicio.ObtenerAsync(id, ct);
-        return grupo is null ? NotFound() : Ok(grupo);
+
+        if (grupo is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(grupo.CooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        return Ok(grupo);
     }
 
     [Authorize(Roles = "ADMIN,COOPERATIVA")]
@@ -36,6 +75,13 @@ public class GruposBusesController : ControllerBase
     public async Task<ActionResult<GrupoBusDto>> Crear(
         CrearGrupoBusRequest request, CancellationToken ct)
     {
+        var denegado = DenegarSiOtraCooperativa(request.CooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         try
         {
             var grupo = await _servicio.CrearAsync(request, ct);
@@ -56,6 +102,20 @@ public class GruposBusesController : ControllerBase
     public async Task<ActionResult<GrupoBusDto>> Actualizar(
         long id, ActualizarGrupoBusRequest request, CancellationToken ct)
     {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         try
         {
             var grupo = await _servicio.ActualizarAsync(id, request, ct);
@@ -71,6 +131,20 @@ public class GruposBusesController : ControllerBase
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> Desactivar(long id, CancellationToken ct)
     {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
         var desactivado = await _servicio.DesactivarAsync(id, ct);
         return desactivado ? NoContent() : NotFound();
     }
