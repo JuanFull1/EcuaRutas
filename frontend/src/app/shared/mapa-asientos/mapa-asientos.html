@@ -1,18 +1,38 @@
 <div class="mapa">
 
-  @for (piso of listaPisos(); track piso) {
+  @if (pisos() > 1 && vistaPisos() === 'pestanas') {
+    <div class="pestanas" role="tablist">
+      @for (piso of listaPisos(); track piso) {
+        <button
+          type="button"
+          role="tab"
+          class="pestana"
+          [class.activa]="pisoActivo() === piso"
+          [attr.aria-selected]="pisoActivo() === piso"
+          (click)="elegirPiso(piso)"
+        >
+          Piso {{ piso }} · {{ piso === 1 ? 'inferior' : 'superior' }}
+          <span class="pestana-total">{{ asientosDelPiso(piso) }}</span>
+        </button>
+      }
+    </div>
+  }
+
+  @for (piso of pisosVisibles(); track piso) {
     <div class="mapa-piso">
 
-      @if (pisos() > 1) {
-        <h6 class="mapa-titulo">Piso {{ piso }}</h6>
+      @if (pisos() > 1 && vistaPisos() === 'juntos') {
+        <h6 class="mapa-titulo">Piso {{ piso }} · {{ piso === 1 ? 'inferior' : 'superior' }}</h6>
       }
 
       <div class="bus-contenedor">
 
-        <span class="rueda rueda-1"></span>
-        <span class="rueda rueda-2"></span>
-        <span class="rueda rueda-3"></span>
-        <span class="rueda rueda-4"></span>
+        @if (piso === 1) {
+          <span class="rueda rueda-1"></span>
+          <span class="rueda rueda-2"></span>
+          <span class="rueda rueda-3"></span>
+          <span class="rueda rueda-4"></span>
+        }
 
       <div class="bus">
 
@@ -20,8 +40,14 @@
           <div class="parabrisas"></div>
           <span class="bus-faro bus-faro-izq"></span>
           <span class="bus-faro bus-faro-der"></span>
-          <span class="bus-etiqueta">FRENTE</span>
-          <span class="bus-puerta">PUERTA</span>
+          <span class="bus-etiqueta">
+            {{ piso === 1 ? 'FRENTE' : 'PISO SUPERIOR' }}
+          </span>
+          @if (piso === 1) {
+            <span class="bus-puerta">PUERTA</span>
+          } @else {
+            <span class="bus-puerta bus-escalera">ESCALERA</span>
+          }
         </div>
 
         <div class="bus-cuadricula" [style.--columnas]="columnas()">
@@ -68,7 +94,7 @@
         </div>
 
         <div class="bus-fondo">
-          @if (tieneBanio()) {
+          @if (tieneBanio() && piso === 1) {
             <span class="bus-banio">WC</span>
           }
           <span class="bus-etiqueta-fondo">ATRÁS</span>

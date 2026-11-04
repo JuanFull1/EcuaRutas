@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 
 export interface PosicionAsiento {
   piso: number;
@@ -47,6 +47,8 @@ export class MapaAsientos {
   readonly tieneBanio = input(false);
   readonly mostrarPrecio = input(false);
   readonly seleccionado = input<PosicionAsiento | null>(null);
+  /** Con varios pisos: una pestaña por piso o todos a la vez. */
+  readonly vistaPisos = input<'pestanas' | 'juntos'>('pestanas');
 
   readonly celdaClick = output<PosicionAsiento>();
   readonly mover = output<MoverAsientoEvento>();
@@ -61,6 +63,24 @@ export class MapaAsientos {
   readonly listaColumnas = computed(() =>
     Array.from({ length: this.columnas() }, (_, i) => i + 1)
   );
+
+  private readonly pisoElegido = signal(1);
+
+  readonly pisoActivo = computed(() => Math.min(this.pisoElegido(), this.pisos()));
+
+  readonly pisosVisibles = computed(() =>
+    this.vistaPisos() === 'pestanas' && this.pisos() > 1
+      ? [this.pisoActivo()]
+      : this.listaPisos()
+  );
+
+  elegirPiso(piso: number): void {
+    this.pisoElegido.set(piso);
+  }
+
+  asientosDelPiso(piso: number): number {
+    return this.asientos().filter(a => a.piso === piso).length;
+  }
 
   private readonly indice = computed(() => {
     const mapa = new Map<string, AsientoMapa>();
