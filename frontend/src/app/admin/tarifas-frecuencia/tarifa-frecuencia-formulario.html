@@ -1,0 +1,52 @@
+<section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-formulario-tarifa">
+  <div class="card-header bg-white border-0 pt-3"><h2 id="titulo-formulario-tarifa" class="h5 mb-0">{{ tarifa() ? 'Editar tarifa' : 'Nueva tarifa' }}</h2></div>
+  <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate [attr.aria-busy]="guardando() || cargandoParadas()">
+    <p class="text-secondary small">Frecuencia #{{ frecuencia()?.id }} · Ruta #{{ frecuencia()?.rutaId }}. Los campos marcados con * son obligatorios.</p>
+    @if (cargandoParadas()) { <p role="status">Cargando paradas...</p> }
+    @if (errorParadas(); as mensaje) { <div class="alert alert-warning" role="alert">{{ mensaje }} <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="guardando() || cargandoParadas()" (click)="reintentarParadas.emit()">Reintentar paradas</button></div> }
+    @if (!cargandoParadas() && !errorParadas() && paradasOrdenadas().length < 2) { <p class="alert alert-warning" role="status">Se necesitan al menos dos paradas con orden distinto para definir un tramo.</p> }
+    <fieldset [disabled]="!autorizado() || guardando() || cargandoParadas() || !!errorParadas()">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label for="tarifa-origen" class="form-label">Parada de origen *</label>
+          <select #origenInput id="tarifa-origen" class="form-select" formControlName="origenRutaParadaId" required [class.is-invalid]="invalido('origenRutaParadaId')" [attr.aria-invalid]="invalido('origenRutaParadaId')" aria-describedby="tarifa-error-tramo">
+            <option [ngValue]="null">Selecciona el origen</option>
+            @for (parada of paradasOrdenadas(); track parada.id) { <option [ngValue]="parada.id">{{ etiqueta(parada) }}</option> }
+          </select>
+          @if (invalido('origenRutaParadaId')) { <div class="invalid-feedback">Selecciona una parada de origen válida.</div> }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="tarifa-destino" class="form-label">Parada de destino *</label>
+          <select id="tarifa-destino" class="form-select" formControlName="destinoRutaParadaId" required [class.is-invalid]="invalido('destinoRutaParadaId')" [attr.aria-invalid]="invalido('destinoRutaParadaId')" aria-describedby="tarifa-ayuda-destino tarifa-error-tramo">
+            <option [ngValue]="null">Selecciona el destino</option>
+            @for (parada of destinosDisponibles(); track parada.id) { <option [ngValue]="parada.id">{{ etiqueta(parada) }}</option> }
+          </select>
+          <div id="tarifa-ayuda-destino" class="form-text">Selecciona primero el origen; el destino debe estar después en el recorrido.</div>
+          @if (invalido('destinoRutaParadaId')) { <div class="invalid-feedback">Selecciona una parada de destino válida.</div> }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="tarifa-precio" class="form-label">Precio base (USD) *</label>
+          <input id="tarifa-precio" type="text" inputmode="decimal" class="form-control" formControlName="precioBase" required placeholder="0,00" [class.is-invalid]="invalido('precioBase')" [attr.aria-invalid]="invalido('precioBase')" aria-describedby="tarifa-ayuda-precio tarifa-error-precio">
+          <div id="tarifa-ayuda-precio" class="form-text">Desde 0 hasta 99.999.999,99; máximo dos decimales. Puedes usar coma o punto decimal.</div>
+          @if (invalido('precioBase')) { <div id="tarifa-error-precio" class="invalid-feedback">Ingresa un precio válido dentro del rango, sin más de dos decimales.</div> }
+        </div>
+      </div>
+      @if (form.touched && form.errors) {
+        <div id="tarifa-error-tramo" class="alert alert-danger mt-3" role="alert">
+          @if (form.hasError('frecuencia')) { La tarifa debe pertenecer a la frecuencia seleccionada. }
+          @else if (form.hasError('frecuenciaInactiva')) { La frecuencia está inactiva y no admite esta operación. }
+          @else if (form.hasError('origenAjeno') || form.hasError('destinoAjeno')) { Las dos paradas deben pertenecer a la ruta de esta frecuencia. }
+          @else { El origen y el destino deben ser distintos y el orden de origen debe ser menor que el de destino. }
+        </div>
+      }
+      @if (tarifa(); as actual) { <p class="text-secondary mt-3 mb-0">Estado actual: {{ actual.activa ? 'Activa' : 'Inactiva' }}. La edición conserva este estado.</p> }
+    </fieldset>
+    @if (error(); as mensaje) { <div class="alert alert-danger mt-3" role="alert">{{ mensaje }}</div> }
+    <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+      <button type="button" class="btn btn-outline-secondary" [disabled]="guardando()" (click)="cancelar.emit()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="!autorizado() || guardando() || cargandoParadas() || !!errorParadas()">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }{{ guardando() ? 'Guardando...' : 'Guardar tarifa' }}
+      </button>
+    </div>
+  </form>
+</section>
