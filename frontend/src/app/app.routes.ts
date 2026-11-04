@@ -242,6 +242,30 @@ export const routes: Routes = [
       },
 
       {
+        path: 'grupos/nuevo',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/grupos/grupo-formulario'
+          )
+            .then(
+              m => m.GrupoFormulario
+            )
+      },
+
+      {
+        path: 'grupos/:id/editar',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/grupos/grupo-formulario'
+          )
+            .then(
+              m => m.GrupoFormulario
+            )
+      },
+
+      {
         path: 'grupos',
 
         loadComponent: () =>
