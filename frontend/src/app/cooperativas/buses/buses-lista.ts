@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -23,6 +24,7 @@ export class BusesLista implements OnInit {
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
   readonly filtroEstado = signal<EstadoBus | ''>('');
+  readonly errorAccion = signal<string | null>(null);
 
   ngOnInit(): void {
     this.cargar();
@@ -42,6 +44,32 @@ export class BusesLista implements OnInit {
   cambiarFiltro(valor: string): void {
     this.filtroEstado.set(valor as EstadoBus | '');
     this.cargar();
+  }
+
+  darDeBaja(bus: Bus): void {
+    if (!confirm(`¿Dar de baja el bus ${bus.numeroInterno} (${bus.placa})?`)) {
+      return;
+    }
+
+    this.errorAccion.set(null);
+
+    this.busService.darDeBaja(bus.id).subscribe({
+      next: () => this.cargar(),
+      error: (e: HttpErrorResponse) => this.errorAccion.set(this.mensajeBaja(e))
+    });
+  }
+
+  private mensajeBaja(e: HttpErrorResponse): string {
+    switch (e.status) {
+      case 0:
+        return 'No se pudo conectar con el servidor. Verifica tu conexión.';
+      case 403:
+        return 'No puedes dar de baja un bus de otra cooperativa.';
+      case 404:
+        return 'El bus ya no existe.';
+      default:
+        return 'No se pudo dar de baja el bus. Inténtalo de nuevo.';
+    }
   }
 
   cargar(): void {

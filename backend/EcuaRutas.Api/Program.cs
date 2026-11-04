@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using EcuaRutas.Api.Configuration;
 
 var builder =
     WebApplication.CreateBuilder(
@@ -99,6 +100,20 @@ builder.Services.AddScoped<
 
 builder.Services.AddScoped<
     NotificacionesService
+>();
+
+builder.Services.Configure<CorreoSmtpOptions>(
+    builder.Configuration.GetSection(
+        CorreoSmtpOptions.Seccion
+    )
+);
+
+builder.Services.AddScoped<
+    CorreoSmtpService
+>();
+
+builder.Services.AddHostedService<
+    NotificacionesCorreoWorker
 >();
 
 builder.Services.AddHostedService<

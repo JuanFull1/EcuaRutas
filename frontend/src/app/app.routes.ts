@@ -215,6 +215,14 @@ export const routes: Routes = [
       },
 
       {
+        path: 'buses/:id/editar',
+
+        loadComponent: () =>
+          import('./cooperativas/buses/bus-formulario')
+            .then(m => m.BusFormulario)
+      },
+
+      {
         path: 'buses',
 
         loadComponent: () =>
@@ -224,6 +232,22 @@ export const routes: Routes = [
             .then(
               m => m.BusesLista
             )
+      },
+
+      {
+        path: 'grupos',
+
+        loadComponent: () =>
+          import('./cooperativas/grupos/grupos-lista')
+            .then(m => m.GruposLista)
+      },
+
+      {
+        path: 'plantillas',
+
+        loadComponent: () =>
+          import('./cooperativas/plantillas/plantillas-lista')
+            .then(m => m.PlantillasLista)
       },
 
       {
