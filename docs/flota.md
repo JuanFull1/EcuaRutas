@@ -59,6 +59,23 @@ Si se intenta listar, consultar, crear, actualizar o dar de baja un bus de otra 
 
 La misma validación se aplica a los grupos de buses (`/api/grupos-buses`): se comprueba la cooperativa al listar, consultar, crear, actualizar y desactivar un grupo.
 
+### Plantillas de asientos
+
+Una plantilla puede ser **general** (sin cooperativa asociada, `cooperativaId` nulo) o pertenecer a una cooperativa. Las reglas para un usuario con rol `COOPERATIVA` u `OFICINISTA` son:
+
+| Operación | Plantilla propia | Plantilla general | Plantilla de otra cooperativa |
+|-----------|------------------|-------------------|-------------------------------|
+| Consultar la plantilla y su disposición de asientos | Permitido | Permitido | 403 |
+| Asignarla a un bus | Permitido | Permitido | 403 |
+| Crear | Permitido, en su cooperativa | 403 (solo ADMIN) | 403 |
+| Definir la disposición de asientos | Permitido | 403 (solo ADMIN) | 403 |
+
+Reglas adicionales:
+
+- Al listar plantillas sin `cooperativaId`, se usa la cooperativa del token; un usuario de cooperativa no puede listar las de otra (403).
+- Asignar una plantilla a un bus y consultar los asientos de un bus (`/api/buses/{busId}/...`) exige que el bus sea de la cooperativa del usuario.
+- El rol `ADMIN` puede operar sobre cualquier plantilla, incluidas las generales.
+
 ## Pantallas del rol COOPERATIVA
 
 | Pantalla | Ruta | Qué permite |
