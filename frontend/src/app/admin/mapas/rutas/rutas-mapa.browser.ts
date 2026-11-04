@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 // Entrada exclusiva de prueba: nunca se registra en la navegación de la aplicación.
 import { bootstrapApplication } from '@angular/platform-browser';
 import { delay, of } from 'rxjs';
@@ -38,7 +39,7 @@ contenedor.className = 'p-3';
 contenedor.append(document.createElement('app-rutas-mapa'));
 document.body.replaceChildren(aviso, desmontar, contenedor);
 bootstrapApplication(RutasMapa, {
-  providers: [
+  providers: [provideRouter([]),
     { provide: RutaService, useValue: { listar: () => of(rutas).pipe(delay(40)) } },
     { provide: LugarService, useValue: { listar: () => of(lugares).pipe(delay(40)) } },
     { provide: RutaParadaService, useValue: { listar: (rutaId: number) => of(paradas.filter(parada => parada.rutaId === rutaId)).pipe(delay(100)) } }

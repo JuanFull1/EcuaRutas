@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 // Entrada exclusiva de prueba: nunca se registra en la navegación de la aplicación.
 import { bootstrapApplication } from '@angular/platform-browser';
 import { of } from 'rxjs';
@@ -21,7 +22,7 @@ contenedor.append(document.createElement('app-lugares-mapa'));
 document.body.replaceChildren(aviso, contenedor);
 
 bootstrapApplication(LugaresMapa, {
-  providers: [{ provide: LugarService, useValue: { listar: () => of(lugaresPrueba) } }]
+  providers: [provideRouter([]),{ provide: LugarService, useValue: { listar: () => of(lugaresPrueba) } }]
 }).catch((causa: unknown) => {
   console.error(causa);
   document.body.dataset['errorPrueba'] = 'No se pudo iniciar la entrada de pruebas.';

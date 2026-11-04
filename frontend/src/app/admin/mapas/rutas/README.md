@@ -15,7 +15,8 @@ se resuelven desde `LugarDto.ubicacion`, siempre en orden `[longitud, latitud]`.
 Solo se consumen GET `/api/rutas`, GET `/api/lugares` y
 GET `/api/rutas/{rutaId}/paradas`, mediante los servicios existentes y su
 configuración HTTP/JWT. Los GET públicos no convierten esta pantalla en una ruta
-pública: su conexión al área administrativa queda para el Commit 4.
+pública: está protegido en `/admin/mapas/rutas` y admite `?rutaId=ID&paradaId=ID`.
+Consulta los detalles de navegación en [la integración](../README.md).
 
 ## Secuencia y trazado referencial
 

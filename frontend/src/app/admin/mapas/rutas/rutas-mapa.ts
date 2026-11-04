@@ -1,6 +1,8 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, NgZone, OnDestroy, OnInit, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import type { Map as MapaLibre } from 'maplibre-gl';
 import { Subscription, finalize } from 'rxjs';
 
@@ -15,11 +17,12 @@ import { RutaService } from '../../rutas/ruta.service';
 import { leerLugares } from '../lugares/lugar-geografico';
 import { construirRecorrido, leerParadas, leerRutas, RecorridoGeografico } from './recorrido-geografico';
 import { RecursosRecorrido } from './recursos-recorrido';
+import { identificadorMapa } from '../navegacion-mapa';
 
 @Component({
   selector: 'app-rutas-mapa',
   standalone: true,
-  imports: [Mapa],
+  imports: [Mapa, RouterLink, FormsModule],
   templateUrl: './rutas-mapa.html',
   styleUrl: './rutas-mapa.css'
 })
@@ -30,6 +33,8 @@ export class RutasMapa implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly documento = inject(DOCUMENT);
   private readonly zona = inject(NgZone);
+  private readonly ruta = inject(ActivatedRoute, { optional: true });
+  private readonly parametros = signal<ParamMap | null>(null);
   private consultaParadas: Subscription | null = null;
   private mapa: MapaLibre | null = null;
   private recursos: RecursosRecorrido | null = null;
@@ -49,6 +54,8 @@ export class RutasMapa implements OnInit, OnDestroy {
   readonly errorLugares = signal<string | null>(null);
   readonly errorParadas = signal<string | null>(null);
   readonly errorMapa = signal<string | null>(null);
+  readonly avisoNavegacion = signal<string | null>(null);
+  readonly avisoParada = signal<string | null>(null);
   readonly mapaDisponible = signal(false);
   readonly cargando = computed(() => this.cargandoRutas() || this.cargandoLugares() || this.cargandoParadas());
   readonly rutaSeleccionada = computed(() => this.rutas().find(ruta => ruta.id === this.rutaId()) ?? null);
@@ -70,9 +77,46 @@ export class RutasMapa implements OnInit, OnDestroy {
       const recorrido = this.recorrido();
       untracked(() => this.sincronizar(recorrido));
     });
+    effect(() => {
+      const parametros = this.parametros();
+      const rutas = this.rutas();
+      const cargando = this.cargandoRutas();
+      const error = this.errorRutas();
+      if (!parametros || cargando || error) return;
+      untracked(() => {
+        this.avisoNavegacion.set(null);
+        const id = identificadorMapa(parametros, 'rutaId');
+        if (id === null && !parametros.has('paradaId')) return;
+        if (id === null || id === 'invalido') {
+          this.seleccionarRuta(null);
+          this.avisoNavegacion.set('El identificador de la ruta no es válido; una parada requiere su ruta.');
+        } else if (!rutas.some(ruta => ruta.id === id)) {
+          this.seleccionarRuta(null);
+          this.avisoNavegacion.set('La ruta solicitada no existe en el catálogo disponible.');
+        } else this.seleccionarRuta(id);
+      });
+    });
+    effect(() => {
+      const parametros = this.parametros();
+      const recorrido = this.recorrido();
+      untracked(() => {
+        this.avisoParada.set(null);
+        if (!parametros || !recorrido || identificadorMapa(parametros, 'rutaId') !== recorrido.rutaId) return;
+        const id = identificadorMapa(parametros, 'paradaId');
+        if (id === null) return;
+        this.seleccionada.set(null);
+        this.recursos?.seleccionar(null);
+        if (id === 'invalido') this.avisoParada.set('El identificador de la parada no es válido.');
+        else if (!recorrido.puntos.some(punto => punto.parada?.id === id)) this.avisoParada.set('La parada solicitada no pertenece a esta ruta o ya no está disponible.');
+        else this.seleccionarPunto(`parada:${id}`);
+      });
+    });
   }
 
-  ngOnInit(): void { this.actualizar(); }
+  ngOnInit(): void {
+    this.ruta?.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(parametros => this.parametros.set(parametros));
+    this.actualizar();
+  }
 
   actualizar(): void {
     if (this.destruido || this.cargando()) return;

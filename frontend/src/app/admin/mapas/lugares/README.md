@@ -2,8 +2,8 @@
 
 `LugaresMapa` (`app-lugares-mapa`) es una pantalla standalone de consulta. Importa
 el `Mapa` existente y consume la instancia emitida por `mapaListo`. No crea otro
-mapa ni altera `shared/maps`. La conexión al menú y a las rutas queda para el
-Commit 4 del PR 4.
+mapa ni altera `shared/maps`. Está integrado en `/admin/mapas/lugares` y admite
+`?lugarId=ID`. Consulta los detalles de navegación en [la integración](../README.md).
 
 ## Datos y comportamiento
 

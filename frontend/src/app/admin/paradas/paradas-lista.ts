@@ -1,6 +1,7 @@
 import { Component, DestroyRef, ElementRef, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, finalize } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { mensajeErrorLugar as mensajeErrorParada } from '../lugares/lugar-error';
@@ -15,7 +16,7 @@ import { RutaParadaService } from './ruta-parada.service';
 @Component({
   selector: 'app-paradas-lista',
   standalone: true,
-  imports: [ParadaFormulario],
+  imports: [ParadaFormulario, RouterLink],
   templateUrl: './paradas-lista.html',
   styleUrl: './paradas-lista.css'
 })

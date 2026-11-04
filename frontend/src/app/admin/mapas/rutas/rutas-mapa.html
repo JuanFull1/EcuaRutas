@@ -6,6 +6,12 @@
       <button type="button" class="btn btn-outline-primary" [disabled]="cargando()" (click)="actualizar()"><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Actualizar</button>
     </div>
   </section>
+  <nav class="d-flex flex-wrap gap-2 mb-3" aria-label="Volver a la gestión">
+    <a class="btn btn-outline-secondary btn-sm" routerLink="/admin/rutas"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Gestión de rutas</a>
+    <a class="btn btn-outline-secondary btn-sm" routerLink="/admin/paradas">Gestión de paradas</a>
+  </nav>
+  @if (avisoNavegacion(); as mensaje) { <p class="alert alert-warning" role="status">{{ mensaje }}</p> }
+  @if (avisoParada(); as mensaje) { <p class="alert alert-warning" role="status">{{ mensaje }}</p> }
   <section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-selector-recorrido">
     <div class="card-body">
       <h2 id="titulo-selector-recorrido" class="h5">Seleccionar ruta</h2>
@@ -13,7 +19,7 @@
         <div class="col-12 col-md-5"><label for="buscar-ruta-mapa" class="form-label">Buscar por nombre</label><input #buscar id="buscar-ruta-mapa" type="search" class="form-control" [value]="busqueda()" (input)="busqueda.set(buscar.value)" placeholder="Nombre de la ruta"></div>
         <div class="col-12 col-md-7">
           <label for="ruta-mapa-selector" class="form-label">Ruta</label>
-          <select #selector id="ruta-mapa-selector" class="form-select" [value]="rutaId() ?? ''" [disabled]="cargandoRutas()" (change)="cambiarRuta(selector.value)">
+          <select id="ruta-mapa-selector" class="form-select" [ngModel]="rutaId() ?? ''" [disabled]="cargandoRutas()" (ngModelChange)="cambiarRuta($event)">
             <option value="">Selecciona una ruta</option>
             @if (seleccionFueraBusqueda() && rutaSeleccionada(); as actual) { <option [value]="actual.id">{{ actual.nombre }} · #{{ actual.id }} · Seleccionada</option> }
             @for (ruta of rutasFiltradas(); track ruta.id) { <option [value]="ruta.id">{{ ruta.nombre }} · #{{ ruta.id }} · {{ ruta.activa ? 'Activa' : 'Inactiva' }}</option> }

@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, NgZone, OnDestroy, OnInit, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
 import type { Map as MapaLibre } from 'maplibre-gl';
 import { finalize } from 'rxjs';
 
@@ -10,11 +11,12 @@ import { LugarDto } from '../../lugares/lugar.model';
 import { LugarService } from '../../lugares/lugar.service';
 import { coordenadasMapa, leerLugares } from './lugar-geografico';
 import { MarcadoresLugares } from './marcadores-lugares';
+import { identificadorMapa } from '../navegacion-mapa';
 
 @Component({
   selector: 'app-lugares-mapa',
   standalone: true,
-  imports: [Mapa],
+  imports: [Mapa, RouterLink],
   templateUrl: './lugares-mapa.html',
   styleUrl: './lugares-mapa.css'
 })
@@ -23,6 +25,8 @@ export class LugaresMapa implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly documento = inject(DOCUMENT);
   private readonly zona = inject(NgZone);
+  private readonly ruta = inject(ActivatedRoute, { optional: true });
+  private readonly parametros = signal<ParamMap | null>(null);
   private mapa: MapaLibre | null = null;
   private marcadores: MarcadoresLugares | null = null;
   private destruido = false;
@@ -35,6 +39,7 @@ export class LugaresMapa implements OnInit, OnDestroy {
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
   readonly errorMarcadores = signal<string | null>(null);
+  readonly avisoNavegacion = signal<string | null>(null);
   readonly mapaDisponible = signal(false);
   readonly lugaresFiltrados = computed(() => {
     const texto = this.busqueda().trim().toLocaleLowerCase('es');
@@ -52,9 +57,28 @@ export class LugaresMapa implements OnInit, OnDestroy {
       // La selección no modifica el conjunto de marcadores ni dispara otro ajuste de cámara.
       untracked(() => this.sincronizar(visibles));
     });
+    effect(() => {
+      const parametros = this.parametros();
+      const lugares = this.lugares();
+      const cargando = this.cargando();
+      const error = this.error();
+      if (!parametros || cargando || error) return;
+      untracked(() => {
+        this.avisoNavegacion.set(null);
+        const id = identificadorMapa(parametros, 'lugarId');
+        if (id === null) return;
+        this.limpiarFiltros();
+        this.seleccionadoId.set(null);
+        this.marcadores?.seleccionar(null);
+        if (id === 'invalido') this.avisoNavegacion.set('El identificador del lugar no es válido.');
+        else if (!lugares.some(lugar => lugar.id === id)) this.avisoNavegacion.set('El lugar solicitado no existe en el catálogo disponible.');
+        else this.seleccionar(id);
+      });
+    });
   }
 
   ngOnInit(): void {
+    this.ruta?.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(parametros => this.parametros.set(parametros));
     this.cargar();
   }
 

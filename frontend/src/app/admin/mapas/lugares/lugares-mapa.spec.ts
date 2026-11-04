@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -231,7 +232,7 @@ describe('Interfaz Mapa de lugares', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    TestBed.configureTestingModule({ imports: [LugaresMapa], providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ imports: [LugaresMapa], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(LugaresMapa);
     componente = fixture.componentInstance;

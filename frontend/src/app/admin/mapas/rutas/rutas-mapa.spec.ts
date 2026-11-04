@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -291,7 +292,7 @@ describe('Interfaz Mapa de rutas y paradas', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    TestBed.configureTestingModule({ imports: [RutasMapa], providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ imports: [RutasMapa], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(RutasMapa); componente = fixture.componentInstance;
   });
