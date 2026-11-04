@@ -153,8 +153,14 @@ export class Layout {
             },
 
             {
+              texto: 'Grupos',
+              icono: 'bi-collection',
+              ruta: '/cooperativas/grupos'
+            },
+            {
               texto: 'Plantillas',
-              icono: 'bi-grid-3x3-gap'
+              icono: 'bi-grid-3x3-gap',
+              ruta: '/cooperativas/plantillas'
             },
 
             {

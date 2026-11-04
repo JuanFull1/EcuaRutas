@@ -1,0 +1,91 @@
+<div class="container-fluid px-0">
+
+  <section class="bg-white border rounded-4 p-4 mb-4">
+
+    <span class="badge text-bg-primary mb-3">
+      Flota
+    </span>
+
+    <h1 class="h3 fw-bold">
+      Grupos de buses
+    </h1>
+
+    <p class="text-secondary mb-0">
+      Consulta los grupos en los que se organizan los buses de la cooperativa.
+    </p>
+
+  </section>
+
+  @if (error(); as mensaje) {
+    <div
+      class="alert alert-danger d-flex justify-content-between align-items-center gap-3"
+      role="alert"
+    >
+      <span>{{ mensaje }}</span>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-danger"
+        (click)="cargar()"
+      >
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <div class="card border-0 shadow-sm">
+
+    <div class="table-responsive">
+
+      <table class="table table-hover align-middle mb-0">
+
+        <thead class="table-light">
+          <tr>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (cargando()) {
+            <tr>
+              <td colspan="3" class="text-center text-secondary py-4">
+                <span
+                  class="spinner-border spinner-border-sm me-2"
+                  aria-hidden="true"
+                ></span>
+                Cargando grupos...
+              </td>
+            </tr>
+          } @else if (!error() && grupos().length === 0) {
+            <tr>
+              <td colspan="3" class="text-center text-secondary py-4">
+                No hay grupos registrados.
+              </td>
+            </tr>
+          }
+
+          @for (grupo of grupos(); track grupo.id) {
+            <tr>
+              <td class="fw-semibold">{{ grupo.nombre }}</td>
+              <td>{{ grupo.descripcion ?? '-' }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class]="'badge ' + (grupo.activo ? 'text-bg-success' : 'text-bg-secondary')"
+                >
+                  {{ grupo.activo ? 'ACTIVO' : 'INACTIVO' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>

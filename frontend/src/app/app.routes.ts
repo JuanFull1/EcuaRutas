@@ -175,6 +175,22 @@ export const routes: Routes = [
       },
 
       {
+        path: 'grupos',
+
+        loadComponent: () =>
+          import('./cooperativas/grupos/grupos-lista')
+            .then(m => m.GruposLista)
+      },
+
+      {
+        path: 'plantillas',
+
+        loadComponent: () =>
+          import('./cooperativas/plantillas/plantillas-lista')
+            .then(m => m.PlantillasLista)
+      },
+
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'inicio'
