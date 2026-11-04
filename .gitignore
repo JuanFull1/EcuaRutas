@@ -29,3 +29,5 @@ npm-debug.log*
 
 # Comprobantes de pago (almacenamiento privado)
 backend/EcuaRutas.Api/Storage/Comprobantes/
+
+backend/EcuaRutas.Api/wwwroot/uploads/

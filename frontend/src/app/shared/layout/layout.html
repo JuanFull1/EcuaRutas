@@ -40,9 +40,12 @@
           class="nav-link"
           [routerLink]="item.ruta"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{
-            exact: true
-          }"
+          [routerLinkActiveOptions]="item.ruta?.startsWith('/admin/mapas/') ? {
+            paths: 'exact',
+            queryParams: 'ignored',
+            matrixParams: 'ignored',
+            fragment: 'ignored'
+          } : { exact: true }"
           (click)="cerrarMenu()"
         >
 
