@@ -191,6 +191,18 @@ export const routes: Routes = [
       },
 
       {
+        path: 'configuracion',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/configuracion/mi-cooperativa'
+          )
+            .then(
+              m => m.MiCooperativa
+            )
+      },
+
+      {
         path: 'buses/nuevo',
 
         loadComponent: () =>

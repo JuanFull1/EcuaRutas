@@ -17,8 +17,7 @@ public class CooperativasController
         _cooperativasService;
 
     public CooperativasController(
-        ICooperativasService
-            cooperativasService
+        ICooperativasService cooperativasService
     )
     {
         _cooperativasService =
@@ -29,9 +28,7 @@ public class CooperativasController
     [Authorize(Roles = "ADMIN")]
     public async Task<
         ActionResult<
-            IReadOnlyList<
-                CooperativaDto
-            >
+            IReadOnlyList<CooperativaDto>
         >
     > Listar(
         [FromQuery]
@@ -86,13 +83,10 @@ public class CooperativasController
     [HttpPost("admin")]
     [Authorize(Roles = "ADMIN")]
     public async Task<
-        ActionResult<
-            CrearCooperativaResponse
-        >
+        ActionResult<CrearCooperativaResponse>
     > Crear(
         [FromBody]
-        CrearCooperativaRequest
-            request
+        CrearCooperativaRequest request
     )
     {
         try
@@ -116,17 +110,14 @@ public class CooperativasController
             );
         }
         catch (
-            InvalidOperationException
-                exception
+            InvalidOperationException exception
         )
         {
             if (
-                exception.Message
-                    .Contains(
-                        "Ya existe",
-                        StringComparison
-                            .OrdinalIgnoreCase
-                    )
+                exception.Message.Contains(
+                    "Ya existe",
+                    StringComparison.OrdinalIgnoreCase
+                )
             )
             {
                 return Conflict(
@@ -156,8 +147,7 @@ public class CooperativasController
         long id,
 
         [FromBody]
-        ActualizarCooperativaAdminRequest
-            request
+        ActualizarCooperativaAdminRequest request
     )
     {
         try
@@ -185,17 +175,14 @@ public class CooperativasController
             );
         }
         catch (
-            InvalidOperationException
-                exception
+            InvalidOperationException exception
         )
         {
             if (
-                exception.Message
-                    .Contains(
-                        "Ya existe",
-                        StringComparison
-                            .OrdinalIgnoreCase
-                    )
+                exception.Message.Contains(
+                    "Ya existe",
+                    StringComparison.OrdinalIgnoreCase
+                )
             )
             {
                 return Conflict(
@@ -226,8 +213,7 @@ public class CooperativasController
             long id,
 
             [FromBody]
-            CambiarEstadoCooperativaRequest
-                request
+            CambiarEstadoCooperativaRequest request
         )
     {
         var existe =
@@ -274,9 +260,7 @@ public class CooperativasController
         if (!cooperativaId.HasValue)
         {
             return StatusCode(
-                StatusCodes
-                    .Status403Forbidden,
-
+                StatusCodes.Status403Forbidden,
                 new
                 {
                     message =
@@ -313,8 +297,7 @@ public class CooperativasController
         ActionResult<CooperativaDto>
     > ActualizarMiCooperativa(
         [FromBody]
-        ActualizarMiCooperativaRequest
-            request
+        ActualizarMiCooperativaRequest request
     )
     {
         var cooperativaId =
@@ -323,9 +306,7 @@ public class CooperativasController
         if (!cooperativaId.HasValue)
         {
             return StatusCode(
-                StatusCodes
-                    .Status403Forbidden,
-
+                StatusCodes.Status403Forbidden,
                 new
                 {
                     message =
@@ -359,8 +340,70 @@ public class CooperativasController
             );
         }
         catch (
-            InvalidOperationException
-                exception
+            InvalidOperationException exception
+        )
+        {
+            return BadRequest(
+                new
+                {
+                    message =
+                        exception.Message
+                }
+            );
+        }
+    }
+
+    [HttpPost("mi-cooperativa/logo")]
+    [Authorize(Roles = "COOPERATIVA")]
+    [Consumes("multipart/form-data")]
+    public async Task<
+        ActionResult<CooperativaDto>
+    > SubirLogo(
+        [FromForm]
+        IFormFile archivo
+    )
+    {
+        var cooperativaId =
+            ObtenerCooperativaId();
+
+        if (!cooperativaId.HasValue)
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new
+                {
+                    message =
+                        "El usuario no tiene una cooperativa asociada."
+                }
+            );
+        }
+
+        try
+        {
+            var cooperativa =
+                await _cooperativasService
+                    .ActualizarLogoAsync(
+                        cooperativaId.Value,
+                        archivo
+                    );
+
+            if (cooperativa == null)
+            {
+                return NotFound(
+                    new
+                    {
+                        message =
+                            "La cooperativa asociada al usuario no existe."
+                    }
+                );
+            }
+
+            return Ok(
+                cooperativa
+            );
+        }
+        catch (
+            InvalidOperationException exception
         )
         {
             return BadRequest(

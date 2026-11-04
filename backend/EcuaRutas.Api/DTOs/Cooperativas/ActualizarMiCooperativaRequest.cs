@@ -41,12 +41,6 @@ public class ActualizarMiCooperativaRequest
     public string? Direccion { get; set; }
 
     [StringLength(
-        500,
-        ErrorMessage = "La URL del logo no puede superar los 500 caracteres."
-    )]
-    public string? LogoUrl { get; set; }
-
-    [StringLength(
         20,
         ErrorMessage = "El color primario no puede superar los 20 caracteres."
     )]

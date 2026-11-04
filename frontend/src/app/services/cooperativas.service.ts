@@ -35,6 +35,12 @@ export class CooperativasService {
   private readonly url =
     `${API_URL}/cooperativas`;
 
+  private readonly backendUrl =
+    API_URL.replace(
+      /\/api\/?$/,
+      ''
+    );
+
   listarAdmin(
     busqueda?: string,
     activa?: boolean | null
@@ -151,5 +157,56 @@ export class CooperativasService {
       `${this.url}/mi-cooperativa`,
       datos
     );
+  }
+
+  subirLogo(
+    archivo: File
+  ): Observable<Cooperativa> {
+
+    const formData =
+      new FormData();
+
+    formData.append(
+      'archivo',
+      archivo
+    );
+
+    return this.http.post<
+      Cooperativa
+    >(
+      `${this.url}/mi-cooperativa/logo`,
+      formData
+    );
+  }
+
+  resolverLogoUrl(
+    ruta:
+      string |
+      null |
+      undefined
+  ): string {
+
+    if (!ruta) {
+      return '';
+    }
+
+    if (
+      ruta.startsWith(
+        'http://'
+      ) ||
+      ruta.startsWith(
+        'https://'
+      )
+    ) {
+      return ruta;
+    }
+
+    return `${
+      this.backendUrl
+    }${
+      ruta.startsWith('/')
+        ? ruta
+        : `/${ruta}`
+    }`;
   }
 }

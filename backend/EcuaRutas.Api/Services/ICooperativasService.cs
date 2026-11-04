@@ -1,4 +1,5 @@
 using EcuaRutas.Api.DTOs.Cooperativas;
+using Microsoft.AspNetCore.Http;
 
 namespace EcuaRutas.Api.Services;
 
@@ -34,5 +35,10 @@ public interface ICooperativasService
     Task<CooperativaDto?> ActualizarMiCooperativaAsync(
         long cooperativaId,
         ActualizarMiCooperativaRequest request
+    );
+
+    Task<CooperativaDto?> ActualizarLogoAsync(
+        long cooperativaId,
+        IFormFile archivo
     );
 }

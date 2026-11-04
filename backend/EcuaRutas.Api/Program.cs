@@ -6,6 +6,7 @@ using EcuaRutas.Api.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 var builder =
@@ -240,6 +241,30 @@ if (
 
 app.UseCors(
     "Frontend"
+);
+
+var uploadsPath =
+    Path.Combine(
+        app.Environment.ContentRootPath,
+        "wwwroot",
+        "uploads"
+    );
+
+Directory.CreateDirectory(
+    uploadsPath
+);
+
+app.UseStaticFiles(
+    new StaticFileOptions
+    {
+        FileProvider =
+            new PhysicalFileProvider(
+                uploadsPath
+            ),
+
+        RequestPath =
+            "/uploads"
+    }
 );
 
 app.UseAuthentication();

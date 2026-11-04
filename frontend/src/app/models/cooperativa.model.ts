@@ -38,7 +38,6 @@ export interface ActualizarMiCooperativa {
   telefono: string | null;
   correo: string | null;
   direccion: string | null;
-  logoUrl: string | null;
   colorPrimario: string | null;
   colorSecundario: string | null;
   redesSociales: string;

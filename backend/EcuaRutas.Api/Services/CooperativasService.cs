@@ -3,6 +3,8 @@ using EcuaRutas.Api.Data;
 using EcuaRutas.Api.DTOs.Cooperativas;
 using EcuaRutas.Api.DTOs.Usuarios;
 using EcuaRutas.Api.Models;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcuaRutas.Api.Services;
@@ -10,18 +12,50 @@ namespace EcuaRutas.Api.Services;
 public class CooperativasService
     : ICooperativasService
 {
-    private readonly EcuaRutasDbContext _context;
+    private const long TamanoMaximoLogo =
+        2 * 1024 * 1024;
+
+    private static readonly HashSet<string>
+        ExtensionesPermitidas =
+        new(
+            StringComparer.OrdinalIgnoreCase
+        )
+        {
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".webp"
+        };
+
+    private static readonly HashSet<string>
+        TiposPermitidos =
+        new(
+            StringComparer.OrdinalIgnoreCase
+        )
+        {
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+        };
+
+    private readonly EcuaRutasDbContext
+        _context;
 
     private readonly IUsuariosService
         _usuariosService;
 
+    private readonly IWebHostEnvironment
+        _environment;
+
     public CooperativasService(
         EcuaRutasDbContext context,
-        IUsuariosService usuariosService
+        IUsuariosService usuariosService,
+        IWebHostEnvironment environment
     )
     {
         _context = context;
         _usuariosService = usuariosService;
+        _environment = environment;
     }
 
     public async Task<
@@ -87,14 +121,11 @@ public class CooperativasService
                 c =>
                     new CooperativaDto
                     {
-                        Id =
-                            c.Id,
+                        Id = c.Id,
 
-                        Nombre =
-                            c.Nombre,
+                        Nombre = c.Nombre,
 
-                        Ruc =
-                            c.Ruc,
+                        Ruc = c.Ruc,
 
                         Descripcion =
                             c.Descripcion,
@@ -152,14 +183,11 @@ public class CooperativasService
                 c =>
                     new CooperativaDto
                     {
-                        Id =
-                            c.Id,
+                        Id = c.Id,
 
-                        Nombre =
-                            c.Nombre,
+                        Nombre = c.Nombre,
 
-                        Ruc =
-                            c.Ruc,
+                        Ruc = c.Ruc,
 
                         Descripcion =
                             c.Descripcion,
@@ -241,8 +269,7 @@ public class CooperativasService
             await _context
                 .Cooperativas
                 .AnyAsync(
-                    c =>
-                        c.Ruc == ruc
+                    c => c.Ruc == ruc
                 )
         )
         {
@@ -330,8 +357,7 @@ public class CooperativasService
                     .CrearAsync(
                         new CrearUsuarioRequest
                         {
-                            Cedula =
-                                null,
+                            Cedula = null,
 
                             Nombres =
                                 request
@@ -348,8 +374,7 @@ public class CooperativasService
                                     .UsuarioCorreo
                                     .Trim(),
 
-                            Telefono =
-                                null,
+                            Telefono = null,
 
                             Password =
                                 request
@@ -361,8 +386,7 @@ public class CooperativasService
                             CooperativaId =
                                 cooperativa.Id,
 
-                            Activo =
-                                true
+                            Activo = true
                         }
                     );
 
@@ -598,11 +622,6 @@ public class CooperativasService
                 request.Direccion
             );
 
-        cooperativa.LogoUrl =
-            NormalizarTexto(
-                request.LogoUrl
-            );
-
         cooperativa.ColorPrimario =
             colorPrimario;
 
@@ -633,6 +652,236 @@ public class CooperativasService
             cooperativa,
             cantidadUsuarios
         );
+    }
+
+    public async Task<
+        CooperativaDto?
+    > ActualizarLogoAsync(
+        long cooperativaId,
+        IFormFile archivo
+    )
+    {
+        var cooperativa =
+            await _context
+                .Cooperativas
+                .FirstOrDefaultAsync(
+                    c =>
+                        c.Id ==
+                        cooperativaId
+                );
+
+        if (cooperativa == null)
+        {
+            return null;
+        }
+
+        if (!cooperativa.Activa)
+        {
+            throw new InvalidOperationException(
+                "La cooperativa está inactiva y no puede modificar su logo."
+            );
+        }
+
+        if (
+            archivo == null ||
+            archivo.Length == 0
+        )
+        {
+            throw new InvalidOperationException(
+                "Debes seleccionar una imagen."
+            );
+        }
+
+        if (
+            archivo.Length >
+            TamanoMaximoLogo
+        )
+        {
+            throw new InvalidOperationException(
+                "El logo no puede superar los 2 MB."
+            );
+        }
+
+        var extension =
+            Path.GetExtension(
+                archivo.FileName
+            )
+            .ToLowerInvariant();
+
+        if (
+            !ExtensionesPermitidas
+                .Contains(
+                    extension
+                )
+        )
+        {
+            throw new InvalidOperationException(
+                "El logo debe ser PNG, JPG, JPEG o WEBP."
+            );
+        }
+
+        if (
+            !TiposPermitidos.Contains(
+                archivo.ContentType
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                "El archivo seleccionado no corresponde a una imagen válida."
+            );
+        }
+
+        var webRoot =
+            Path.Combine(
+                _environment.ContentRootPath,
+                "wwwroot"
+            );
+
+        var carpeta =
+            Path.Combine(
+                webRoot,
+                "uploads",
+                "cooperativas",
+                cooperativaId.ToString()
+            );
+
+        Directory.CreateDirectory(
+            carpeta
+        );
+
+        var nombreArchivo =
+            $"logo-{Guid.NewGuid():N}{extension}";
+
+        var rutaFisica =
+            Path.Combine(
+                carpeta,
+                nombreArchivo
+            );
+
+        var nuevaUrl =
+            $"/uploads/cooperativas/{cooperativaId}/{nombreArchivo}";
+
+        var logoAnterior =
+            cooperativa.LogoUrl;
+
+        try
+        {
+            await using (
+                var stream =
+                    new FileStream(
+                        rutaFisica,
+                        FileMode.CreateNew
+                    )
+            )
+            {
+                await archivo
+                    .CopyToAsync(
+                        stream
+                    );
+            }
+
+            cooperativa.LogoUrl =
+                nuevaUrl;
+
+            await _context
+                .SaveChangesAsync();
+
+            EliminarLogoAnterior(
+                webRoot,
+                logoAnterior
+            );
+        }
+        catch
+        {
+            if (
+                File.Exists(
+                    rutaFisica
+                )
+            )
+            {
+                File.Delete(
+                    rutaFisica
+                );
+            }
+
+            throw;
+        }
+
+        var cantidadUsuarios =
+            await _context
+                .Usuarios
+                .CountAsync(
+                    u =>
+                        u.CooperativaId ==
+                        cooperativa.Id
+                );
+
+        return Mapear(
+            cooperativa,
+            cantidadUsuarios
+        );
+    }
+
+    private static void
+        EliminarLogoAnterior(
+            string webRoot,
+            string? logoUrl
+        )
+    {
+        if (
+            string.IsNullOrWhiteSpace(
+                logoUrl
+            ) ||
+            !logoUrl.StartsWith(
+                "/uploads/cooperativas/",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return;
+        }
+
+        var relativa =
+            logoUrl
+                .TrimStart('/')
+                .Replace(
+                    '/',
+                    Path.DirectorySeparatorChar
+                );
+
+        var ruta =
+            Path.GetFullPath(
+                Path.Combine(
+                    webRoot,
+                    relativa
+                )
+            );
+
+        var raiz =
+            Path.GetFullPath(
+                webRoot
+            );
+
+        if (
+            !ruta.StartsWith(
+                raiz,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            return;
+        }
+
+        if (
+            File.Exists(
+                ruta
+            )
+        )
+        {
+            File.Delete(
+                ruta
+            );
+        }
     }
 
     private static CooperativaDto
