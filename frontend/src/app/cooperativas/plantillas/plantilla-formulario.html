@@ -1,163 +1,200 @@
 <div class="container-fluid py-3">
-  <div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">
-        {{ existente() ? 'Disposición de asientos' : 'Nueva plantilla' }}
-      </h5>
-      <a routerLink="/cooperativas/plantillas" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> Volver
-      </a>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      {{ existente() ? 'Diseño de la plantilla' : 'Nueva plantilla' }}
+    </h4>
+    <a routerLink="/cooperativas/plantillas" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+  </div>
+
+  @if (cargando()) {
+    <div class="text-secondary mb-3">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      Cargando plantilla...
+    </div>
+  }
+
+  @if (errorCargar(); as mensaje) {
+    <div class="alert alert-danger">{{ mensaje }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <div class="row g-3">
+
+      <!-- Configuración -->
+      <div class="col-lg-3">
+        <div class="card shadow-sm panel">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">Configuración</h6>
+
+            <label class="form-label" for="nombre">Nombre *</label>
+            <input id="nombre" class="form-control" formControlName="nombre"
+                   [class.is-invalid]="invalido('nombre')" />
+            @if (invalido('nombre')) {
+              <div class="invalid-feedback">Obligatorio, máximo 120 caracteres.</div>
+            }
+
+            <div class="row g-2 mt-1">
+              <div class="col-6">
+                <label class="form-label" for="pisos">Pisos</label>
+                <select id="pisos" class="form-select" [disabled]="existente()"
+                        [value]="pisos()" (change)="cambiarPisos($any($event.target).value)">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                </select>
+              </div>
+              <div class="col-6 d-flex align-items-end">
+                <div class="form-check">
+                  <input id="tieneBanio" type="checkbox" class="form-check-input"
+                         formControlName="tieneBanio" />
+                  <label class="form-check-label" for="tieneBanio">Baño</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label" for="filas">Filas</label>
+                <input id="filas" type="number" class="form-control"
+                       min="1" [max]="maxFilas" [value]="filas()"
+                       (change)="cambiarFilas($any($event.target).value)" />
+              </div>
+              <div class="col-6">
+                <label class="form-label" for="columnas">Columnas</label>
+                <input id="columnas" type="number" class="form-control"
+                       min="1" [max]="maxColumnas" [value]="columnas()"
+                       (change)="cambiarColumnas($any($event.target).value)" />
+              </div>
+            </div>
+
+            <hr />
+
+            <label class="form-label" for="cantidad">Cantidad de asientos</label>
+            <input id="cantidad" type="number" class="form-control"
+                   min="1" [max]="maxAsientos" [value]="cantidad()"
+                   (change)="cambiarCantidad($any($event.target).value)" />
+            <button type="button" class="btn btn-outline-primary w-100 mt-2" (click)="generar()">
+              Generar distribución 2 + 2
+            </button>
+            <button type="button" class="btn btn-outline-secondary w-100 mt-2" (click)="vaciar()">
+              Vaciar diseño
+            </button>
+
+            <p class="text-secondary small mt-3 mb-0">
+              Una columna sin asientos queda como pasillo. La numeración es automática.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diseño del bus -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body lienzo">
+            <h6 class="fw-bold mb-1">Vista del bus</h6>
+            <p class="text-secondary small">
+              Arrastra un tipo de asiento hasta una casilla, o haz clic en una casilla vacía.
+              Arrastra un asiento para moverlo; si cae sobre otro, intercambian lugar.
+            </p>
+
+            <app-mapa-asientos
+              [pisos]="pisos()"
+              [filas]="filas()"
+              [columnas]="columnas()"
+              [asientos]="asientosMapa()"
+              [editable]="true"
+              [tieneBanio]="tieneBanio()"
+              [mostrarPrecio]="true"
+              [seleccionado]="seleccion()"
+              (celdaClick)="alHacerClic($event)"
+              (soltarTipo)="alSoltarTipo($event)"
+              (mover)="alMover($event)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Tipos y propiedades -->
+      <div class="col-lg-3">
+        <div class="card shadow-sm panel">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">Tipos de asiento</h6>
+
+            @for (tipo of tipos(); track tipo.id) {
+              <div
+                class="tipo-item"
+                [class.activo]="tipoSeleccionado() === tipo.id"
+                draggable="true"
+                (dragstart)="arrastrarTipo($event, tipo.id)"
+                (click)="seleccionarTipo(tipo.id)"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="seleccionarTipo(tipo.id)"
+              >
+                <span [class]="'tipo-color t' + indiceTipo(tipo.id)"></span>
+                <span class="flex-grow-1">{{ tipo.nombre }}</span>
+                <small class="text-secondary">
+                  {{ tipo.recargoPorcentaje > 0 ? '+' + tipo.recargoPorcentaje + '%' : 'sin recargo' }}
+                </small>
+              </div>
+            }
+
+            <hr />
+
+            <h6 class="fw-bold mb-2">Asiento seleccionado</h6>
+            @if (asientoSeleccionado(); as asiento) {
+              <p class="mb-1">
+                <strong>N.º {{ asiento.numero }}</strong> · {{ asiento.tipoNombre }}
+              </p>
+              <p class="text-secondary small mb-2">
+                Piso {{ asiento.piso }}, fila {{ asiento.fila }}, columna {{ asiento.columna }}
+              </p>
+              <p class="text-secondary small mb-2">
+                Elige otro tipo de la lista para cambiarlo.
+              </p>
+              <button type="button" class="btn btn-sm btn-outline-danger w-100"
+                      (click)="eliminarSeleccionado()">
+                <i class="bi bi-trash"></i> Quitar asiento
+              </button>
+            } @else {
+              <p class="text-secondary small mb-0">Haz clic en un asiento del bus.</p>
+            }
+
+            <hr />
+
+            <h6 class="fw-bold mb-2">Resumen</h6>
+            <p class="mb-1">Total de asientos: <strong>{{ totalAsientos() }}</strong></p>
+            @for (item of resumenPorTipo(); track item.tipo.id) {
+              <p class="text-secondary small mb-0">
+                {{ item.tipo.nombre }}: {{ item.total }}
+              </p>
+            }
+
+            <hr />
+
+            <label class="form-label" for="precio">Precio base de ejemplo ($)</label>
+            <input id="precio" type="number" class="form-control" min="0" step="0.5"
+                   [value]="precioEjemplo()" (input)="cambiarPrecio($any($event.target).value)" />
+            <p class="text-secondary small mt-1 mb-0">
+              Solo para ver cómo se mostrarán los precios. El precio real sale de la tarifa de cada frecuencia.
+            </p>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    @if (cargando()) {
-      <div class="card-body text-secondary">
-        <span class="spinner-border spinner-border-sm me-2"></span>
-        Cargando plantilla...
-      </div>
+    @if (errorGuardar()) {
+      <div class="alert alert-danger mt-3 mb-0">{{ errorGuardar() }}</div>
     }
 
-    @if (errorCargar(); as mensaje) {
-      <div class="alert alert-danger m-3">{{ mensaje }}</div>
-    }
-
-    <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
-
-      <div class="row g-3 mb-4">
-
-        <div class="col-md-5">
-          <label class="form-label" for="nombre">Nombre *</label>
-          <input id="nombre" class="form-control" formControlName="nombre"
-                 [class.is-invalid]="invalido('nombre')" />
-          @if (invalido('nombre')) {
-            <div class="invalid-feedback">Obligatorio, máximo 120 caracteres.</div>
-          }
-        </div>
-
-        <div class="col-md-2">
-          <label class="form-label" for="pisos">Pisos *</label>
-          <select id="pisos" class="form-select" [disabled]="existente()"
-                  [value]="pisos()" (change)="cambiarPisos($any($event.target).value)">
-            <option value="1">1</option>
-            <option value="2">2</option>
-          </select>
-        </div>
-
-        <div class="col-md-2">
-          <label class="form-label" for="filas">Filas</label>
-          <input id="filas" type="number" class="form-control"
-                 min="1" [max]="maxFilas" [value]="filas()"
-                 (change)="cambiarFilas($any($event.target).value)" />
-        </div>
-
-        <div class="col-md-2">
-          <label class="form-label" for="columnas">Columnas</label>
-          <input id="columnas" type="number" class="form-control"
-                 min="1" [max]="maxColumnas" [value]="columnas()"
-                 (change)="cambiarColumnas($any($event.target).value)" />
-        </div>
-
-        <div class="col-md-1 d-flex align-items-end">
-          <div class="form-check">
-            <input id="tieneBanio" type="checkbox" class="form-check-input"
-                   formControlName="tieneBanio" />
-            <label class="form-check-label" for="tieneBanio">Baño</label>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <span class="text-secondary me-1">Tipo de asiento:</span>
-
-        @for (tipo of tipos(); track tipo.id) {
-          <button
-            type="button"
-            class="btn btn-sm"
-            [class]="'btn btn-sm ' + (tipoSeleccionado() === tipo.id
-              ? claseTipo(tipo.id)
-              : 'btn-outline-secondary')"
-            (click)="seleccionarTipo(tipo.id)"
-          >
-            {{ tipo.nombre }}
-            @if (tipo.recargoPorcentaje > 0) {
-              <small>(+{{ tipo.recargoPorcentaje }}%)</small>
-            }
-          </button>
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <a routerLink="/cooperativas/plantillas" class="btn btn-outline-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+        @if (guardando()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
         }
-
-        <span class="vr mx-2"></span>
-
-        <button type="button" class="btn btn-sm btn-outline-primary" (click)="llenarTodo()">
-          Llenar todo
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="vaciar()">
-          Vaciar
-        </button>
-
-        <span class="ms-auto text-secondary">
-          Asientos: <strong>{{ totalAsientos() }}</strong>
-        </span>
-      </div>
-
-      <p class="text-secondary small">
-        Haz clic en una casilla para colocar un asiento con el tipo elegido.
-        Si ya tiene ese tipo, se quita y queda como pasillo. La numeración es automática.
-      </p>
-
-      @for (piso of listaPisos(); track piso) {
-        <div class="mb-4">
-          <h6 class="fw-bold">Piso {{ piso }}</h6>
-
-          <div class="table-responsive">
-            <table class="table table-borderless w-auto mb-0">
-              <thead>
-                <tr>
-                  <th></th>
-                  @for (columna of listaColumnas(); track columna) {
-                    <th class="text-center text-secondary small">{{ columna }}</th>
-                  }
-                </tr>
-              </thead>
-              <tbody>
-                @for (fila of listaFilas(); track fila) {
-                  <tr>
-                    <th class="text-secondary small align-middle">{{ fila }}</th>
-                    @for (columna of listaColumnas(); track columna) {
-                      <td class="p-1">
-                        <button
-                          type="button"
-                          class="btn btn-sm celda"
-                          [class]="'btn btn-sm celda ' + claseTipo(tipoEn(piso, fila, columna))"
-                          [title]="tipoEn(piso, fila, columna) !== undefined
-                            ? nombreTipo(tipoEn(piso, fila, columna)!)
-                            : 'Pasillo'"
-                          (click)="alternar(piso, fila, columna)"
-                        >
-                          {{ numeroEn(piso, fila, columna) }}
-                        </button>
-                      </td>
-                    }
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      }
-
-      @if (errorGuardar()) {
-        <div class="alert alert-danger mt-3 mb-0">{{ errorGuardar() }}</div>
-      }
-
-      <div class="d-flex justify-content-end gap-2 mt-4">
-        <a routerLink="/cooperativas/plantillas" class="btn btn-outline-secondary">Cancelar</a>
-        <button type="submit" class="btn btn-primary" [disabled]="guardando()">
-          @if (guardando()) {
-            <span class="spinner-border spinner-border-sm me-1"></span>
-          }
-          {{ existente() ? 'Guardar disposición' : 'Guardar plantilla' }}
-        </button>
-      </div>
-    </form>
-  </div>
+        {{ existente() ? 'Guardar diseño' : 'Guardar plantilla' }}
+      </button>
+    </div>
+  </form>
 </div>
