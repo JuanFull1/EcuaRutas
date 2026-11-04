@@ -1,0 +1,72 @@
+<section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-formulario-resolucion">
+  <div class="card-header bg-white border-0 pt-3">
+    <h2 id="titulo-formulario-resolucion" class="h5 mb-0">{{ resolucion() ? 'Editar resolución ANT' : 'Nueva resolución ANT' }}</h2>
+  </div>
+  <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate [attr.aria-busy]="guardando()">
+    <p class="text-secondary small">Los campos marcados con * son obligatorios.</p>
+    @if (cargandoCooperativas()) { <p role="status">Cargando cooperativas...</p> }
+    @if (errorCooperativas(); as mensaje) {
+      <div class="alert alert-warning" role="alert">
+        {{ mensaje }}
+        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" [disabled]="guardando() || cargandoCooperativas()" (click)="reintentarCooperativas.emit()">Reintentar cooperativas</button>
+      </div>
+    } @else if (!cargandoCooperativas() && cooperativas().length === 0) {
+      <p class="alert alert-warning" role="status">No hay cooperativas en el catálogo disponible para registrar una resolución.</p>
+    }
+    <fieldset [disabled]="guardando() || !autorizado() || cargandoCooperativas() || (!!errorCooperativas() && !resolucion())">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label for="resolucion-cooperativa" class="form-label">Cooperativa *</label>
+          <select id="resolucion-cooperativa" class="form-select" formControlName="cooperativaId" required
+            [class.is-invalid]="invalido('cooperativaId') || (form.hasError('cooperativaNoDisponible') && form.controls.cooperativaId.touched)"
+            [attr.aria-invalid]="invalido('cooperativaId') || (form.hasError('cooperativaNoDisponible') && form.controls.cooperativaId.touched)"
+            aria-describedby="resolucion-error-cooperativa resolucion-ayuda-cooperativa">
+            <option [ngValue]="null">Selecciona una cooperativa</option>
+            @if (resolucion(); as actual) {
+              @if (!existeCooperativa(actual.cooperativaId)) {
+                <option [ngValue]="actual.cooperativaId">Cooperativa #{{ actual.cooperativaId }} (fuera del catálogo disponible)</option>
+              }
+            }
+            @for (cooperativa of cooperativas(); track cooperativa.id) {
+              <option [ngValue]="cooperativa.id">{{ cooperativa.nombre }} · #{{ cooperativa.id }}</option>
+            }
+          </select>
+          <div id="resolucion-ayuda-cooperativa" class="form-text">Se muestran las cooperativas del catálogo disponible; al editar puedes conservar la cooperativa original.</div>
+          @if (invalido('cooperativaId') || (form.hasError('cooperativaNoDisponible') && form.controls.cooperativaId.touched)) {
+            <div id="resolucion-error-cooperativa" class="invalid-feedback">Selecciona una cooperativa válida.</div>
+          }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="resolucion-numero" class="form-label">Número de resolución *</label>
+          <input #numeroInput id="resolucion-numero" class="form-control" formControlName="numeroResolucion" required maxlength="100"
+            [class.is-invalid]="invalido('numeroResolucion')" [attr.aria-invalid]="invalido('numeroResolucion')" aria-describedby="resolucion-error-numero">
+          @if (invalido('numeroResolucion')) {
+            <div id="resolucion-error-numero" class="invalid-feedback">Ingresa un número de resolución de hasta 100 caracteres; no puede contener solo espacios.</div>
+          }
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="resolucion-fecha" class="form-label">Fecha de resolución</label>
+          <input id="resolucion-fecha" type="date" class="form-control" formControlName="fechaResolucion" min="0001-01-01" max="9999-12-31"
+            [class.is-invalid]="invalido('fechaResolucion')" [attr.aria-invalid]="invalido('fechaResolucion')" aria-describedby="resolucion-error-fecha">
+          @if (invalido('fechaResolucion')) { <div id="resolucion-error-fecha" class="invalid-feedback">Ingresa una fecha válida entre los años 0001 y 9999 o deja el campo vacío.</div> }
+        </div>
+        <div class="col-12 col-md-8">
+          <label for="resolucion-archivo" class="form-label">URL del documento</label>
+          <input id="resolucion-archivo" class="form-control" formControlName="archivoUrl" maxlength="500"
+            [class.is-invalid]="invalido('archivoUrl')" [attr.aria-invalid]="invalido('archivoUrl')" aria-describedby="resolucion-error-archivo resolucion-ayuda-archivo">
+          <div id="resolucion-ayuda-archivo" class="form-text">Opcional. Ingresa la dirección del documento; no se cargan archivos. Los enlaces se abren si usan HTTP o HTTPS.</div>
+          @if (invalido('archivoUrl')) { <div id="resolucion-error-archivo" class="invalid-feedback">La URL puede tener hasta 500 caracteres.</div> }
+        </div>
+      </div>
+      @if (resolucion(); as actual) { <p class="text-secondary mt-3 mb-0">Estado actual: {{ actual.activa ? 'Activa' : 'Inactiva' }}.</p> }
+    </fieldset>
+    @if (error(); as mensaje) { <div class="alert alert-danger mt-3" role="alert">{{ mensaje }}</div> }
+    <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+      <button type="button" class="btn btn-outline-secondary" [disabled]="guardando()" (click)="cancelar.emit()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="guardando() || !autorizado() || cargandoCooperativas() || (!!errorCooperativas() && !resolucion())">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        {{ guardando() ? 'Guardando...' : 'Guardar resolución' }}
+      </button>
+    </div>
+  </form>
+</section>

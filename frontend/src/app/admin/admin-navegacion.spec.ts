@@ -75,8 +75,8 @@ describe('Integración de navegación administrativa', () => {
   });
 
   afterEach(() => {
-    http.verify();
-    localStorage.removeItem(AUTH_SESSION_KEY);
+    try { http.verify(); }
+    finally { localStorage.removeItem(AUTH_SESSION_KEY); TestBed.resetTestingModule(); }
   });
 
   function iniciarSesion(rol: RolUsuario = 'ADMIN', vigente = true): void {
@@ -96,6 +96,16 @@ describe('Integración de navegación administrativa', () => {
       if (peticion.request.url === `${API_URL}/lugares`) peticion.flush(lugares);
       else if (peticion.request.url === `${API_URL}/rutas`) peticion.flush(rutas);
       else throw new Error(`Consulta inesperada: ${peticion.request.urlWithParams}`);
+    }
+    harness.detectChanges();
+  }
+
+  function responderInicioCooperativa(): void {
+    // El inicio actual consulta sus indicadores; no son accesos a catálogos ADMIN.
+    for (const recurso of ['buses', 'plantillas']) {
+      const peticion = http.expectOne(`${API_URL}/${recurso}?cooperativaId=5`);
+      expect(peticion.request.headers.get('Authorization')).toBe(`Bearer ${auth.obtenerToken()}`);
+      peticion.flush([]);
     }
     harness.detectChanges();
   }
@@ -145,6 +155,7 @@ describe('Integración de navegación administrativa', () => {
       expect(router.url).toBe(auth.obtenerRutaInicio(rol));
       expect(menu().querySelector('a[href^="/admin/"]')).toBeNull();
       expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeNull();
+      if (rol === 'COOPERATIVA') responderInicioCooperativa();
       http.expectNone(request => request.method === 'GET');
     });
   }
@@ -217,13 +228,14 @@ describe('Integración de navegación administrativa', () => {
   });
 
   it.each([
-    { rol: 'COOPERATIVA', enlaces: ['/cooperativas/inicio', '/cooperativas/buses'], textos: ['Plantillas', 'Rutas', 'Frecuencias'] },
+    { rol: 'COOPERATIVA', enlaces: ['/cooperativas/inicio', '/cooperativas/buses', '/viajes/hojas-ruta', '/viajes/lista'], textos: ['Plantillas', 'Rutas', 'Frecuencias'] },
     { rol: 'OFICINISTA', enlaces: ['/ventas/inicio', '/ventas/disponibilidad', '/ventas/gestion'], textos: ['Pagos', 'Comprobantes', 'Validación de pagos'] },
     { rol: 'CLIENTE', enlaces: ['/cliente/inicio', '/cliente/buscar-viajes', '/cliente/boletos', '/cliente/historial', '/cliente/notificaciones'], textos: [] },
     { rol: 'BUS', enlaces: ['/personal-bus/inicio'], textos: ['Validar boletos', 'Viajes', 'Historial'] }
   ] as const)('conserva enlaces y opciones del menú de $rol', async ({ rol, enlaces, textos }) => {
     iniciarSesion(rol);
     await harness.navigateByUrl(auth.obtenerRutaInicio(rol), Layout);
+    if (rol === 'COOPERATIVA') responderInicioCooperativa();
     const hrefs = Array.from(menu().querySelectorAll('a')).map(enlace => enlace.getAttribute('href'));
     expect(hrefs).toEqual(enlaces);
     for (const texto of textos) expect(menu().textContent).toContain(texto);
@@ -245,6 +257,7 @@ describe('Integración de navegación administrativa', () => {
     iniciarSesion(rol);
     await harness.navigateByUrl(path, Layout);
     expect(router.url).toBe(esperado);
+    if (rol === 'COOPERATIVA') responderInicioCooperativa();
   });
 
   it('integra el formulario de lugares con el layout, HttpClient y el interceptor existentes', async () => {

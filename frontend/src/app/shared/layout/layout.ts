@@ -141,6 +141,22 @@ export class Layout {
               ruta: '/admin/mapas/rutas'
             },
             {
+              texto: 'Resoluciones ANT',
+              icono: 'bi-file-earmark-text',
+              ruta: '/admin/resoluciones-ant'
+            },
+            {
+              texto: 'Frecuencias',
+              icono: 'bi-clock',
+              ruta: '/admin/frecuencias'
+            },
+            {
+              texto: 'Tarifas',
+              icono: 'bi-cash-coin',
+              ruta: '/admin/tarifas'
+            },
+
+            {
               texto: 'Roles',
               icono: 'bi-person-gear',
               ruta: '/admin/roles'

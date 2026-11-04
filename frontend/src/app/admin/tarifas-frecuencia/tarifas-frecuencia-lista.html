@@ -1,0 +1,89 @@
+<div class="container-fluid px-0">
+  <section class="bg-white border rounded-4 p-4 mb-4">
+    <span class="badge text-bg-primary mb-3">Administrador</span><h1 class="h3 fw-bold">Gestión de tarifas</h1>
+    <p class="text-secondary mb-0">Administra los precios de los recorridos entre paradas para cada frecuencia de transporte.</p>
+    @if (puedeGestionar()) { <button type="button" class="btn btn-primary mt-3" [disabled]="!puedeCrear()" (click)="nueva()"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva tarifa</button> }
+  </section>
+  @if (!puedeGestionar()) { <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol ADMIN para consultar y gestionar tarifas.</div> }
+  @else {
+    @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+    <section class="card border-0 shadow-sm mb-4"><div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3"><h2 class="h5 mb-0">Frecuencia de transporte</h2><button type="button" class="btn btn-sm btn-outline-primary" [disabled]="cargandoFrecuencias() || seleccionBloqueada()" (click)="cargarFrecuencias()">Actualizar frecuencias</button></div>
+      <label for="tarifas-frecuencia" class="form-label">Frecuencia</label>
+      <select #selector id="tarifas-frecuencia" class="form-select" [disabled]="cargandoFrecuencias() || seleccionBloqueada()" [value]="frecuenciaId() ?? ''" (change)="seleccionarDesdeControl(selector.value)">
+        <option value="">Selecciona una frecuencia</option>@for (frecuencia of frecuencias(); track frecuencia.id) { <option [value]="frecuencia.id">{{ etiquetaFrecuencia(frecuencia) }}</option> }
+      </select>
+      @if (cargandoFrecuencias()) { <p class="text-secondary mt-2 mb-0" role="status">Cargando frecuencias...</p> }
+      @else if (!errorFrecuencias() && frecuencias().length === 0) { <p class="text-secondary mt-2 mb-0" role="status">No hay frecuencias disponibles.</p> }
+      @if (errorFrecuencias(); as mensaje) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{ mensaje }}</div> }
+      @if (avisosNombres().length) {
+        <div class="alert alert-warning mt-3 mb-0" role="alert"><p>No se pudieron actualizar algunos nombres. Se muestran identificadores cuando corresponde.</p>
+          @for (mensaje of avisosNombres(); track $index) { <p class="small mb-1">{{ mensaje }}</p> }
+          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="guardando() || desactivando()" (click)="cargarNombres()">Reintentar nombres</button>
+        </div>
+      }
+    </div></section>
+    @if (cargandoContexto()) { <p role="status">Cargando frecuencia seleccionada...</p> }
+    @if (errorContexto(); as mensaje) { <div class="alert alert-danger" role="alert">{{ mensaje }}</div> }
+    @if (!frecuenciaId()) { <p class="text-secondary" role="status">Selecciona una frecuencia para consultar sus tarifas.</p> }
+    @if (contexto(); as frecuencia) {
+      <p class="text-secondary">{{ etiquetaFrecuencia(frecuencia) }}</p>
+      @if (!frecuencia.activa) { <p class="alert alert-warning" role="status">La frecuencia está inactiva. No se pueden registrar nuevas tarifas; las consultas y bajas siguen disponibles.</p> }
+      @if (cargandoParadas()) { <p role="status">Cargando paradas de la ruta...</p> }
+      @if (errorParadas(); as mensaje) {
+        <div class="alert alert-warning" role="alert"><p>{{ mensaje }}</p><p>No se pueden registrar ni editar tramos hasta disponer de las paradas de esta ruta.</p><button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="guardando() || desactivando() || cargandoParadas()" (click)="cargarParadas()">Reintentar paradas</button></div>
+      } @else if (!cargandoParadas() && paradasOrdenadas().length === 0) { <p class="alert alert-warning" role="status">La ruta no tiene paradas disponibles.</p> }
+      @else if (!cargandoParadas() && !tramoDisponible()) { <p class="alert alert-warning" role="status">Se necesitan dos paradas con orden distinto para definir un tramo.</p> }
+      @if (cargandoDetalle()) { <p role="status">Cargando tarifa...</p> }
+      @if (formularioVisible()) {
+        <app-tarifa-frecuencia-formulario [frecuencia]="frecuencia" [tarifa]="seleccionada()" [paradas]="paradasOrdenadas()" [lugares]="lugares()"
+          [cargandoParadas]="cargandoParadas()" [errorParadas]="errorParadas()" [guardando]="guardando()" [autorizado]="puedeGestionar()" [error]="errorFormulario()"
+          (guardarTarifa)="guardar($event)" (cancelar)="cerrarPanel()" (reintentarParadas)="cargarParadas()" />
+      }
+      @if (detalleVisible()) { @if (seleccionada(); as tarifa) {
+        <section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-detalle-tarifa"><div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 id="titulo-detalle-tarifa" class="h5 mb-0">Tarifa #{{ tarifa.id }} · Frecuencia #{{ tarifa.frecuenciaId }}</h2><button type="button" class="btn btn-sm btn-outline-secondary" (click)="cerrarPanel()">Cerrar detalle</button></div>
+          <dl class="row mb-0 detalle"><dt class="col-12 col-sm-3">Origen</dt><dd class="col-12 col-sm-9">{{ nombreParada(tarifa.origenRutaParadaId) }}</dd><dt class="col-12 col-sm-3">Destino</dt><dd class="col-12 col-sm-9">{{ nombreParada(tarifa.destinoRutaParadaId) }}</dd><dt class="col-12 col-sm-3">Precio base</dt><dd class="col-12 col-sm-9">{{ tarifa.precioBase | currency:'USD':'symbol':'1.2-2' }}</dd><dt class="col-12 col-sm-3">Estado</dt><dd class="col-12 col-sm-9">{{ tarifa.activa ? 'Activa' : 'Inactiva' }}</dd></dl>
+        </div></section>
+      } }
+      <section class="card border-0 shadow-sm" aria-labelledby="titulo-listado-tarifas" [attr.aria-busy]="cargandoTarifas()">
+        <div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3"><h2 id="titulo-listado-tarifas" class="h5 mb-0">Tarifas de la frecuencia</h2><button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || panelAbierto()" (click)="seleccionarFrecuencia(frecuencia.id)">Actualizar</button></div>
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6"><label for="buscar-tarifa" class="form-label">Buscar por origen o destino</label><input #buscador id="buscar-tarifa" class="form-control" type="search" placeholder="Lugar o identificador de parada" [value]="busqueda()" (input)="buscar(buscador.value)"></div>
+            <div class="col-12 col-sm-6 col-md-3"><label for="estado-tarifa" class="form-label">Estado</label><select #estado id="estado-tarifa" class="form-select" [value]="filtroEstado()" (change)="filtrarEstado(estado.value)"><option value="">Todas</option><option value="activa">Activas</option><option value="inactiva">Inactivas</option></select></div>
+            <div class="col-12 col-sm-6 col-md-3"><button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()">Limpiar filtros</button></div>
+          </div>
+        </div>
+        @if (errorTarifas(); as mensaje) { <div class="alert alert-danger mx-3" role="alert">{{ mensaje }}</div> }
+        @if (cargandoTarifas()) { <p class="text-center text-secondary py-5" role="status">Cargando tarifas...</p> }
+        @else if (!errorTarifas() && tarifas().length === 0) { <p class="text-center text-secondary py-5 mb-0" role="status">Esta frecuencia no tiene tarifas registradas.</p> }
+        @else if (!errorTarifas() && filtradas().length === 0) { <p class="text-center text-secondary py-5 mb-0" role="status">No hay tarifas que coincidan con los filtros seleccionados.</p> }
+        @else if (filtradas().length) {
+          @if (errorTarifas()) { <p class="text-secondary small px-3">Se muestran los últimos datos consultados; podrían estar desactualizados.</p> }
+          <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla de tarifas, desplazamiento horizontal disponible"><table class="table table-hover align-middle mb-0">
+            <caption class="visually-hidden">Tarifas por recorrido, precio base, estado y acciones.</caption>
+            <thead class="table-light"><tr><th scope="col">Origen</th><th scope="col">Destino</th><th scope="col">Precio base</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+            <tbody>@for (tarifa of filasPagina(); track tarifa.id) {
+              <tr><th scope="row" class="fw-normal">{{ nombreParada(tarifa.origenRutaParadaId) }}</th><td>{{ nombreParada(tarifa.destinoRutaParadaId) }}</td><td class="text-nowrap">{{ tarifa.precioBase | currency:'USD':'symbol':'1.2-2' }}</td><td><span class="badge" [class.text-bg-success]="tarifa.activa" [class.text-bg-secondary]="!tarifa.activa">{{ tarifa.activa ? 'Activa' : 'Inactiva' }}</span></td>
+                <td><div class="d-flex flex-wrap gap-2 acciones">
+                  <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado() || panelAbierto()" (click)="abrir(tarifa, 'consultar')" [attr.aria-label]="'Consultar ' + identificar(tarifa)">Consultar</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || panelAbierto() || !tramoDisponible()" (click)="abrir(tarifa, 'editar')" [attr.aria-label]="'Editar ' + identificar(tarifa)">Editar</button>
+                  @if (tarifa.activa) { <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || panelAbierto()" (click)="solicitarBaja(tarifa)" [attr.aria-label]="'Desactivar ' + identificar(tarifa)">Desactivar</button> }
+                </div></td>
+              </tr>
+            }</tbody>
+          </table></div>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 p-3"><p class="text-secondary small mb-0" role="status">{{ filtradas().length }} tarifas · Página {{ paginaActual() }} de {{ totalPaginas() }}</p><nav class="d-flex flex-wrap gap-2" aria-label="Paginación de tarifas"><button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="paginaActual() === 1" (click)="cambiarPagina(-1)">Anterior</button><button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="paginaActual() === totalPaginas()" (click)="cambiarPagina(1)">Siguiente</button></nav></div>
+        }
+      </section>
+    }
+  }
+</div>
+<dialog #dialogoBaja class="border-0 rounded-4 shadow p-4" aria-labelledby="titulo-baja-tarifa" aria-describedby="descripcion-baja-tarifa" [attr.aria-busy]="desactivando()" (cancel)="cancelarBaja($event)">
+  <h2 id="titulo-baja-tarifa" class="h5">Desactivar tarifa</h2><p id="descripcion-baja-tarifa">¿Deseas desactivar la tarifa del tramo <strong>{{ pendienteBaja() ? identificar(pendienteBaja()!) : '' }}</strong>? Quedará inactiva y conservará su registro.</p>
+  @if (errorBaja(); as mensaje) { <div class="alert alert-danger" role="alert">{{ mensaje }}</div> }
+  <div class="d-flex flex-wrap justify-content-end gap-2"><button type="button" class="btn btn-outline-secondary" autofocus [disabled]="desactivando()" (click)="cancelarBaja()">Cancelar</button>
+    @if (puedeGestionar()) { <button type="button" class="btn btn-danger" [disabled]="desactivando()" (click)="confirmarBaja()">@if (desactivando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }{{ desactivando() ? 'Desactivando...' : 'Desactivar' }}</button> }
+  </div>
+</dialog>
