@@ -44,6 +44,16 @@
   box-shadow: 0 8px 20px rgba(21, 47, 77, 0.09) !important;
 }
 
+.reserva-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(85vh, 720px);
+  color: #152f4d;
+}
+
+.reserva-dialog::backdrop {
+  background: rgba(15, 35, 58, .55);
+}
+
 /* Responsivo */
 @media (max-width: 767.98px) {
   .card-body {

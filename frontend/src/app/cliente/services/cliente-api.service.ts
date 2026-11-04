@@ -30,6 +30,29 @@ export interface ViajeCliente {
   cooperativa: string;
 }
 
+export interface AsientoDisponibleCliente {
+  asientoBusId: number;
+  numero: string;
+  piso: number;
+  tipoAsiento: string;
+  precioFinal: number;
+}
+
+export interface ReservaClienteRequest {
+  viajeId: number;
+  asientoBusId: number;
+  origenRutaParadaId: number;
+  destinoRutaParadaId: number;
+  documento: string;
+}
+
+export interface ReservaClienteResponse {
+  codigo: string;
+  estado: string;
+  total: number;
+  expiraEn: string;
+}
+
 export interface ResumenCompraCliente {
   ventaId: number;
   codigo: string;
@@ -51,10 +74,16 @@ export interface DetalleBoletoCliente {
   estadoBoleto: string;
   generadoEn: string;
   archivoUrl: string | null;
+  qrToken: string;
   viajeId: number;
+  rutaNombre: string;
+  origen: string;
+  destino: string;
   salidaProgramada: string;
   pasajeroId: number;
+  pasajero: string;
   asientoBusId: number;
+  numeroAsiento: string;
   precioFinal: number;
 }
 
@@ -88,6 +117,22 @@ export class ClienteApiService {
     return this.http.get<DetalleBoletoCliente[]>(
       `${this.clienteUrl}/boletos`
     );
+  }
+
+  obtenerAsientosDisponibles(viaje: ViajeCliente): Observable<{ asientos: AsientoDisponibleCliente[] }> {
+    const params = new HttpParams()
+      .set('viajeId', viaje.viajeId.toString())
+      .set('origenRutaParadaId', viaje.origenRutaParadaId.toString())
+      .set('destinoRutaParadaId', viaje.destinoRutaParadaId.toString());
+    return this.http.get<{ asientos: AsientoDisponibleCliente[] }>(this.disponibilidadUrl, { params });
+  }
+
+  crearReservaCliente(request: ReservaClienteRequest): Observable<ReservaClienteResponse> {
+    return this.http.post<ReservaClienteResponse>(`${this.clienteUrl}/reservas`, request);
+  }
+
+  obtenerCedulaCliente(): Observable<{ cedula: string | null }> {
+    return this.http.get<{ cedula: string | null }>(`${this.clienteUrl}/perfil`);
   }
 
   obtenerNotificaciones(): Observable<NotificacionCliente[]> {

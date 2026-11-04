@@ -70,6 +70,16 @@ builder.Services.AddDbContext<
         )
 );
 
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IUsuariosService, UsuariosService>();
+builder.Services.AddScoped<PagosService>();
+builder.Services.AddScoped<BoletosService>();
+builder.Services.AddScoped<DisponibilidadService>();
+builder.Services.AddScoped<VentasService>();
+builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<ReservasClienteService>();
+builder.Services.AddScoped<NotificacionesService>();
 builder.Services.Configure<
     JwtSettings
 >(

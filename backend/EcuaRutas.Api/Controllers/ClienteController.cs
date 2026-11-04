@@ -11,10 +11,12 @@ namespace EcuaRutas.Api.Controllers;
 public class ClienteController : ControllerBase
 {
     private readonly ClienteService _clienteService;
+    private readonly ReservasClienteService _reservasClienteService;
 
-    public ClienteController(ClienteService clienteService)
+    public ClienteController(ClienteService clienteService, ReservasClienteService reservasClienteService)
     {
         _clienteService = clienteService;
+        _reservasClienteService = reservasClienteService;
     }
 
     // GET: api/cliente/viajes
@@ -88,5 +90,38 @@ public class ClienteController : ControllerBase
             .ObtenerBoletosClienteAsync(usuarioId);
 
         return Ok(boletos);
+    }
+
+    [Authorize(Roles = "CLIENTE")]
+    [HttpGet("perfil")]
+    public async Task<IActionResult> ObtenerPerfilReserva()
+    {
+        if (!long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var usuarioId) || usuarioId <= 0)
+            return Unauthorized(new { mensaje = "No se pudo identificar al cliente." });
+
+        var documento = await _reservasClienteService.ObtenerDocumentoAsync(usuarioId);
+        return Ok(new { cedula = documento });
+    }
+
+    [Authorize(Roles = "CLIENTE")]
+    [HttpPost("reservas")]
+    public async Task<IActionResult> CrearReserva([FromBody] CrearReservaClienteRequest solicitud)
+    {
+        if (!long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var usuarioId) || usuarioId <= 0)
+            return Unauthorized(new { mensaje = "No se pudo identificar al cliente." });
+
+        try
+        {
+            var reserva = await _reservasClienteService.CrearAsync(usuarioId, solicitud);
+            return Ok(reserva);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
     }
 }
