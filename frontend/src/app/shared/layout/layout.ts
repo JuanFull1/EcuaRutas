@@ -81,9 +81,10 @@ export class Layout {
               ruta: '/admin/inicio'
             },
             {
-              texto: 'Usuarios',
-              icono: 'bi-people'
-            },
+  texto: 'Usuarios',
+  icono: 'bi-people',
+  ruta: '/admin/usuarios'
+},
             {
               texto: 'Cooperativas',
               icono: 'bi-building'

@@ -51,6 +51,18 @@ export const routes: Routes = [
       },
 
       {
+  path: 'usuarios',
+
+  loadComponent: () =>
+    import(
+      './admin/usuarios/usuarios-admin'
+    )
+      .then(
+        m => m.UsuariosAdmin
+      )
+},
+
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'inicio'
