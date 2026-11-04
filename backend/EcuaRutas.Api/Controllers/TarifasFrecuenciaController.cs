@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using EcuaRutas.Api.DTOs.Tarifas;
 using EcuaRutas.Api.Services;
+using EcuaRutas.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +10,9 @@ using Npgsql;
 namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
+[CatalogosCooperativa]
 [Route("api/frecuencias/{frecuenciaId:long}/tarifas")]
-[Authorize(Roles = "ADMIN")]
+[Authorize(Roles = "ADMIN,COOPERATIVA")]
 public class TarifasFrecuenciaController(ITarifaFrecuenciaService service, ILogger<TarifasFrecuenciaController>? logger = null) : ControllerBase
 {
     [HttpGet]
@@ -28,7 +30,7 @@ public class TarifasFrecuenciaController(ITarifaFrecuenciaService service, ILogg
     });
 
     [HttpPost]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     public Task<IActionResult> Crear(long frecuenciaId, CrearTarifaFrecuenciaDto dto, CancellationToken ct) => Ejecutar(async () =>
     {
         ValidarId(frecuenciaId);
@@ -37,7 +39,7 @@ public class TarifasFrecuenciaController(ITarifaFrecuenciaService service, ILogg
     });
 
     [HttpPut("{id:long}")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     public Task<IActionResult> Actualizar(long frecuenciaId, long id, ActualizarTarifaFrecuenciaDto dto, CancellationToken ct) => Ejecutar(async () =>
     {
         if (await ObtenerContextualAsync(frecuenciaId, id, ct) is null) return NotFound();
@@ -46,7 +48,7 @@ public class TarifasFrecuenciaController(ITarifaFrecuenciaService service, ILogg
     });
 
     [HttpDelete("{id:long}")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     public Task<IActionResult> DarDeBaja(long frecuenciaId, long id, CancellationToken ct) => Ejecutar(async () =>
     {
         if (await ObtenerContextualAsync(frecuenciaId, id, ct) is null) return NotFound();
@@ -70,6 +72,7 @@ public class TarifasFrecuenciaController(ITarifaFrecuenciaService service, ILogg
     private async Task<IActionResult> Ejecutar(Func<Task<IActionResult>> accion)
     {
         try { return await accion(); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
         catch (ValidationException ex) { return BadRequest(new { mensaje = ex.Message }); }
         catch (RecursoNoEncontradoException ex) { return NotFound(new { mensaje = ex.Message }); }
         catch (ConflictoException ex) { return Conflict(new { mensaje = ex.Message }); }

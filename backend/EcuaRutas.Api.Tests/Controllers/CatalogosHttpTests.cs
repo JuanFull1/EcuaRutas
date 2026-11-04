@@ -46,8 +46,9 @@ public class CatalogosHttpTests : IClassFixture<CatalogosHttpFixture>
             foreach (var metodo in new[] { "GET", "POST", "PUT", "DELETE" })
             {
                 casos.Add(ruta, metodo, null, 401);
-                foreach (var rol in new[] { "CLIENTE", "COOPERATIVA", "OFICINISTA", "BUS" }) casos.Add(ruta, metodo, rol, 403);
-                casos.Add(ruta, metodo, "ADMIN", metodo switch { "POST" => 201, "DELETE" => 204, _ => 200 });
+                foreach (var rol in new[] { "CLIENTE", "OFICINISTA", "BUS" }) casos.Add(ruta, metodo, rol, 403);
+                foreach (var permitido in new[] { "ADMIN", "COOPERATIVA" })
+                    casos.Add(ruta, metodo, permitido, metodo switch { "POST" => 201, "DELETE" => 204, _ => 200 });
             }
             return casos;
         }
@@ -55,7 +56,7 @@ public class CatalogosHttpTests : IClassFixture<CatalogosHttpFixture>
 
     [Theory]
     [MemberData(nameof(Autorizacion))]
-    public async Task MiddlewareRealAplicaPoliticaAdmin(string ruta, string metodo, string? rol, int estado)
+    public async Task MiddlewareRealAplicaPoliticaDeCatalogos(string ruta, string metodo, string? rol, int estado)
     {
         using var respuesta = await fixture.EnviarAsync(metodo, ruta, rol);
         Assert.Equal((HttpStatusCode)estado, respuesta.StatusCode);
@@ -248,7 +249,7 @@ public sealed class CatalogosHttpFixture : IAsyncLifetime, IObserver<DiagnosticL
     }
 
     public string Token(string rol) => Host.Services.GetRequiredService<JwtService>().GenerarToken(new Usuario
-    { Id = 1, Nombres = "Prueba", Apellidos = "HTTP", Correo = "prueba@example.invalid", Rol = new Role { Codigo = rol } }).Token;
+    { Id = 1, CooperativaId = rol == "COOPERATIVA" ? 1 : null, Nombres = "Prueba", Apellidos = "HTTP", Correo = "prueba@example.invalid", Rol = new Role { Codigo = rol } }).Token;
 
     public static string Cuerpo(string ruta, bool actualizar)
     {

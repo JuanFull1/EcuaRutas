@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using EcuaRutas.Api.Data;
+using EcuaRutas.Api.Security;
 using EcuaRutas.Api.DTOs.ResolucionesAnt;
 using EcuaRutas.Api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,9 @@ public class ResolucionAntService : IResolucionAntService
     public async Task<IReadOnlyList<ResolucionAntDto>> ListarAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
+        var propia = AlcanceCatalogos.CooperativaId;
         return await _db.ResolucionesAnts.AsNoTracking()
+            .Where(r => !propia.HasValue || r.CooperativaId == propia.Value)
             .OrderBy(r => r.NumeroResolucion).ThenBy(r => r.Id).Select(Proyeccion).ToListAsync(ct);
     }
 
@@ -36,13 +39,17 @@ public class ResolucionAntService : IResolucionAntService
     {
         ct.ThrowIfCancellationRequested();
         ValidarId(id);
-        return await _db.ResolucionesAnts.AsNoTracking().Where(r => r.Id == id).Select(Proyeccion).SingleOrDefaultAsync(ct);
+        var propia = AlcanceCatalogos.CooperativaId;
+        return await _db.ResolucionesAnts.AsNoTracking()
+            .Where(r => r.Id == id && (!propia.HasValue || r.CooperativaId == propia.Value))
+            .Select(Proyeccion).SingleOrDefaultAsync(ct);
     }
 
     public async Task<ResolucionAntDto> CrearAsync(CrearResolucionAntDto request, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(request);
+        AlcanceCatalogos.ExigirPropia(request.CooperativaId);
         Validator.ValidateObject(request, new ValidationContext(request), validateAllProperties: true);
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
         await ComprobarCooperativaAsync(request.CooperativaId, ct);
@@ -63,10 +70,11 @@ public class ResolucionAntService : IResolucionAntService
         ct.ThrowIfCancellationRequested();
         ValidarId(id);
         ArgumentNullException.ThrowIfNull(request);
+        AlcanceCatalogos.ExigirPropia(request.CooperativaId);
         Validator.ValidateObject(request, new ValidationContext(request), validateAllProperties: true);
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
         var resolucion = await BloquearAsync(id, ct);
-        if (resolucion is null) return null;
+        if (resolucion is null || !AlcanceCatalogos.Permite(resolucion.CooperativaId)) return null;
 
         // FOR UPDATE protege la comprobación frente a nuevas FK de frecuencias.
         // Sus futuros servicios deben coordinar también sus lecturas previas de negocio.
@@ -92,7 +100,7 @@ public class ResolucionAntService : IResolucionAntService
         ValidarId(id);
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
         var resolucion = await BloquearAsync(id, ct);
-        if (resolucion is null) return false;
+        if (resolucion is null || !AlcanceCatalogos.Permite(resolucion.CooperativaId)) return false;
         // Es idempotente y no desactiva frecuencias ni altera relaciones históricas.
         resolucion.Activa = false;
         await GuardarAsync(ct);

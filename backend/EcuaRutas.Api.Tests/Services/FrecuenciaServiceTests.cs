@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text.RegularExpressions;
 using EcuaRutas.Api.Data;
+using EcuaRutas.Api.Tests.Controllers;
 using EcuaRutas.Api.DTOs.Frecuencias;
 using EcuaRutas.Api.Models;
 using EcuaRutas.Api.Services;
@@ -19,6 +20,66 @@ namespace EcuaRutas.Api.Tests.Services;
 // transacciones simulados. Nunca abre conexiones ni prueba concurrencia PostgreSQL real.
 public class FrecuenciaServiceTests
 {
+
+    [Fact]
+    public async Task CooperativaFiltraListadoDetalleYFiltroExplicitoAjeno()
+    {
+        await using var db = new ContextoSimulado(); db.Filas.AddRange([Fila(1), Fila(2, cooperativa: 12)]);
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            Assert.Equal(1, Assert.Single(await Servicio(db).ListarAsync()).Id);
+            Assert.NotNull(await Servicio(db).ObtenerAsync(1));
+            Assert.Null(await Servicio(db).ObtenerAsync(2));
+            Assert.Empty(await Servicio(db).ListarAsync(12));
+            Assert.Contains(db.Sql, sql => sql.Contains("cooperativa_id") && sql.Contains("propia"));
+        });
+        await AlcanceCatalogosTests.EjecutarAsync(async () => Assert.Equal(2, (await Servicio(db).ListarAsync()).Count), null, "ADMIN");
+    }
+
+    [Fact]
+    public async Task CooperativaCreaEditaYDesactivaPropias()
+    {
+        await using var db = new ContextoSimulado();
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            var creada = await Servicio(db).CrearAsync(Creacion());
+            Assert.Equal(11, creada.CooperativaId);
+            Assert.NotNull(await Servicio(db).ActualizarAsync(creada.Id, Actualizacion()));
+            Assert.True(await Servicio(db).DarDeBajaAsync(creada.Id));
+        });
+        Assert.Equal(3, db.Guardados);
+    }
+
+    [Fact]
+    public async Task CooperativaRechazaEscriturasAjenasYManipulacionDelDto()
+    {
+        await using var db = new ContextoSimulado(); db.Filas.Add(Fila(2, cooperativa: 12));
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            Assert.Null(await Servicio(db).ActualizarAsync(2, Actualizacion()));
+            Assert.False(await Servicio(db).DarDeBajaAsync(2));
+            var crear = Creacion(); crear.CooperativaId = 12;
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Servicio(db).CrearAsync(crear));
+            var editar = Actualizacion(); editar.CooperativaId = 12;
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Servicio(db).ActualizarAsync(2, editar));
+        });
+        Assert.Equal(0, db.Guardados); Assert.True(Assert.Single(db.Filas).Activa);
+    }
+
+    [Fact]
+    public async Task ResolucionAjenaEsNoVisibleTantoAlCrearComoAlEditar()
+    {
+        await using var db = new ContextoSimulado(); db.Filas.Add(Fila(1));
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            var crear = Creacion(); crear.ResolucionAntId = 34;
+            await Assert.ThrowsAsync<RecursoNoEncontradoException>(() => Servicio(db).CrearAsync(crear));
+            var editar = Actualizacion(); editar.ResolucionAntId = 34;
+            await Assert.ThrowsAsync<RecursoNoEncontradoException>(() => Servicio(db).ActualizarAsync(1, editar));
+        });
+        Assert.Equal(0, db.Guardados);
+    }
+
     [Fact]
     public async Task ListadoProyectaOrdenaIncluyeInactivasYNoRastrea()
     {
@@ -456,7 +517,8 @@ public class FrecuenciaServiceTests
             db.Sql.Add(sql); db.Tokens.Add(cancellationToken);
             db.AlConsultar?.Invoke(sql); cancellationToken.ThrowIfCancellationRequested();
             var parametros = command.Parameters.Cast<DbParameter>().ToArray();
-            var id = parametros.FirstOrDefault(p => p.Value is long)?.Value as long?;
+            var id = parametros.FirstOrDefault(p => p.Value is long && !p.ParameterName.Contains("propia", StringComparison.OrdinalIgnoreCase))?.Value as long?;
+            var propia = parametros.FirstOrDefault(p => p.ParameterName.Contains("propia", StringComparison.OrdinalIgnoreCase))?.Value as long?;
             long? Parametro(string nombre) => parametros.FirstOrDefault(p => p.ParameterName.Contains(nombre, StringComparison.OrdinalIgnoreCase))?.Value as long?;
             DataTable tabla = new();
             if (sql.StartsWith("SELECT EXISTS", StringComparison.Ordinal))
@@ -483,7 +545,7 @@ public class FrecuenciaServiceTests
                 else if (sql.Contains("FROM frecuencias"))
                 {
                     var coop = Parametro("cooperativaId"); var ruta = Parametro("rutaId");
-                    var consulta = db.Filas.Where(f => (!coop.HasValue || f.CooperativaId == coop) && (!ruta.HasValue || f.RutaId == ruta));
+                    var consulta = db.Filas.Where(f => (!propia.HasValue || f.CooperativaId == propia) && (!coop.HasValue || f.CooperativaId == coop) && (!ruta.HasValue || f.RutaId == ruta));
                     if (!coop.HasValue && !ruta.HasValue && id.HasValue) consulta = consulta.Where(f => f.Id == id);
                     filas = consulta.OrderBy(f => f.CooperativaId).ThenBy(f => f.RutaId).ThenBy(f => f.HoraSalida).ThenBy(f => f.Id)
                         .Select(f => new Dictionary<string, object?>

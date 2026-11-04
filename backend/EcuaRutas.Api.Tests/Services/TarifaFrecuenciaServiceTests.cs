@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text.RegularExpressions;
 using EcuaRutas.Api.Data;
+using EcuaRutas.Api.Tests.Controllers;
 using EcuaRutas.Api.DTOs.Tarifas;
 using EcuaRutas.Api.Models;
 using EcuaRutas.Api.Services;
@@ -20,6 +21,72 @@ namespace EcuaRutas.Api.Tests.Services;
 // CHECK, unicidad concurrente, bloqueos compartidos, deadlocks y rollback real.
 public class TarifaFrecuenciaServiceTests
 {
+
+    [Fact]
+    public async Task CooperativaConsultaSoloTarifasDeSusFrecuencias()
+    {
+        await using var db = new ContextoSimulado(); db.Filas.AddRange([Fila(1), Fila(2, frecuencia: 12)]);
+        var servicio = new TarifaFrecuenciaService(db);
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            Assert.Equal(1, Assert.Single(await servicio.ListarAsync()).Id);
+            Assert.Single(await servicio.ListarPorFrecuenciaAsync(11));
+            await Assert.ThrowsAsync<RecursoNoEncontradoException>(() => servicio.ListarPorFrecuenciaAsync(12));
+            Assert.NotNull(await servicio.ObtenerAsync(1)); Assert.Null(await servicio.ObtenerAsync(2));
+            Assert.Contains(db.Sql, sql => sql.Contains("JOIN") && sql.Contains("cooperativa_id") && sql.Contains("propia"));
+        });
+        await AlcanceCatalogosTests.EjecutarAsync(async () => Assert.Equal(2, (await servicio.ListarAsync()).Count), null, "ADMIN");
+    }
+
+    [Fact]
+    public async Task CooperativaCreaEditaYDesactivaTarifaPropia()
+    {
+        await using var db = new ContextoSimulado(); var servicio = new TarifaFrecuenciaService(db);
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            var creada = await servicio.CrearAsync(11, Crear());
+            Assert.NotNull(await servicio.ActualizarAsync(creada.Id, Editar()));
+            Assert.True(await servicio.DarDeBajaAsync(creada.Id));
+        });
+        Assert.Equal(3, db.Guardados);
+        Assert.All(db.TiposGuardados, t => Assert.Equal(typeof(TarifasFrecuencium), t));
+    }
+
+    [Fact]
+    public async Task CooperativaNoCreaEditaNiDesactivaTarifaAjena()
+    {
+        await using var db = new ContextoSimulado(); db.Filas.Add(Fila(2, frecuencia: 12));
+        var servicio = new TarifaFrecuenciaService(db);
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            await Assert.ThrowsAsync<RecursoNoEncontradoException>(() => servicio.CrearAsync(12, Crear()));
+            Assert.Null(await servicio.ActualizarAsync(2, Editar()));
+            Assert.False(await servicio.DarDeBajaAsync(2));
+        });
+        Assert.Equal(0, db.Guardados); Assert.True(Assert.Single(db.Filas).Activa);
+    }
+
+    [Theory]
+    [InlineData("precio")]
+    [InlineData("decimales")]
+    [InlineData("ruta")]
+    [InlineData("orden")]
+    public async Task CooperativaConservaValidacionesDePrecioYTramo(string caso)
+    {
+        await using var db = new ContextoSimulado(); var dto = Crear();
+        if (caso == "precio") dto.PrecioBase = -1;
+        if (caso == "decimales") dto.PrecioBase = 1.001m;
+        if (caso == "ruta") db.Paradas.Single(p => p.Id == 10).RutaId = 99;
+        if (caso == "orden") db.Paradas.Single(p => p.Id == 10).Orden = 0;
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            if (caso is "precio" or "decimales")
+                await Assert.ThrowsAsync<ValidationException>(() => new TarifaFrecuenciaService(db).CrearAsync(11, dto));
+            else await Assert.ThrowsAsync<ConflictoException>(() => new TarifaFrecuenciaService(db).CrearAsync(11, dto));
+        });
+        Assert.Equal(0, db.Guardados);
+    }
+
     [Fact]
     public async Task ConsultasProyectanOrdenanFiltranEIncluyenInactivasSinRastrear()
     {
@@ -282,7 +349,7 @@ public class TarifaFrecuenciaServiceTests
     {
         public readonly List<TarifasFrecuencium> Filas = [];
         public readonly List<Frecuencia> FrecuenciasResueltas =
-        [new() { Id = 11, RutaId = 22, Activa = true }, new() { Id = 12, RutaId = 22, Activa = true }, new() { Id = 13, RutaId = 22, Activa = false }];
+        [new() { Id = 11, CooperativaId = 11, RutaId = 22, Activa = true }, new() { Id = 12, CooperativaId = 12, RutaId = 22, Activa = true }, new() { Id = 13, CooperativaId = 11, RutaId = 22, Activa = false }];
         public readonly List<RutaParada> Paradas =
         [new() { Id = 90, RutaId = 22, Orden = 0 }, new() { Id = 80, RutaId = 22, Orden = 1 },
          new() { Id = 10, RutaId = 22, Orden = 2 }, new() { Id = 20, RutaId = 22, Orden = 3 }];
@@ -337,13 +404,14 @@ public class TarifaFrecuenciaServiceTests
             var sql = command.CommandText; db.Sql.Add(sql); db.Tokens.Add(cancellationToken);
             db.AlConsultar?.Invoke(); cancellationToken.ThrowIfCancellationRequested();
             var parametros = command.Parameters.Cast<DbParameter>().ToArray();
-            var id = parametros.FirstOrDefault(p => p.Value is long)?.Value as long?;
+            var id = parametros.FirstOrDefault(p => p.Value is long && !p.ParameterName.Contains("propia", StringComparison.OrdinalIgnoreCase))?.Value as long?;
+            var propia = parametros.FirstOrDefault(p => p.ParameterName.Contains("propia", StringComparison.OrdinalIgnoreCase))?.Value as long?;
             long? Parametro(string nombre) => parametros.FirstOrDefault(p => p.ParameterName.Contains(nombre, StringComparison.OrdinalIgnoreCase))?.Value as long?;
             DataTable tabla = new();
             if (sql.StartsWith("SELECT EXISTS", StringComparison.Ordinal))
             {
                 bool existe;
-                if (sql.Contains("FROM frecuencias")) existe = db.FrecuenciasResueltas.Any(f => f.Id == id);
+                if (sql.Contains("FROM frecuencias")) existe = db.FrecuenciasResueltas.Any(f => f.Id == id && (!propia.HasValue || f.CooperativaId == propia));
                 else if (sql.Contains("FROM tarifas_frecuencia"))
                     existe = db.Filas.Any(t => t.FrecuenciaId == Parametro("FrecuenciaId") && t.OrigenRutaParadaId == Parametro("OrigenRutaParadaId")
                         && t.DestinoRutaParadaId == Parametro("DestinoRutaParadaId") && t.Id != Parametro("tarifa_Id"));
@@ -354,13 +422,14 @@ public class TarifaFrecuenciaServiceTests
             {
                 IEnumerable<Dictionary<string, object?>> filas;
                 if (sql.Contains("FROM frecuencias")) filas = db.FrecuenciasResueltas.Where(f => f.Id == id).Select(f => new Dictionary<string, object?>
-                    { ["id"] = f.Id, ["ruta_id"] = f.RutaId, ["activa"] = f.Activa });
+                    { ["id"] = f.Id, ["cooperativa_id"] = f.CooperativaId, ["ruta_id"] = f.RutaId, ["activa"] = f.Activa });
                 else if (sql.Contains("FROM ruta_paradas")) filas = db.Paradas.Where(p => p.Id == id).Select(p => new Dictionary<string, object?>
                     { ["id"] = p.Id, ["ruta_id"] = p.RutaId, ["orden"] = p.Orden });
                 else if (sql.Contains("FROM tarifas_frecuencia"))
                 {
                     var frecuencia = Parametro("frecuenciaId");
-                    var consulta = db.Filas.Where(t => frecuencia.HasValue ? t.FrecuenciaId == frecuencia : !id.HasValue || t.Id == id);
+                    var consulta = db.Filas.Where(t => (frecuencia.HasValue ? t.FrecuenciaId == frecuencia : !id.HasValue || t.Id == id)
+                        && (!propia.HasValue || db.FrecuenciasResueltas.Any(f => f.Id == t.FrecuenciaId && f.CooperativaId == propia)));
                     filas = consulta.OrderBy(t => t.FrecuenciaId).ThenBy(t => t.OrigenRutaParadaId).ThenBy(t => t.DestinoRutaParadaId).ThenBy(t => t.Id)
                         .Select(t => new Dictionary<string, object?> { ["id"] = t.Id, ["frecuencia_id"] = t.FrecuenciaId,
                             ["origen_ruta_parada_id"] = t.OrigenRutaParadaId, ["destino_ruta_parada_id"] = t.DestinoRutaParadaId,

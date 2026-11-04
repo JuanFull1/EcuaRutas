@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using EcuaRutas.Api.DTOs.ResolucionesAnt;
 using EcuaRutas.Api.Services;
+using EcuaRutas.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +10,9 @@ using Npgsql;
 namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
+[CatalogosCooperativa]
 [Route("api/resoluciones-ant")]
-[Authorize(Roles = "ADMIN")]
+[Authorize(Roles = "ADMIN,COOPERATIVA")]
 public class ResolucionesAntController(IResolucionAntService service, ILogger<ResolucionesAntController>? logger = null) : ControllerBase
 {
     [HttpGet]
@@ -25,7 +27,7 @@ public class ResolucionesAntController(IResolucionAntService service, ILogger<Re
     });
 
     [HttpPost]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     public Task<IActionResult> Crear(CrearResolucionAntDto dto, CancellationToken ct) => Ejecutar(async () =>
     {
         var resultado = await service.CrearAsync(dto, ct);
@@ -33,7 +35,7 @@ public class ResolucionesAntController(IResolucionAntService service, ILogger<Re
     });
 
     [HttpPut("{id:long}")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     public Task<IActionResult> Actualizar(long id, ActualizarResolucionAntDto dto, CancellationToken ct) => Ejecutar(async () =>
     {
         ValidarId(id);
@@ -42,7 +44,7 @@ public class ResolucionesAntController(IResolucionAntService service, ILogger<Re
     });
 
     [HttpDelete("{id:long}")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     public Task<IActionResult> DarDeBaja(long id, CancellationToken ct) => Ejecutar(async () =>
     {
         ValidarId(id);
@@ -57,6 +59,7 @@ public class ResolucionesAntController(IResolucionAntService service, ILogger<Re
     private async Task<IActionResult> Ejecutar(Func<Task<IActionResult>> accion)
     {
         try { return await accion(); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
         catch (ValidationException ex) { return BadRequest(new { mensaje = ex.Message }); }
         catch (RecursoNoEncontradoException ex) { return NotFound(new { mensaje = ex.Message }); }
         catch (ConflictoException ex) { return Conflict(new { mensaje = ex.Message }); }

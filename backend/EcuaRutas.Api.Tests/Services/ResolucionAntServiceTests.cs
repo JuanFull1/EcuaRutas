@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text.RegularExpressions;
 using EcuaRutas.Api.Data;
+using EcuaRutas.Api.Tests.Controllers;
 using EcuaRutas.Api.DTOs.ResolucionesAnt;
 using EcuaRutas.Api.Models;
 using EcuaRutas.Api.Services;
@@ -19,6 +20,78 @@ namespace EcuaRutas.Api.Tests.Services;
 // No se abre una conexión ni se verifican restricciones/bloqueos reales de PostgreSQL.
 public class ResolucionAntServiceTests
 {
+
+    [Fact]
+    public async Task SolicitudesConcurrentesNoCompartenAlcance()
+    {
+        var ambasDentro = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var entradas = 0;
+        async Task Solicitud(long propia)
+        {
+            await using var db = Contexto(); db.Filas.AddRange([Fila(1), Fila(2, cooperativa: 22)]);
+            await AlcanceCatalogosTests.EjecutarAsync(async () =>
+            {
+                if (Interlocked.Increment(ref entradas) == 2) ambasDentro.SetResult();
+                await ambasDentro.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                Assert.Equal(propia, Assert.Single(await Servicio(db).ListarAsync()).CooperativaId);
+            }, propia.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+        await Task.WhenAll(Solicitud(11), Solicitud(22));
+    }
+
+    [Fact]
+    public async Task ExcepcionNoDejaAlcanceActivoEnElLlamador()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(() => AlcanceCatalogosTests.EjecutarAsync(() => throw new InvalidOperationException()));
+        await using var db = Contexto(); db.Filas.AddRange([Fila(1), Fila(2, cooperativa: 22)]);
+        Assert.Equal(2, (await Servicio(db).ListarAsync()).Count);
+    }
+
+    [Fact]
+    public async Task CooperativaFiltraLecturasYConservaAdminGlobal()
+    {
+        await using var db = Contexto(); db.Filas.AddRange([Fila(1), Fila(2, cooperativa: 22)]);
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            Assert.Equal(1, Assert.Single(await Servicio(db).ListarAsync()).Id);
+            Assert.NotNull(await Servicio(db).ObtenerAsync(1));
+            Assert.Null(await Servicio(db).ObtenerAsync(2));
+            Assert.Contains(db.Sql, sql => sql.Contains("cooperativa_id") && sql.Contains("propia"));
+        });
+        Assert.Equal(2, (await Servicio(db).ListarAsync()).Count);
+        await AlcanceCatalogosTests.EjecutarAsync(async () => Assert.NotNull(await Servicio(db).ObtenerAsync(2)), null, "ADMIN");
+    }
+
+    [Fact]
+    public async Task CooperativaCreaEditaYDesactivaPropias()
+    {
+        await using var db = Contexto();
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            var creada = await Servicio(db).CrearAsync(Creacion());
+            Assert.Equal(11, creada.CooperativaId);
+            Assert.NotNull(await Servicio(db).ActualizarAsync(creada.Id, Actualizacion("EDITADA")));
+            Assert.True(await Servicio(db).DarDeBajaAsync(creada.Id));
+        });
+        Assert.Equal(3, db.Guardados);
+    }
+
+    [Fact]
+    public async Task CooperativaRechazaEscriturasAjenasYManipulacionDelDto()
+    {
+        await using var db = Contexto(); db.Filas.Add(Fila(2, cooperativa: 22));
+        await AlcanceCatalogosTests.EjecutarAsync(async () =>
+        {
+            Assert.Null(await Servicio(db).ActualizarAsync(2, Actualizacion()));
+            Assert.False(await Servicio(db).DarDeBajaAsync(2));
+            var crear = Creacion(); crear.CooperativaId = 22;
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Servicio(db).CrearAsync(crear));
+            var editar = Actualizacion(); editar.CooperativaId = 22;
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => Servicio(db).ActualizarAsync(2, editar));
+        });
+        Assert.Equal(0, db.Guardados); Assert.True(Assert.Single(db.Filas).Activa);
+    }
+
     [Fact]
     public async Task ListarIncluyeInactivasProyectaOrdenaYNoRastrea()
     {
@@ -356,7 +429,8 @@ public class ResolucionAntServiceTests
             var db = (ContextoSimulado)eventData.Context!;
             db.Sql.Add(command.CommandText); db.Tokens.Add(cancellationToken);
             var parametros = command.Parameters.Cast<DbParameter>().ToArray();
-            var id = parametros.FirstOrDefault(p => p.Value is long)?.Value as long?;
+            var id = parametros.FirstOrDefault(p => p.Value is long && !p.ParameterName.Contains("propia", StringComparison.OrdinalIgnoreCase))?.Value as long?;
+            var propia = parametros.FirstOrDefault(p => p.ParameterName.Contains("propia", StringComparison.OrdinalIgnoreCase))?.Value as long?;
             DataTable tabla = new();
             if (command.CommandText.StartsWith("SELECT EXISTS", StringComparison.Ordinal))
             {
@@ -386,7 +460,7 @@ public class ResolucionAntServiceTests
                     "id" or "cooperativa_id" => typeof(long), "activa" => typeof(bool),
                     "fecha_resolucion" => typeof(DateOnly), _ => typeof(string)
                 });
-                foreach (var fila in db.Filas.Where(f => !id.HasValue || f.Id == id).OrderBy(f => f.NumeroResolucion).ThenBy(f => f.Id))
+                foreach (var fila in db.Filas.Where(f => (!id.HasValue || f.Id == id) && (!propia.HasValue || f.CooperativaId == propia)).OrderBy(f => f.NumeroResolucion).ThenBy(f => f.Id))
                     tabla.Rows.Add(columnas.Select<string, object>(columna => columna switch
                     {
                         "id" => fila.Id, "cooperativa_id" => fila.CooperativaId, "activa" => fila.Activa,

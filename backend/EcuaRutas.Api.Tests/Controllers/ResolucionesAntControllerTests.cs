@@ -14,6 +14,15 @@ public class ResolucionesAntControllerTests
     private static ActualizarResolucionAntDto EditarDto() => new() { CooperativaId = 1, NumeroResolucion = "ANT-01", Activa = false };
 
     [Fact]
+    public async Task CooperativaAjenaSeTraduceA403SinMensajePrivado()
+    {
+        var (servicio, doble) = ServicioDoble<IResolucionAntService>.Crear();
+        doble.Error = new UnauthorizedAccessException();
+        var controller = new ResolucionesAntController(servicio);
+        Assert.IsType<ForbidResult>(await controller.Crear(CrearDto(), default));
+    }
+
+    [Fact]
     public async Task OperacionesDevuelvenDtoUbicacionYPropaganToken()
     {
         var (servicio, doble) = ServicioDoble<IResolucionAntService>.Crear();

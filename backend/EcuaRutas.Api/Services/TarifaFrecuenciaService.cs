@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using EcuaRutas.Api.Data;
+using EcuaRutas.Api.Security;
 using EcuaRutas.Api.DTOs.Tarifas;
 using EcuaRutas.Api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,8 @@ public class TarifaFrecuenciaService(EcuaRutasDbContext db) : ITarifaFrecuenciaS
     {
         ct.ThrowIfCancellationRequested();
         ValidarId(id);
-        return await db.TarifasFrecuencia.AsNoTracking().Where(t => t.Id == id)
+        var propia = AlcanceCatalogos.CooperativaId;
+        return await db.TarifasFrecuencia.AsNoTracking().Where(t => t.Id == id && (!propia.HasValue || t.Frecuencia.CooperativaId == propia.Value))
             .Select(Proyeccion).SingleOrDefaultAsync(ct);
     }
 
@@ -42,14 +44,20 @@ public class TarifaFrecuenciaService(EcuaRutasDbContext db) : ITarifaFrecuenciaS
     {
         ct.ThrowIfCancellationRequested();
         ValidarId(frecuenciaId);
-        if (!await db.Frecuencias.AsNoTracking().AnyAsync(f => f.Id == frecuenciaId, ct))
+        var propia = AlcanceCatalogos.CooperativaId;
+        if (!await db.Frecuencias.AsNoTracking().AnyAsync(f => f.Id == frecuenciaId && (!propia.HasValue || f.CooperativaId == propia.Value), ct))
             throw new RecursoNoEncontradoException($"No existe la frecuencia con id {frecuenciaId}.");
         return await Consultar().Where(t => t.FrecuenciaId == frecuenciaId).ToListAsync(ct);
     }
 
-    private IQueryable<TarifaFrecuenciaDto> Consultar() => db.TarifasFrecuencia.AsNoTracking()
-        .OrderBy(t => t.FrecuenciaId).ThenBy(t => t.OrigenRutaParadaId)
-        .ThenBy(t => t.DestinoRutaParadaId).ThenBy(t => t.Id).Select(Proyeccion);
+    private IQueryable<TarifaFrecuenciaDto> Consultar()
+    {
+        var propia = AlcanceCatalogos.CooperativaId;
+        return db.TarifasFrecuencia.AsNoTracking()
+            .Where(t => !propia.HasValue || t.Frecuencia.CooperativaId == propia.Value)
+            .OrderBy(t => t.FrecuenciaId).ThenBy(t => t.OrigenRutaParadaId)
+            .ThenBy(t => t.DestinoRutaParadaId).ThenBy(t => t.Id).Select(Proyeccion);
+    }
 
     public async Task<TarifaFrecuenciaDto> CrearAsync(long frecuenciaId, CrearTarifaFrecuenciaDto request, CancellationToken ct = default)
     {
@@ -119,6 +127,15 @@ public class TarifaFrecuenciaService(EcuaRutasDbContext db) : ITarifaFrecuenciaS
         var tarifa = await db.TarifasFrecuencia
             .FromSqlInterpolated($"SELECT * FROM tarifas_frecuencia WHERE id = {id} FOR UPDATE").SingleOrDefaultAsync(ct);
         if (tarifa is not null) await db.Entry(tarifa).ReloadAsync(ct);
+        if (tarifa is not null && AlcanceCatalogos.CooperativaId is long propia)
+        {
+            // Mantiene estable la propiedad de la frecuencia hasta finalizar la escritura.
+            var frecuenciaId = tarifa.FrecuenciaId;
+            var frecuencia = await db.Frecuencias
+                .FromSqlInterpolated($"SELECT * FROM frecuencias WHERE id = {frecuenciaId} FOR SHARE")
+                .AsNoTracking().Select(f => new { f.CooperativaId }).SingleOrDefaultAsync(ct);
+            if (frecuencia?.CooperativaId != propia) return null;
+        }
         return tarifa;
     }
 
@@ -127,9 +144,11 @@ public class TarifaFrecuenciaService(EcuaRutasDbContext db) : ITarifaFrecuenciaS
         var frecuenciaId = tarifa.FrecuenciaId;
         var frecuencia = await db.Frecuencias
             .FromSqlInterpolated($"SELECT * FROM frecuencias WHERE id = {frecuenciaId} FOR SHARE")
-            .AsNoTracking().Select(f => new Frecuencia { Id = f.Id, RutaId = f.RutaId, Activa = f.Activa })
+            .AsNoTracking().Select(f => new Frecuencia { Id = f.Id, CooperativaId = f.CooperativaId, RutaId = f.RutaId, Activa = f.Activa })
             .SingleOrDefaultAsync(ct)
             ?? throw new RecursoNoEncontradoException($"No existe la frecuencia con id {frecuenciaId}.");
+        if (!AlcanceCatalogos.Permite(frecuencia.CooperativaId))
+            throw new RecursoNoEncontradoException("No existe la frecuencia solicitada.");
         // Orden estable de bloqueos compartidos: conserva pertenencia y Orden
         // hasta commit frente a UPDATE/DELETE de las paradas en PostgreSQL.
         var menor = Math.Min(tarifa.OrigenRutaParadaId, tarifa.DestinoRutaParadaId);

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using EcuaRutas.Api.Data;
+using EcuaRutas.Api.Security;
 using EcuaRutas.Api.DTOs.Frecuencias;
 using EcuaRutas.Api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,8 @@ public class FrecuenciaService : IFrecuenciaService
         ct.ThrowIfCancellationRequested();
         if (cooperativaId.HasValue) ValidarId(cooperativaId.Value);
         if (rutaId.HasValue) ValidarId(rutaId.Value);
-        var consulta = _db.Frecuencias.AsNoTracking();
+        var propia = AlcanceCatalogos.CooperativaId;
+        var consulta = _db.Frecuencias.AsNoTracking().Where(f => !propia.HasValue || f.CooperativaId == propia.Value);
         if (cooperativaId.HasValue) consulta = consulta.Where(f => f.CooperativaId == cooperativaId.Value);
         if (rutaId.HasValue) consulta = consulta.Where(f => f.RutaId == rutaId.Value);
         return await consulta.OrderBy(f => f.CooperativaId).ThenBy(f => f.RutaId)
@@ -43,13 +45,17 @@ public class FrecuenciaService : IFrecuenciaService
     {
         ct.ThrowIfCancellationRequested();
         ValidarId(id);
-        return await _db.Frecuencias.AsNoTracking().Where(f => f.Id == id).Select(Proyeccion).SingleOrDefaultAsync(ct);
+        var propia = AlcanceCatalogos.CooperativaId;
+        return await _db.Frecuencias.AsNoTracking()
+            .Where(f => f.Id == id && (!propia.HasValue || f.CooperativaId == propia.Value))
+            .Select(Proyeccion).SingleOrDefaultAsync(ct);
     }
 
     public async Task<FrecuenciaDto> CrearAsync(CrearFrecuenciaDto request, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(request);
+        AlcanceCatalogos.ExigirPropia(request.CooperativaId);
         Validator.ValidateObject(request, new ValidationContext(request), validateAllProperties: true);
         var frecuencia = new Frecuencia
         {
@@ -70,10 +76,11 @@ public class FrecuenciaService : IFrecuenciaService
         ct.ThrowIfCancellationRequested();
         ValidarId(id);
         ArgumentNullException.ThrowIfNull(request);
+        AlcanceCatalogos.ExigirPropia(request.CooperativaId);
         Validator.ValidateObject(request, new ValidationContext(request), validateAllProperties: true);
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
         var actual = await BloquearAsync(id, ct);
-        if (actual is null) return null;
+        if (actual is null || !AlcanceCatalogos.Permite(actual.CooperativaId)) return null;
         var propuesta = new Frecuencia
         {
             Id = id, CooperativaId = request.CooperativaId, RutaId = request.RutaId,
@@ -105,7 +112,7 @@ public class FrecuenciaService : IFrecuenciaService
         ValidarId(id);
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
         var frecuencia = await BloquearAsync(id, ct);
-        if (frecuencia is null) return false;
+        if (frecuencia is null || !AlcanceCatalogos.Permite(frecuencia.CooperativaId)) return false;
         frecuencia.Activa = false;
         await GuardarAsync(ct);
         await transaction.CommitAsync(ct);
@@ -133,6 +140,8 @@ public class FrecuenciaService : IFrecuenciaService
             .AsNoTracking().Select(r => new ResolucionesAnt { Id = r.Id, CooperativaId = r.CooperativaId, Activa = r.Activa })
             .SingleOrDefaultAsync(ct)
             ?? throw new RecursoNoEncontradoException($"No existe la resolución ANT con id {resolucionId}.");
+        if (!AlcanceCatalogos.Permite(resolucion.CooperativaId))
+            throw new RecursoNoEncontradoException("No existe la resolución ANT solicitada.");
         var rutaId = frecuencia.RutaId;
         var ruta = await _db.Rutas.FromSqlInterpolated($"SELECT * FROM rutas WHERE id = {rutaId} FOR SHARE")
             .AsNoTracking().Select(r => new Ruta { Id = r.Id, Activa = r.Activa }).SingleOrDefaultAsync(ct)

@@ -13,6 +13,15 @@ public class FrecuenciasControllerTests
     private static ActualizarFrecuenciaDto EditarDto() => new() { CooperativaId = 1, RutaId = 2, ResolucionAntId = 3, HoraSalida = TimeOnly.MinValue, Activa = false };
 
     [Fact]
+    public async Task CooperativaAjenaSeTraduceA403SinMensajePrivado()
+    {
+        var (servicio, doble) = ServicioDoble<IFrecuenciaService>.Crear();
+        doble.Error = new UnauthorizedAccessException();
+        var controller = new FrecuenciasController(servicio);
+        Assert.IsType<ForbidResult>(await controller.Crear(CrearDto(), default));
+    }
+
+    [Fact]
     public async Task OperacionesPreservanMedianocheFiltrosFalseYToken()
     {
         var (servicio, doble) = ServicioDoble<IFrecuenciaService>.Crear();
