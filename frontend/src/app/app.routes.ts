@@ -62,6 +62,7 @@ export const routes: Routes = [
       },
 
       {
+
         path: 'usuarios',
 
         loadComponent: () =>
