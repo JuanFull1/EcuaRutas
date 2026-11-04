@@ -93,6 +93,17 @@ public class ClienteController : ControllerBase
     }
 
     [Authorize(Roles = "CLIENTE")]
+    [HttpGet("perfil")]
+    public async Task<IActionResult> ObtenerPerfilReserva()
+    {
+        if (!long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var usuarioId) || usuarioId <= 0)
+            return Unauthorized(new { mensaje = "No se pudo identificar al cliente." });
+
+        var documento = await _reservasClienteService.ObtenerDocumentoAsync(usuarioId);
+        return Ok(new { cedula = documento });
+    }
+
+    [Authorize(Roles = "CLIENTE")]
     [HttpPost("reservas")]
     public async Task<IActionResult> CrearReserva([FromBody] CrearReservaClienteRequest solicitud)
     {

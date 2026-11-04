@@ -64,6 +64,7 @@ export class BuscarViajes implements OnInit {
   asientosDisponibles: AsientoDisponibleCliente[] = [];
   asientoSeleccionadoId: number | null = null;
   documento = '';
+  documentoDesdePerfil = false;
   cargandoAsientos = false;
   reservando = false;
   errorReserva = '';
@@ -71,6 +72,17 @@ export class BuscarViajes implements OnInit {
 
   ngOnInit(): void {
     this.cargarLugares();
+    this.clienteApi.obtenerCedulaCliente().subscribe({
+      next: perfil => {
+        const cedulaPerfil = perfil.cedula?.trim() ?? '';
+        this.documentoDesdePerfil = /^\d{10}$/.test(cedulaPerfil);
+        this.documento = this.documentoDesdePerfil ? cedulaPerfil : '';
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Si la cuenta no tiene cédula todavía, se podrá ingresar en el formulario de reserva.
+      }
+    });
   }
 
   cargarLugares(): void {

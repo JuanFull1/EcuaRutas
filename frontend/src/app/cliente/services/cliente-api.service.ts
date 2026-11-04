@@ -131,6 +131,10 @@ export class ClienteApiService {
     return this.http.post<ReservaClienteResponse>(`${this.clienteUrl}/reservas`, request);
   }
 
+  obtenerCedulaCliente(): Observable<{ cedula: string | null }> {
+    return this.http.get<{ cedula: string | null }>(`${this.clienteUrl}/perfil`);
+  }
+
   obtenerNotificaciones(): Observable<NotificacionCliente[]> {
     return this.http.get<NotificacionCliente[]>(
       `${API_URL}/notificaciones`

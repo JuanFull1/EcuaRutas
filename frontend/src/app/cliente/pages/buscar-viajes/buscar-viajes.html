@@ -365,8 +365,11 @@
 
         <label for="documento-cliente" class="form-label fw-semibold">Cédula del pasajero</label>
         <input id="documento-cliente" class="form-control mb-2" [(ngModel)]="documento" name="documentoCliente"
-          inputmode="numeric" maxlength="10" placeholder="10 dígitos" autocomplete="off">
-        <p class="form-text">La reserva se asociará a tu cuenta y expirará en 15 minutos si no completas el pago.</p>
+          inputmode="numeric" maxlength="10" placeholder="10 dígitos" autocomplete="off" [readonly]="documentoDesdePerfil">
+        <p class="form-text">
+          {{ documentoDesdePerfil ? 'Cédula cargada desde tu perfil.' : 'Tu cuenta no tiene una cédula válida; ingresa una de 10 dígitos para asociar tu perfil de pasajero.' }}
+          La reserva expirará en 15 minutos si no completas el pago.
+        </p>
       }
 
       @if (errorReserva) { <div class="alert alert-danger" role="alert">{{ errorReserva }}</div> }

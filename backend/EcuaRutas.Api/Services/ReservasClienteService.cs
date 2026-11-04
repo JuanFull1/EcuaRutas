@@ -17,6 +17,15 @@ public sealed class ReservasClienteService
         _ventasService = ventasService;
     }
 
+    public Task<string?> ObtenerDocumentoAsync(long usuarioId)
+    {
+        return _context.Usuarios
+            .AsNoTracking()
+            .Where(u => u.Id == usuarioId && u.Activo)
+            .Select(u => u.Pasajero != null ? u.Pasajero.Documento : u.Cedula)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<ReservaResponse> CrearAsync(long usuarioId, CrearReservaClienteRequest solicitud)
     {
         if (solicitud is null)
@@ -34,6 +43,11 @@ public sealed class ReservasClienteService
         if (documento.Length != 10 || documento.Any(c => !char.IsDigit(c)))
             throw new ArgumentException("Ingresa una cédula ecuatoriana de 10 dígitos.");
 
+        var cedulaCuentaValida = EsCedulaDeDiezDigitos(usuario.Cedula);
+        if (cedulaCuentaValida &&
+            !string.Equals(usuario.Cedula!.Trim(), documento, StringComparison.Ordinal))
+            throw new InvalidOperationException("La cédula ingresada no coincide con la registrada en tu cuenta.");
+
         var pasajero = usuario.Pasajero;
         if (pasajero is null)
         {
@@ -43,6 +57,9 @@ public sealed class ReservasClienteService
 
             if (pasajero is null)
             {
+                if (await _context.Usuarios.AnyAsync(u => u.Id != usuario.Id && u.Cedula == documento))
+                    throw new InvalidOperationException("Esa cédula ya está asociada a otra cuenta.");
+
                 pasajero = new Pasajero
                 {
                     UsuarioId = usuario.Id,
@@ -62,12 +79,29 @@ public sealed class ReservasClienteService
                 pasajero.UsuarioId = usuario.Id;
             }
 
-            await _context.SaveChangesAsync();
         }
-        else if (!string.Equals(pasajero.Documento, documento, StringComparison.Ordinal))
+        else if (!string.Equals(pasajero.Documento, documento, StringComparison.Ordinal) &&
+                 EsCedulaDeDiezDigitos(pasajero.Documento))
         {
             throw new InvalidOperationException("El documento ingresado no coincide con el perfil de pasajero de tu cuenta.");
         }
+
+        if (!EsCedulaDeDiezDigitos(usuario.Cedula))
+        {
+            if (await _context.Usuarios.AnyAsync(u => u.Id != usuario.Id && u.Cedula == documento))
+                throw new InvalidOperationException("Esa cédula ya está asociada a otra cuenta.");
+            usuario.Cedula = documento;
+        }
+
+        if (pasajero is not null && !EsCedulaDeDiezDigitos(pasajero.Documento))
+        {
+            if (await _context.Pasajeros.AnyAsync(p => p.Id != pasajero.Id && p.Documento == documento))
+                throw new InvalidOperationException("Esa cédula ya está asociada a otro pasajero.");
+            pasajero.Documento = documento;
+            pasajero.TipoDocumento = "CEDULA";
+        }
+
+        await _context.SaveChangesAsync();
 
         return await _ventasService.CrearReservaAsync(new CrearReservaRequest
         {
@@ -88,4 +122,7 @@ public sealed class ReservasClienteService
             }
         });
     }
+
+    private static bool EsCedulaDeDiezDigitos(string? valor) =>
+        valor is { Length: 10 } && valor.All(char.IsDigit);
 }

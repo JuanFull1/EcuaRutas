@@ -3,17 +3,18 @@ using EcuaRutas.Api.DTOs.Ventas;
 using EcuaRutas.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using System.Security.Cryptography;
 
 namespace EcuaRutas.Api.Services;
 
 public class VentasService
 {
     private readonly EcuaRutasDbContext _context;
+    private readonly BoletosService _boletosService;
 
-    public VentasService(EcuaRutasDbContext context)
+    public VentasService(EcuaRutasDbContext context, BoletosService boletosService)
     {
         _context = context;
+        _boletosService = boletosService;
     }
 
     public async Task<VentasPaginadasResponse> BuscarVentasAsync(
@@ -615,27 +616,15 @@ public async Task<ReservaResponse> ConfirmarVentaAsync(
         Observacion = "Pago en efectivo registrado en punto de venta."
     });
 
-    var codigosBoletos = new List<string>();
-
     foreach (var asiento in venta.VentaAsientos)
     {
         if (asiento.EstadoAsiento == "RETENIDO")
         {
             asiento.EstadoAsiento = "CONFIRMADO";
         }
-
-        var codigoBoleto = $"{venta.Codigo}-{asiento.AsientoBus.Numero}";
-        var qrToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-        _context.Boletos.Add(new Boleto
-        {
-            VentaAsientoId = asiento.Id,
-            CodigoBoleto = codigoBoleto,
-            QrToken = qrToken,
-            Estado = "ACTIVO",
-            GeneradoEn = ahora
-        });
-        codigosBoletos.Add(codigoBoleto);
     }
+
+    var codigosBoletos = await _boletosService.EmitirParaVentaAsync(venta, ahora);
 
     if (venta.UsuarioClienteId.HasValue)
     {
