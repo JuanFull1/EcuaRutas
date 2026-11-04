@@ -1,7 +1,7 @@
 # Frecuencias administrativas
 
-Entrada standalone: `FrecuenciasLista`, preparada para una ruta administrativa
-del Commit 4. Este módulo no registra rutas, menús ni guards.
+Entrada standalone: `FrecuenciasLista`, integrada desde el Commit 4 en
+`/admin/frecuencias`, con carga diferida, enlace ADMIN y guards existentes.
 
 ## API y permisos
 
@@ -67,17 +67,19 @@ node node_modules/@angular/compiler-cli/bundles/src/bin/ngc.js --noEmit -p tscon
 ```
 
 Las pruebas usan Vitest/JSDOM y `HttpTestingController`, no una conexión real al
-backend. JSDOM simula el diálogo modal. Queda pendiente la integración de ruta y
-layout del Commit 4 y una prueba integral con backend y sesión ADMIN reales.
+backend. JSDOM simula el diálogo modal. La integración de ruta/layout del Commit 4
+se verifica con el router y guards reales y HTTP simulado. Queda pendiente una
+prueba integral con backend y sesión ADMIN reales.
 
 Se revisaron listado, formulario y confirmación en Chrome headless a 1440, 768 y
 390 píxeles con una vista temporal y datos simulados fuera del repositorio.
 No se detectaron errores de ejecución ni desbordamiento horizontal de la página.
 El servidor temporal y el navegador se cerraron tras la revisión.
 
-La suite global conserva 18 fallos existentes en `app.spec.ts` y
+En el Commit 2 la suite global presentaba 18 fallos en `app.spec.ts` y
 `admin/admin-navegacion.spec.ts`: título de ejemplo `Hello, frontend`, expectativas
 antiguas del menú, solicitudes HTTP del inicio de cooperativas y fallos derivados
 de limpieza de TestBed. No se modificaron esos archivos ajenos al módulo.
 El build mantiene advertencias de presupuesto inicial y estilos de ventas,
-además de `DecimalPipe` sin uso en `GestionVentas`.
+además de `DecimalPipe` sin uso en `GestionVentas`. El Commit 4 actualiza las
+pruebas de navegación y solo queda el fallo previo de título en `app.spec.ts`.

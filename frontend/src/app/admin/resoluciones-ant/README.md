@@ -2,7 +2,8 @@
 
 Componente standalone de entrada: `ResolucionesAntLista` (`resoluciones-ant-lista.ts`).
 Usa los estilos Bootstrap globales y el `HttpClient`/interceptor JWT ya configurados.
-No se registran rutas ni enlaces del menú: esa integración corresponde al Commit 4.
+Desde el Commit 4 se integra en `/admin/resoluciones-ant`, bajo el layout existente,
+con enlace administrativo, carga diferida y guards `authGuard`/`roleGuard` para ADMIN.
 
 ## Contratos
 
@@ -49,12 +50,14 @@ node node_modules/@angular/compiler-cli/bundles/src/bin/ngc.js --noEmit -p tscon
 npm run build
 ```
 
-La suite global presenta 18 fallos existentes en `app.spec.ts` y
+En la verificación del Commit 1 la suite global presentaba 18 fallos en `app.spec.ts` y
 `admin/admin-navegacion.spec.ts`, reproducidos ejecutando solo esos archivos sin
 las pruebas nuevas. El primero espera el título de ejemplo `Hello, frontend`;
 las pruebas de navegación no contemplan consultas del inicio de cooperativas
 ni sus enlaces de viajes, y después acumulan fallos de limpieza de TestBed.
 No se modificaron esos archivos por estar fuera del alcance del Commit 1.
 
-Quedan pendientes la integración con la ruta y el layout en el Commit 4 y una
-prueba integral con sesión ADMIN y backend real.
+El Commit 4 actualiza las pruebas de navegación y deja solo el fallo preexistente
+del título de ejemplo en `app.spec.ts`. La integración de ruta/layout se prueba
+con el router, guards, autenticación e interceptor reales y HTTP simulado.
+Queda pendiente una prueba integral con sesión ADMIN y backend real.

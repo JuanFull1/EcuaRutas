@@ -82,6 +82,33 @@ export const routes: Routes = [
       },
 
       {
+        path: 'resoluciones-ant',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./admin/resoluciones-ant/resoluciones-ant-lista')
+            .then(m => m.ResolucionesAntLista)
+      },
+
+      {
+        path: 'frecuencias',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./admin/frecuencias/frecuencias-lista')
+            .then(m => m.FrecuenciasLista)
+      },
+
+      {
+        path: 'tarifas',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./admin/tarifas-frecuencia/tarifas-frecuencia-lista')
+            .then(m => m.TarifasFrecuenciaLista)
+      },
+
+      {
         path: 'usuarios',
 
         loadComponent: () =>

@@ -1,8 +1,8 @@
 # Tarifas por frecuencia y tramo
 
-Entrada standalone: `TarifasFrecuenciaLista`, pendiente de conectar al router y
-layout en el Commit 4. No se modifican rutas globales, menús, guards ni módulos
-de frecuencias o resoluciones ANT.
+Entrada standalone: `TarifasFrecuenciaLista`, integrada desde el Commit 4 en
+`/admin/tarifas` con el layout existente, carga diferida y guards para ADMIN.
+El módulo reutiliza los servicios de frecuencias y catálogos sin modificarlos.
 
 ## Contratos y dependencias
 
@@ -70,7 +70,7 @@ node node_modules/@angular/compiler-cli/bundles/src/bin/ngc.js --noEmit -p tscon
 
 Pruebas Vitest/JSDOM con `HttpTestingController`, sin conexiones reales al backend.
 La simulación del diálogo en JSDOM no sustituye la revisión de navegador.
-Resultado del módulo: 95 pruebas aprobadas. Suite global: 466 aprobadas y 18
+Resultado del Commit 3: 95 pruebas del módulo aprobadas. Suite global entonces: 466 aprobadas y 18
 fallos existentes en `app.spec.ts` y `admin/admin-navegacion.spec.ts` (título de
 ejemplo, expectativas del menú y solicitudes HTTP pendientes del inicio de
 cooperativas, con fallos derivados de limpieza de TestBed). No se modifican esos
@@ -78,13 +78,29 @@ archivos ajenos al alcance.
 
 Build y verificaciones TypeScript/plantillas sin errores. Persisten las advertencias
 conocidas de `DecimalPipe` en ventas, presupuesto inicial y estilos de ventas.
-El módulo todavía no entra en el bundle de navegación; se compila además mediante
-pruebas y `ngc --noEmit` para verificar sus plantillas aunque no tenga ruta global.
+Desde el Commit 4 el módulo entra como chunk diferido en el build de producción.
+Se compila además mediante pruebas y `ngc --noEmit` para verificar sus plantillas.
 
 Revisión visual en Chrome headless a 1440, 768 y 390 píxeles: listado, formulario
 y confirmación sin errores de ejecución ni desbordamiento horizontal de página.
 Se usó una vista temporal con datos simulados fuera del repositorio; navegador
 y servidor se cerraron después de la revisión.
 
-Queda pendiente la integración real de los endpoints de catálogo, la ruta del
-Commit 4 y una prueba integral con backend y sesión ADMIN reales.
+En el Commit 4 las pruebas de navegación anteriores y las nuevas pasan; la suite
+global conserva únicamente el fallo previo del título de `App`. Las tres rutas
+se verifican dentro del layout y con JWT mediante una API simulada.
+Queda pendiente integrar los endpoints backend de catálogo y ejecutar una prueba
+integral con backend y sesión ADMIN reales.
+
+Verificación final del Commit 4: 80 pruebas de navegación aprobadas (35 nuevas y
+45 existentes actualizadas). Suite completa: 518 aprobadas, 1 fallida y 0 omitidas.
+La única fallida sigue esperando `Hello, frontend` en `app.spec.ts` y queda fuera
+de las correcciones de navegación. El build de producción es correcto y conserva
+las advertencias conocidas de presupuesto y ventas.
+
+Las tres pantallas se revisaron dentro del `App`, router y layout reales en
+Chrome a 1440, 768 y 390 píxeles: 27 combinaciones de pantalla/estado/tamaño y
+6 comprobaciones del sidebar en tablet/móvil. Sin desbordamiento horizontal de
+página ni errores de ejecución. La vista temporal reutilizó autenticación e
+interceptor con API simulada; no se enviaron solicitudes al backend real ni se
+escribieron datos PostgreSQL. El navegador y el servidor temporal se cerraron.
