@@ -1,0 +1,163 @@
+<div class="container-fluid py-3">
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        {{ existente() ? 'Disposición de asientos' : 'Nueva plantilla' }}
+      </h5>
+      <a routerLink="/cooperativas/plantillas" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Volver
+      </a>
+    </div>
+
+    @if (cargando()) {
+      <div class="card-body text-secondary">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Cargando plantilla...
+      </div>
+    }
+
+    @if (errorCargar(); as mensaje) {
+      <div class="alert alert-danger m-3">{{ mensaje }}</div>
+    }
+
+    <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+
+      <div class="row g-3 mb-4">
+
+        <div class="col-md-5">
+          <label class="form-label" for="nombre">Nombre *</label>
+          <input id="nombre" class="form-control" formControlName="nombre"
+                 [class.is-invalid]="invalido('nombre')" />
+          @if (invalido('nombre')) {
+            <div class="invalid-feedback">Obligatorio, máximo 120 caracteres.</div>
+          }
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label" for="pisos">Pisos *</label>
+          <select id="pisos" class="form-select" [disabled]="existente()"
+                  [value]="pisos()" (change)="cambiarPisos($any($event.target).value)">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label" for="filas">Filas</label>
+          <input id="filas" type="number" class="form-control"
+                 min="1" [max]="maxFilas" [value]="filas()"
+                 (change)="cambiarFilas($any($event.target).value)" />
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label" for="columnas">Columnas</label>
+          <input id="columnas" type="number" class="form-control"
+                 min="1" [max]="maxColumnas" [value]="columnas()"
+                 (change)="cambiarColumnas($any($event.target).value)" />
+        </div>
+
+        <div class="col-md-1 d-flex align-items-end">
+          <div class="form-check">
+            <input id="tieneBanio" type="checkbox" class="form-check-input"
+                   formControlName="tieneBanio" />
+            <label class="form-check-label" for="tieneBanio">Baño</label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span class="text-secondary me-1">Tipo de asiento:</span>
+
+        @for (tipo of tipos(); track tipo.id) {
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class]="'btn btn-sm ' + (tipoSeleccionado() === tipo.id
+              ? claseTipo(tipo.id)
+              : 'btn-outline-secondary')"
+            (click)="seleccionarTipo(tipo.id)"
+          >
+            {{ tipo.nombre }}
+            @if (tipo.recargoPorcentaje > 0) {
+              <small>(+{{ tipo.recargoPorcentaje }}%)</small>
+            }
+          </button>
+        }
+
+        <span class="vr mx-2"></span>
+
+        <button type="button" class="btn btn-sm btn-outline-primary" (click)="llenarTodo()">
+          Llenar todo
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="vaciar()">
+          Vaciar
+        </button>
+
+        <span class="ms-auto text-secondary">
+          Asientos: <strong>{{ totalAsientos() }}</strong>
+        </span>
+      </div>
+
+      <p class="text-secondary small">
+        Haz clic en una casilla para colocar un asiento con el tipo elegido.
+        Si ya tiene ese tipo, se quita y queda como pasillo. La numeración es automática.
+      </p>
+
+      @for (piso of listaPisos(); track piso) {
+        <div class="mb-4">
+          <h6 class="fw-bold">Piso {{ piso }}</h6>
+
+          <div class="table-responsive">
+            <table class="table table-borderless w-auto mb-0">
+              <thead>
+                <tr>
+                  <th></th>
+                  @for (columna of listaColumnas(); track columna) {
+                    <th class="text-center text-secondary small">{{ columna }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (fila of listaFilas(); track fila) {
+                  <tr>
+                    <th class="text-secondary small align-middle">{{ fila }}</th>
+                    @for (columna of listaColumnas(); track columna) {
+                      <td class="p-1">
+                        <button
+                          type="button"
+                          class="btn btn-sm celda"
+                          [class]="'btn btn-sm celda ' + claseTipo(tipoEn(piso, fila, columna))"
+                          [title]="tipoEn(piso, fila, columna) !== undefined
+                            ? nombreTipo(tipoEn(piso, fila, columna)!)
+                            : 'Pasillo'"
+                          (click)="alternar(piso, fila, columna)"
+                        >
+                          {{ numeroEn(piso, fila, columna) }}
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      @if (errorGuardar()) {
+        <div class="alert alert-danger mt-3 mb-0">{{ errorGuardar() }}</div>
+      }
+
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <a routerLink="/cooperativas/plantillas" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+          @if (guardando()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          {{ existente() ? 'Guardar disposición' : 'Guardar plantilla' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
