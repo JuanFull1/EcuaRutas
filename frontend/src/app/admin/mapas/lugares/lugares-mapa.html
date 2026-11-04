@@ -1,0 +1,125 @@
+<div class="container-fluid px-0">
+  <section class="bg-white border rounded-4 p-4 mb-4">
+    <span class="badge text-bg-primary mb-3">Consulta geográfica</span>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+      <div>
+        <h1 class="h3 fw-bold">Mapa de lugares</h1>
+        <p class="text-secondary mb-0">Consulta la ubicación y la información de los lugares registrados en EcuaRutas.</p>
+      </div>
+      <button type="button" class="btn btn-outline-primary" [disabled]="cargando()" (click)="cargar()">
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Actualizar
+      </button>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm mb-4" aria-label="Búsqueda de lugares">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6">
+          <label for="mapa-busqueda" class="form-label">Buscar por nombre</label>
+          <input #buscar id="mapa-busqueda" type="search" class="form-control" placeholder="Nombre del lugar"
+            [value]="busqueda()" (input)="busqueda.set(buscar.value)">
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <label for="mapa-estado" class="form-label">Estado</label>
+          <select #estado id="mapa-estado" class="form-select" [value]="filtroEstado()" (change)="filtroEstado.set(estado.value)">
+            <option value="">Todos</option><option value="activo">Activos</option><option value="inactivo">Inactivos</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Limpiar filtros</button>
+        </div>
+      </div>
+      @if (!cargando() && !error()) {
+        <p class="text-secondary small mt-3 mb-0" role="status">
+          {{ lugaresFiltrados().length }} de {{ lugares().length }} lugares · {{ conCoordenadas().length }} con coordenadas válidas · {{ sinCoordenadas() }} sin coordenadas válidas.
+        </p>
+      }
+    </div>
+  </section>
+
+  @if (error(); as mensaje) {
+    <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-3" role="alert">
+      <span>{{ mensaje }}</span>
+      <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="cargando()" (click)="cargar()">Reintentar</button>
+    </div>
+  }
+  @if (errorMarcadores(); as mensaje) { <div class="alert alert-warning" role="alert">{{ mensaje }}</div> }
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-8">
+      <section aria-labelledby="titulo-mapa-lugares">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <h2 id="titulo-mapa-lugares" class="h5 mb-0">Ubicaciones</h2>
+          <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!mapaDisponible() || conCoordenadas().length === 0" (click)="mostrarTodos()">
+            <i class="bi bi-arrows-fullscreen me-1" aria-hidden="true"></i>Mostrar todos los puntos
+          </button>
+        </div>
+        <app-mapa etiqueta="Mapa de lugares de EcuaRutas" (mapaListo)="alPrepararMapa($event)" />
+        <p class="text-secondary small mt-2 mb-3">
+          <span class="badge text-bg-primary">Activo</span>
+          <span class="badge text-bg-secondary ms-1">Inactivo</span>
+          <span class="badge text-bg-warning ms-1">Seleccionado</span>
+        </p>
+        @if (!cargando() && !error() && lugaresFiltrados().length > 0 && conCoordenadas().length === 0) {
+          <p class="alert alert-info" role="status">Los resultados no tienen coordenadas válidas. Puedes consultar sus datos en la lista.</p>
+        }
+      </section>
+
+      <section class="card border-0 shadow-sm" aria-labelledby="titulo-detalle-lugar">
+        <div class="card-body">
+          <h2 id="titulo-detalle-lugar" class="h5">Información del lugar</h2>
+          @if (seleccionado(); as lugar) {
+            <h3 class="h6 fw-semibold text-break">{{ lugar.nombre }}</h3>
+            <dl class="row small mb-0">
+              <dt class="col-5 col-sm-3">Identificador</dt><dd class="col-7 col-sm-9">{{ lugar.id }}</dd>
+              <dt class="col-5 col-sm-3">Tipo</dt><dd class="col-7 col-sm-9">{{ lugar.tipo }}</dd>
+              <dt class="col-5 col-sm-3">Provincia</dt><dd class="col-7 col-sm-9">{{ lugar.provincia ?? 'Sin dato' }}</dd>
+              <dt class="col-5 col-sm-3">Cantón</dt><dd class="col-7 col-sm-9">{{ lugar.canton ?? 'Sin dato' }}</dd>
+              <dt class="col-5 col-sm-3">Estado</dt><dd class="col-7 col-sm-9"><span class="badge" [class.text-bg-success]="lugar.activo" [class.text-bg-secondary]="!lugar.activo">{{ lugar.activo ? 'Activo' : 'Inactivo' }}</span></dd>
+              @if (coordenadasSeleccionadas(); as coordenadas) {
+                <dt class="col-5 col-sm-3">Longitud</dt><dd class="col-7 col-sm-9">{{ coordenadas[0] }}</dd>
+                <dt class="col-5 col-sm-3">Latitud</dt><dd class="col-7 col-sm-9">{{ coordenadas[1] }}</dd>
+              }
+            </dl>
+            @if (coordenadasSeleccionadas()) {
+              <button type="button" class="btn btn-outline-primary btn-sm mt-2" [disabled]="!mapaDisponible()" (click)="centrarSeleccionado()"><i class="bi bi-crosshair me-1" aria-hidden="true"></i>Centrar en el mapa</button>
+            } @else {
+              <p class="text-secondary small mb-0" role="status">Este lugar no tiene coordenadas válidas. No se representa con un marcador.</p>
+            }
+          } @else {
+            <p class="text-secondary mb-0">Selecciona un lugar desde la lista o un marcador para consultar su información.</p>
+          }
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <section class="card border-0 shadow-sm" aria-labelledby="titulo-lista-lugares" [attr.aria-busy]="cargando()">
+        <div class="card-body pb-3"><h2 id="titulo-lista-lugares" class="h5 mb-0">Lugares registrados</h2></div>
+        @if (cargando()) {
+          <p class="text-center text-secondary py-4 mb-0" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando lugares...</p>
+        } @else if (!error() && lugares().length === 0) {
+          <p class="text-center text-secondary py-4 px-3 mb-0" role="status">No hay lugares registrados.</p>
+        } @else if (!error() && lugaresFiltrados().length === 0) {
+          <p class="text-center text-secondary py-4 px-3 mb-0" role="status">No hay lugares que coincidan con la búsqueda y el estado seleccionados.</p>
+        }
+        <ul class="list-group list-group-flush lista-lugares">
+          @for (lugar of lugaresFiltrados(); track lugar.id) {
+            <li class="list-group-item p-0">
+              <button type="button" class="lugar-opcion w-100 text-start border-0 p-3" [class.seleccionado]="seleccionadoId() === lugar.id"
+                [attr.aria-pressed]="seleccionadoId() === lugar.id" (click)="seleccionar(lugar.id)">
+                <span class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                  <strong class="text-break">{{ lugar.nombre }}</strong>
+                  <span class="badge" [class.text-bg-success]="lugar.activo" [class.text-bg-secondary]="!lugar.activo">{{ lugar.activo ? 'Activo' : 'Inactivo' }}</span>
+                </span>
+                <span class="d-block small text-secondary mt-1">{{ lugar.tipo }} · #{{ lugar.id }}</span>
+                @if (!tieneCoordenadas(lugar)) { <span class="d-block small text-secondary mt-1"><i class="bi bi-geo-alt me-1" aria-hidden="true"></i>Sin coordenadas válidas</span> }
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    </div>
+  </div>
+</div>

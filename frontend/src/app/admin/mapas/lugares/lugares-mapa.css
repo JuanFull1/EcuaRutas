@@ -1,0 +1,13 @@
+:host { display: block; min-width: 0; }
+.card { border-radius: 14px; min-width: 0; }
+app-mapa { --ecuarutas-mapa-altura: 480px; }
+.lista-lugares { max-height: 680px; overflow-y: auto; border-radius: 0 0 14px 14px; }
+.lugar-opcion { background: #fff; color: inherit; }
+.lugar-opcion:hover { background: #f5f7fa; }
+.lugar-opcion.seleccionado { background: #edf4fc; box-shadow: inset 3px 0 0 #1769aa; }
+.lugar-opcion:focus-visible { outline: 2px solid #1769aa; outline-offset: -3px; }
+dd { overflow-wrap: anywhere; }
+@media (max-width: 575.98px) {
+  app-mapa { --ecuarutas-mapa-altura: 340px; }
+  .lista-lugares { max-height: 420px; }
+}
