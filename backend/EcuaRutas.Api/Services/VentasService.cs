@@ -364,13 +364,39 @@ public class VentasService
                     });
             }
 
-            venta.Subtotal = subtotal;
-            venta.DescuentoTotal = descuentoTotal;
-            venta.Total = subtotal - descuentoTotal;
-            venta.ActualizadoEn = DateTime.UtcNow;
+        venta.Subtotal = subtotal;
+        venta.DescuentoTotal = descuentoTotal;
+        venta.Total = subtotal - descuentoTotal;
+        venta.ActualizadoEn = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+        // Registrar notificación de reserva creada.
+        if (venta.UsuarioClienteId.HasValue)
+        {
+            var correoCliente = await _context.Usuarios
+                .AsNoTracking()
+                .Where(u => u.Id == venta.UsuarioClienteId.Value)
+                .Select(u => u.Correo)
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(correoCliente) &&
+                correoCliente.Length <= 150)
+            {
+                _context.Notificaciones.Add(new Notificacione
+                {
+                    UsuarioId = venta.UsuarioClienteId.Value,
+                    VentaId = venta.Id,
+                    CorreoDestino = correoCliente,
+                    Tipo = "RESERVA_CREADA",
+                    Asunto = $"Tu reserva {venta.Codigo} fue registrada correctamente.",
+                    Estado = "PENDIENTE",
+                    CreadoEn = DateTime.UtcNow,
+                    EnviadoEn = null
+                });
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
 
             for (int i = 0;
                  i < venta.VentaAsientos.Count;

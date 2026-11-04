@@ -13,7 +13,9 @@ import {
   RouterOutlet
 } from '@angular/router';
 
-import { AuthService } from '../../services/auth.service';
+import {
+  AuthService
+} from '../../services/auth.service';
 
 interface MenuItem {
   texto: string;
@@ -44,46 +46,64 @@ export class Layout {
   readonly usuario =
     this.authService.usuarioActual;
 
-  readonly subtituloPanel = computed(() => {
+  readonly subtituloPanel =
+    computed(() => {
 
-    switch (this.usuario()?.rol) {
+      switch (
+        this.usuario()?.rol
+      ) {
 
-      case 'ADMIN':
-        return 'Administración';
+        case 'ADMIN':
 
-      case 'COOPERATIVA':
-        return 'Gestión de Cooperativa';
+          return 'Administración';
 
-      case 'OFICINISTA':
-        return 'Punto de Venta';
+        case 'COOPERATIVA':
 
-      case 'CLIENTE':
-        return 'Portal del Cliente';
+          return 'Gestión de Cooperativa';
 
-      case 'BUS':
-        return 'Operación de Bus';
+        case 'OFICINISTA':
 
-      default:
-        return 'Panel de gestión';
-    }
-  });
+          return 'Punto de Venta';
+
+        case 'CLIENTE':
+
+          return 'Portal del Cliente';
+
+        case 'BUS':
+
+          return 'Operación de Bus';
+
+        default:
+
+          return 'Panel de gestión';
+
+      }
+
+    });
 
   readonly menuItems =
     computed<MenuItem[]>(() => {
 
-      switch (this.usuario()?.rol) {
+      switch (
+        this.usuario()?.rol
+      ) {
 
         case 'ADMIN':
+
           return [
+
             {
               texto: 'Inicio',
               icono: 'bi-grid',
               ruta: '/admin/inicio'
             },
+
             {
               texto: 'Usuarios',
-              icono: 'bi-people'
+              icono: 'bi-people',
+              ruta: '/admin/usuarios'
             },
+
             {
               texto: 'Cooperativas',
               icono: 'bi-building'
@@ -115,137 +135,196 @@ export class Layout {
             },
             {
               texto: 'Roles',
-              icono: 'bi-person-gear'
+              icono: 'bi-person-gear',
+              ruta: '/admin/roles'
             },
+
             {
               texto: 'Configuración',
               icono: 'bi-gear'
             }
+
           ];
 
         case 'COOPERATIVA':
+
           return [
+
             {
               texto: 'Inicio',
               icono: 'bi-grid',
               ruta: '/cooperativas/inicio'
             },
+
             {
               texto: 'Buses',
               icono: 'bi-bus-front',
               ruta: '/cooperativas/buses'
             },
+
+            {
+              texto: 'Grupos',
+              icono: 'bi-collection',
+              ruta: '/cooperativas/grupos'
+            },
             {
               texto: 'Plantillas',
-              icono: 'bi-grid-3x3-gap'
+              icono: 'bi-grid-3x3-gap',
+              ruta: '/cooperativas/plantillas'
+            },
+
+            {
+              texto: 'Hojas de Ruta',
+              icono: 'bi-calendar-check',
+              ruta: '/viajes/hojas-ruta'
+            },
+            {
+              texto: 'Viajes',
+              icono: 'bi-map',
+              ruta: '/viajes/lista'
             },
             {
               texto: 'Rutas',
               icono: 'bi-signpost-2'
             },
+
             {
               texto: 'Frecuencias',
               icono: 'bi-clock'
             }
+
           ];
 
         case 'OFICINISTA':
-  return [
-    {
-      texto: 'Inicio',
-      icono: 'bi-grid',
-      ruta: '/ventas/inicio'
-    },
-    {
-      texto: 'Disponibilidad',
-      icono: 'bi-search',
-      ruta: '/ventas/disponibilidad'
-    },
-    {
-      texto: 'Venta de boletos',
-      icono: 'bi-ticket-perforated',
-      ruta: '/ventas/gestion'
-    },
-    {
-      texto: 'Pagos',
-      icono: 'bi-credit-card'
-    },
-    {
-      texto: 'Comprobantes',
-      icono: 'bi-receipt'
-    },
-    {
-      texto: 'Validación de pagos',
-      icono: 'bi-check-circle'
-    }
-  ];
+
+          return [
+
+            {
+              texto: 'Inicio',
+              icono: 'bi-grid',
+              ruta: '/ventas/inicio'
+            },
+
+            {
+              texto: 'Disponibilidad',
+              icono: 'bi-search',
+              ruta: '/ventas/disponibilidad'
+            },
+
+            {
+              texto: 'Venta de boletos',
+              icono: 'bi-ticket-perforated',
+              ruta: '/ventas/gestion'
+            },
+
+            {
+              texto: 'Pagos',
+              icono: 'bi-credit-card'
+            },
+
+            {
+              texto: 'Comprobantes',
+              icono: 'bi-receipt'
+            },
+
+            {
+              texto: 'Validación de pagos',
+              icono: 'bi-check-circle'
+            }
+
+          ];
 
         case 'CLIENTE':
+
           return [
+
             {
               texto: 'Inicio',
               icono: 'bi-house',
               ruta: '/cliente/inicio'
             },
+
             {
               texto: 'Buscar viajes',
               icono: 'bi-search',
               ruta: '/cliente/buscar-viajes'
             },
+
             {
               texto: 'Mis boletos',
               icono: 'bi-ticket-perforated',
               ruta: '/cliente/boletos'
             },
+
             {
               texto: 'Mis viajes',
               icono: 'bi-clock-history',
               ruta: '/cliente/historial'
             },
+
             {
               texto: 'Notificaciones',
               icono: 'bi-bell',
               ruta: '/cliente/notificaciones'
             }
+
           ];
 
         case 'BUS':
+
           return [
+
             {
               texto: 'Inicio',
               icono: 'bi-grid',
               ruta: '/personal-bus/inicio'
             },
+
             {
               texto: 'Validar boletos',
               icono: 'bi-qr-code-scan'
             },
+
             {
               texto: 'Viajes',
               icono: 'bi-map'
             },
+
             {
               texto: 'Historial',
               icono: 'bi-clock-history'
             }
+
           ];
 
         default:
+
           return [];
+
       }
+
     });
 
   toggleMenu(): void {
+
     this.menuAbierto.update(
       valor => !valor
     );
+
   }
 
   cerrarMenu(): void {
-    this.menuAbierto.set(false);
+
+    this.menuAbierto.set(
+      false
+    );
+
   }
 
   cerrarSesion(): void {
+
     this.authService.logout();
+
   }
+
 }

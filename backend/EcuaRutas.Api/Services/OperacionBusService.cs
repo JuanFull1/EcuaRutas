@@ -207,11 +207,13 @@ public class OperacionBusService : IOperacionBusService
         }
     }
 
-    // No libera asientos en bloque: la liberación solo la confirma el BUS (R3).
-    public async Task<ReporteViajeDto> FinalizarViajeAsync(long viajeId, long usuarioBusId, CancellationToken ct = default)
+        public async Task<ReporteViajeDto> FinalizarViajeAsync(long viajeId, long usuarioBusId, CancellationToken ct = default)
     {
         var viaje = await CargarViajeAsignadoAsync(viajeId, usuarioBusId, ct);
         ExigirEnCurso(viaje);
+
+        if (await _db.OcupacionesAsientos.AnyAsync(o => o.ViajeId == viajeId && o.Estado == EstadosOcupacion.Abordado, ct))
+            throw new ReglaNegocioException(409, "No se puede finalizar el viaje mientras haya pasajeros abordados sin liberar.");
 
         viaje.Estado = EstadosViaje.Finalizado;
         viaje.FinalizadoEn = DateTime.UtcNow;

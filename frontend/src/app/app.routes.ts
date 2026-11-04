@@ -18,8 +18,12 @@ export const routes: Routes = [
     path: 'login',
 
     loadComponent: () =>
-      import('./auth/login/login')
-        .then(m => m.Login)
+      import(
+        './auth/login/login'
+      )
+        .then(
+          m => m.Login
+        )
   },
 
   {
@@ -96,6 +100,30 @@ export const routes: Routes = [
       },
 
       {
+        path: 'usuarios',
+
+        loadComponent: () =>
+          import(
+            './admin/usuarios/usuarios-admin'
+          )
+            .then(
+              m => m.UsuariosAdmin
+            )
+      },
+
+      {
+        path: 'roles',
+
+        loadComponent: () =>
+          import(
+            './admin/roles/roles-admin'
+          )
+            .then(
+              m => m.RolesAdmin
+            )
+      },
+
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'inicio'
@@ -136,6 +164,18 @@ export const routes: Routes = [
         path: 'buses/nuevo',
 
         loadComponent: () =>
+          import(
+            './cooperativas/buses/bus-formulario'
+          )
+            .then(
+              m => m.BusFormulario
+            )
+      },
+
+      {
+        path: 'buses/:id/editar',
+
+        loadComponent: () =>
           import('./cooperativas/buses/bus-formulario')
             .then(m => m.BusFormulario)
       },
@@ -153,9 +193,59 @@ export const routes: Routes = [
       },
 
       {
+        path: 'grupos',
+
+        loadComponent: () =>
+          import('./cooperativas/grupos/grupos-lista')
+            .then(m => m.GruposLista)
+      },
+
+      {
+        path: 'plantillas',
+
+        loadComponent: () =>
+          import('./cooperativas/plantillas/plantillas-lista')
+            .then(m => m.PlantillasLista)
+      },
+
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'inicio'
+      }
+
+    ]
+  },
+
+  {
+    path: 'viajes',
+
+    component: Layout,
+
+    canActivate: [
+      authGuard,
+      roleGuard
+    ],
+
+    data: {
+      roles: [
+        'ADMIN',
+        'COOPERATIVA'
+      ]
+    },
+
+    children: [
+
+      {
+        path: '',
+
+        loadChildren: () =>
+          import(
+            './viajes/viajes.routes'
+          )
+            .then(
+              m => m.VIAJES_ROUTES
+            )
       }
 
     ]
@@ -175,20 +265,21 @@ export const routes: Routes = [
       roles: ['OFICINISTA']
     },
 
-   children: [
+    children: [
 
-  {
-    path: '',
-    loadChildren: () =>
-      import(
-        './ventas/ventas.routes'
-      )
-        .then(
-          m => m.VENTAS_ROUTES
-        )
-  }
+      {
+        path: '',
 
-]
+        loadChildren: () =>
+          import(
+            './ventas/ventas.routes'
+          )
+            .then(
+              m => m.VENTAS_ROUTES
+            )
+      }
+
+    ]
   },
 
   {
@@ -206,13 +297,20 @@ export const routes: Routes = [
     },
 
     children: [
-    {
-      path: '',
-      loadChildren: () =>
-        import('./cliente/cliente.routes')
-          .then(m => m.CLIENTE_ROUTES)
-    }
-  ]
+
+      {
+        path: '',
+
+        loadChildren: () =>
+          import(
+            './cliente/cliente.routes'
+          )
+            .then(
+              m => m.CLIENTE_ROUTES
+            )
+      }
+
+    ]
   },
 
   {
@@ -262,4 +360,5 @@ export const routes: Routes = [
     path: '**',
     redirectTo: 'login'
   }
+
 ];

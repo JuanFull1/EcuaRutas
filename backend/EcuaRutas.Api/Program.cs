@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using EcuaRutas.Api.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,11 +32,18 @@ builder.Services.Configure<JwtSettings>(
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IUsuariosService, UsuariosService>();
 builder.Services.AddScoped<PagosService>();
 builder.Services.AddScoped<DisponibilidadService>();
 builder.Services.AddScoped<VentasService>();
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<NotificacionesService>();
+builder.Services.Configure<CorreoSmtpOptions>(
+    builder.Configuration.GetSection(
+        CorreoSmtpOptions.Seccion));
+
+builder.Services.AddScoped<CorreoSmtpService>();
+builder.Services.AddHostedService<NotificacionesCorreoWorker>();
 builder.Services.AddHostedService<ReservasExpirationWorker>();
 builder.Services.AddScoped<ComprobantesStorageService>();
 builder.Services.AddScoped<IViajeService, ViajeService>();

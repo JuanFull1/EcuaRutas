@@ -24,6 +24,10 @@ public class BusesController : ControllerBase
         [FromQuery] string? estado,
         CancellationToken ct)
     {
+        var denegado = DenegarSiOtraCooperativa(cooperativaId);
+        if (denegado is not null)
+            return denegado;
+
         var buses = await _servicio.ListarAsync(cooperativaId, grupoBusId, estado, ct);
         return Ok(buses);
     }
@@ -35,6 +39,10 @@ public class BusesController : ControllerBase
         if (bus is null)
             return NotFound();
 
+        var denegado = DenegarSiOtraCooperativa(bus.CooperativaId);
+        if (denegado is not null)
+            return denegado;
+
         return Ok(bus);
     }
 
@@ -44,6 +52,10 @@ public class BusesController : ControllerBase
     {
         try
         {
+            var denegado = DenegarSiOtraCooperativa(request.CooperativaId);
+            if (denegado is not null)
+                return denegado;
+
             var bus = await _servicio.CrearAsync(request, ct);
             return CreatedAtAction(nameof(Obtener), new { id = bus.Id }, bus);
         }
@@ -63,6 +75,14 @@ public class BusesController : ControllerBase
     {
         try
         {
+            var existente = await _servicio.ObtenerAsync(id, ct);
+            if (existente is null)
+                return NotFound();
+
+            var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+            if (denegado is not null)
+                return denegado;
+
             var bus = await _servicio.ActualizarAsync(id, request, ct);
             if (bus is null)
                 return NotFound();
@@ -83,10 +103,35 @@ public class BusesController : ControllerBase
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> DarDeBaja(long id, CancellationToken ct)
     {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+        if (existente is null)
+            return NotFound();
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+        if (denegado is not null)
+            return denegado;
+
         var dadoDeBaja = await _servicio.DarDeBajaAsync(id, ct);
         if (!dadoDeBaja)
             return NotFound();
 
         return NoContent();
+    }
+
+    // Devuelve 403 si un usuario que no es ADMIN intenta operar sobre otra cooperativa.
+    private ActionResult? DenegarSiOtraCooperativa(long cooperativaId)
+    {
+        try
+        {
+            var contexto = User.ObtenerCooperativaContexto();
+            if (contexto is null || contexto == cooperativaId)
+                return null;
+
+            return StatusCode(403, new { mensaje = "No puede operar sobre otra cooperativa." });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.StatusCode, new { mensaje = ex.Message });
+        }
     }
 }
