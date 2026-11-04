@@ -7,10 +7,19 @@
         <h6 class="mapa-titulo">Piso {{ piso }}</h6>
       }
 
+      <div class="bus-contenedor">
+
+        <span class="rueda rueda-1"></span>
+        <span class="rueda rueda-2"></span>
+        <span class="rueda rueda-3"></span>
+        <span class="rueda rueda-4"></span>
+
       <div class="bus">
 
         <div class="bus-frente">
           <div class="parabrisas"></div>
+          <span class="bus-faro bus-faro-izq"></span>
+          <span class="bus-faro bus-faro-der"></span>
           <span class="bus-etiqueta">FRENTE</span>
           <span class="bus-puerta">PUERTA</span>
         </div>
@@ -23,6 +32,7 @@
               <div
                 class="celda"
                 [class.celda-editable]="editable()"
+                [class.pasillo]="esPasillo(piso, columna)"
                 (dragover)="alPasarSobre($event)"
                 (drop)="alSoltar($event, piso, fila, columna)"
               >
@@ -61,8 +71,10 @@
           @if (tieneBanio()) {
             <span class="bus-banio">WC</span>
           }
+          <span class="bus-etiqueta-fondo">ATRÁS</span>
         </div>
 
+      </div>
       </div>
     </div>
   }

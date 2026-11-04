@@ -80,6 +80,38 @@ export class MapaAsientos {
     return [...tipos.values()];
   });
 
+  // Columnas sin asientos que quedan entre columnas con asientos: son el pasillo.
+  private readonly pasillos = computed(() => {
+    const porPiso = new Map<number, Set<number>>();
+
+    for (const piso of this.listaPisos()) {
+      const ocupadas = this.asientos()
+        .filter(a => a.piso === piso)
+        .map(a => a.columna);
+
+      const pasillo = new Set<number>();
+
+      if (ocupadas.length > 0) {
+        const minima = Math.min(...ocupadas);
+        const maxima = Math.max(...ocupadas);
+
+        for (let c = minima + 1; c < maxima; c++) {
+          if (!ocupadas.includes(c)) {
+            pasillo.add(c);
+          }
+        }
+      }
+
+      porPiso.set(piso, pasillo);
+    }
+
+    return porPiso;
+  });
+
+  esPasillo(piso: number, columna: number): boolean {
+    return this.pasillos().get(piso)?.has(columna) ?? false;
+  }
+
   asientoEn(piso: number, fila: number, columna: number): AsientoMapa | undefined {
     return this.indice().get(this.clave(piso, fila, columna));
   }
