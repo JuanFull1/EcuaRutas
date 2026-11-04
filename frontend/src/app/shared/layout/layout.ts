@@ -89,6 +89,21 @@ export class Layout {
               icono: 'bi-building'
             },
             {
+              texto: 'Lugares',
+              icono: 'bi-geo-alt',
+              ruta: '/admin/lugares'
+            },
+            {
+              texto: 'Rutas',
+              icono: 'bi-signpost-2',
+              ruta: '/admin/rutas'
+            },
+            {
+              texto: 'Paradas',
+              icono: 'bi-pin-map',
+              ruta: '/admin/paradas'
+            },
+            {
               texto: 'Roles',
               icono: 'bi-person-gear'
             },
