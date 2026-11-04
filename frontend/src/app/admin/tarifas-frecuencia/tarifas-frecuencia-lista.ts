@@ -96,7 +96,17 @@ export class TarifasFrecuenciaLista implements OnInit {
   readonly paginaActual = computed(() => Math.max(1, Math.min(this.pagina(), this.totalPaginas())));
   readonly filasPagina = computed(() => this.filtradas().slice((this.paginaActual() - 1) * this.tamanoPagina, this.paginaActual() * this.tamanoPagina));
 
-  puedeGestionar(): boolean { return this.auth.tieneRol('ADMIN'); }
+  readonly cooperativaIdAutenticada = computed(() => {
+    const usuario = this.auth.usuarioActual();
+    const id = usuario?.cooperativaId;
+    return usuario?.rol === 'COOPERATIVA' && typeof id === 'number' && Number.isSafeInteger(id) && id > 0 ? id : null;
+  });
+  puedeGestionar(): boolean {
+    return this.auth.tieneRol('ADMIN') || (this.auth.tieneRol('COOPERATIVA') && this.cooperativaIdAutenticada() !== null);
+  }
+  private pertenece(cooperativaId: number): boolean {
+    return this.puedeGestionar() && (this.auth.tieneRol('ADMIN') || cooperativaId === this.cooperativaIdAutenticada());
+  }
   ngOnInit(): void { this.cargarFrecuencias(); this.cargarNombres(); }
   etiquetaFrecuencia(f: FrecuenciaDto): string {
     return `${this.cooperativasPorId().get(f.cooperativaId) ?? `Cooperativa #${f.cooperativaId}`} · ${this.rutasPorId().get(f.rutaId) ?? `Ruta #${f.rutaId}`} · ${f.codigo || `Frecuencia #${f.id}`} · ${f.horaSalida}${f.activa ? '' : ' (inactiva)'}`;
@@ -115,14 +125,18 @@ export class TarifasFrecuenciaLista implements OnInit {
     this.cargandoFrecuencias.set(true); this.errorFrecuencias.set(null);
     this.frecuenciaService.listar().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargandoFrecuencias.set(false))).subscribe({
       next: datos => {
-        this.frecuencias.set(datos);
-        if (this.frecuenciaId() !== null) this.seleccionarFrecuencia(datos.some(f => f.id === this.frecuenciaId()) ? this.frecuenciaId() : null);
+        this.frecuencias.set(datos.filter(f => this.pertenece(f.cooperativaId)));
+        if (this.frecuenciaId() !== null) this.seleccionarFrecuencia(this.frecuencias().some(f => f.id === this.frecuenciaId()) ? this.frecuenciaId() : null);
       }, error: (e: unknown) => this.errorFrecuencias.set(mensajeErrorTarifa(e))
     });
   }
   cargarNombres(): void {
     if (!this.puedeGestionar() || this.guardando() || this.desactivando()) return;
-    this.cargarNombre('cooperativas', this.cooperativaService.listarCooperativas(), this.cooperativas);
+    const propia = this.cooperativaIdAutenticada();
+    if (propia !== null) {
+      this.cooperativas.set([{ id: propia, nombre: `Cooperativa #${propia}` }]);
+      this.erroresNombres.update(c => ({ ...c, cooperativas: null }));
+    } else this.cargarNombre('cooperativas', this.cooperativaService.listarCooperativas(), this.cooperativas);
     this.cargarNombre('rutas', this.rutaService.listar(), this.rutas);
     this.cargarNombre('lugares', this.lugarService.listar(), this.lugares);
   }
@@ -136,7 +150,7 @@ export class TarifasFrecuenciaLista implements OnInit {
   seleccionarDesdeControl(valor: string): void { this.seleccionarFrecuencia(valor === '' ? null : Number(valor)); }
   seleccionarFrecuencia(id: number | null): void {
     if (!this.puedeGestionar() || this.seleccionBloqueada()) return;
-    if (id !== null && (!Number.isSafeInteger(id) || id <= 0 || !this.frecuencias().some(f => f.id === id))) return;
+    if (id !== null && (!Number.isSafeInteger(id) || id <= 0 || !this.frecuencias().some(f => f.id === id && this.pertenece(f.cooperativaId)))) return;
     // Cancela lecturas del contexto anterior, incluidas consultas aún pendientes.
     this.contextoSub?.unsubscribe(); this.tarifasSub?.unsubscribe(); this.paradasSub?.unsubscribe(); this.detalleSub?.unsubscribe();
     this.frecuenciaId.set(id); this.contexto.set(null); this.tarifas.set([]); this.paradas.set([]); this.seleccionada.set(null);
@@ -146,13 +160,14 @@ export class TarifasFrecuenciaLista implements OnInit {
     this.contextoSub = this.frecuenciaService.obtener(id).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargandoContexto.set(false))).subscribe({
       next: actual => {
         if (this.frecuenciaId() !== id) return;
+        if (!this.pertenece(actual.cooperativaId)) { this.errorContexto.set('La frecuencia no pertenece a la cooperativa autorizada.'); return; }
         if (actual.id !== id || !Number.isSafeInteger(actual.rutaId) || actual.rutaId <= 0) { this.errorContexto.set('La frecuencia no identifica una ruta válida.'); return; }
         this.contexto.set(actual); this.cargarTarifas(); this.cargarParadas();
       }, error: (e: unknown) => this.errorContexto.set(mensajeErrorTarifa(e))
     });
   }
   cargarTarifas(): void {
-    const contexto = this.contexto(); if (!this.puedeGestionar() || !contexto || this.seleccionBloqueada()) return;
+    const contexto = this.contexto(); if (!this.puedeGestionar() || !contexto || !this.pertenece(contexto.cooperativaId) || this.seleccionBloqueada()) return;
     this.tarifasSub?.unsubscribe(); this.cargandoTarifas.set(true); this.errorTarifas.set(null);
     this.tarifasSub = this.servicio.listar(contexto.id).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargandoTarifas.set(false))).subscribe({
       next: datos => { if (this.contexto()?.id === contexto.id) this.tarifas.set(datos.filter(t => t.frecuenciaId === contexto.id)); },
@@ -160,7 +175,7 @@ export class TarifasFrecuenciaLista implements OnInit {
     });
   }
   cargarParadas(): void {
-    const contexto = this.contexto(); if (!this.puedeGestionar() || !contexto || this.guardando() || this.desactivando()) return;
+    const contexto = this.contexto(); if (!this.puedeGestionar() || !contexto || !this.pertenece(contexto.cooperativaId) || this.guardando() || this.desactivando()) return;
     this.paradasSub?.unsubscribe(); this.cargandoParadas.set(true); this.errorParadas.set(null);
     this.paradasSub = this.paradaService.listar(contexto.rutaId).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargandoParadas.set(false))).subscribe({
       next: datos => { if (this.contexto()?.id === contexto.id) this.paradas.set(paradasDeFrecuencia(datos, contexto)); },
@@ -168,12 +183,12 @@ export class TarifasFrecuenciaLista implements OnInit {
     });
   }
   nueva(): void {
-    if (!this.puedeGestionar() || !this.puedeCrear()) return;
+    if (!this.puedeGestionar() || !this.contexto() || !this.pertenece(this.contexto()!.cooperativaId) || !this.puedeCrear()) return;
     this.seleccionada.set(null); this.errorFormulario.set(null); this.exito.set(null); this.formularioVisible.set(true);
   }
   abrir(tarifa: TarifaFrecuenciaDto, modo: 'consultar' | 'editar'): void {
     const contexto = this.contexto();
-    if (!this.puedeGestionar() || !contexto || tarifa.frecuenciaId !== contexto.id || this.ocupado() || this.panelAbierto() || (modo === 'editar' && !this.tramoDisponible())) return;
+    if (!this.puedeGestionar() || !contexto || !this.pertenece(contexto.cooperativaId) || tarifa.frecuenciaId !== contexto.id || this.ocupado() || this.panelAbierto() || (modo === 'editar' && !this.tramoDisponible())) return;
     this.cargandoDetalle.set(true); this.errorTarifas.set(null); this.exito.set(null);
     this.detalleSub = this.servicio.obtener(contexto.id, tarifa.id).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargandoDetalle.set(false))).subscribe({
       next: actual => {
@@ -189,7 +204,7 @@ export class TarifasFrecuenciaLista implements OnInit {
   }
   guardar(evento: GuardarTarifa): void {
     const contexto = this.contexto(); const actual = this.seleccionada();
-    if (!this.puedeGestionar() || !contexto || evento.frecuenciaId !== contexto.id || this.ocupado() || !this.formularioVisible() || !this.tramoDisponible()) return;
+    if (!this.puedeGestionar() || !contexto || !this.pertenece(contexto.cooperativaId) || evento.frecuenciaId !== contexto.id || this.ocupado() || !this.formularioVisible() || !this.tramoDisponible()) return;
     if (evento.modo === 'editar' ? actual?.id !== evento.id || actual.frecuenciaId !== contexto.id || actual.activa !== evento.datos.activa : actual !== null || !contexto.activa) return;
     const origen = this.paradasPorId().get(evento.datos.origenRutaParadaId); const destino = this.paradasPorId().get(evento.datos.destinoRutaParadaId);
     if (!origen || !destino || origen.orden >= destino.orden) { this.errorFormulario.set('Selecciona un tramo válido de la ruta de esta frecuencia.'); return; }
@@ -205,7 +220,7 @@ export class TarifasFrecuenciaLista implements OnInit {
     });
   }
   solicitarBaja(tarifa: TarifaFrecuenciaDto): void {
-    if (!this.puedeGestionar() || !this.contexto() || tarifa.frecuenciaId !== this.contexto()?.id || !tarifa.activa || this.ocupado() || this.panelAbierto()) return;
+    if (!this.puedeGestionar() || !this.contexto() || !this.pertenece(this.contexto()!.cooperativaId) || tarifa.frecuenciaId !== this.contexto()?.id || !tarifa.activa || this.ocupado() || this.panelAbierto()) return;
     this.pendienteBaja.set(tarifa); this.errorBaja.set(null); this.exito.set(null); this.dialogo().nativeElement.showModal();
   }
   cancelarBaja(evento?: Event): void {
@@ -215,7 +230,7 @@ export class TarifasFrecuenciaLista implements OnInit {
   confirmarBaja(): void {
     const actual = this.pendienteBaja(); const contexto = this.contexto();
     if (!actual || !contexto || actual.frecuenciaId !== contexto.id || !actual.activa || this.ocupado()) return;
-    if (!this.puedeGestionar()) { this.errorBaja.set('Se requiere una sesión vigente con rol ADMIN.'); return; }
+    if (!this.pertenece(contexto.cooperativaId)) { this.errorBaja.set('Se requiere una sesión vigente y autorizada para esta cooperativa.'); return; }
     this.desactivando.set(true); this.errorBaja.set(null);
     this.servicio.darDeBaja(contexto.id, actual.id).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.desactivando.set(false))).subscribe({
       next: () => {

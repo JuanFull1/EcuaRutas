@@ -1,11 +1,11 @@
 <div class="container-fluid px-0">
   <section class="bg-white border rounded-4 p-4 mb-4">
-    <span class="badge text-bg-primary mb-3">Administrador</span>
+    <span class="badge text-bg-primary mb-3">{{ cooperativaIdAutenticada() !== null ? 'Cooperativa' : 'Administrador' }}</span>
     <h1 class="h3 fw-bold">Gestión de frecuencias</h1>
     <p class="text-secondary mb-0">Administra los horarios de salida y las frecuencias de transporte de las cooperativas.</p>
     @if (puedeGestionar()) { <button type="button" class="btn btn-primary mt-3" [disabled]="ocupado() || panelAbierto()" (click)="nueva()"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva frecuencia</button> }
   </section>
-  @if (!puedeGestionar()) { <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol ADMIN para consultar y gestionar frecuencias.</div> }
+  @if (!puedeGestionar()) { <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol ADMIN, o COOPERATIVA con una cooperativa válida, para consultar y gestionar frecuencias.</div> }
   @else {
     @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
     @if (error(); as mensaje) {
@@ -44,7 +44,9 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3"><h2 id="titulo-listado-frecuencias" class="h5 mb-0">Frecuencias registradas</h2><button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || panelAbierto()" (click)="cargar()"><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Actualizar</button></div>
         <div class="row g-3 align-items-end">
           <div class="col-12 col-lg-4"><label for="buscar-frecuencia" class="form-label">Buscar por código o información visible</label><input #buscador id="buscar-frecuencia" class="form-control" type="search" placeholder="Código, ruta, resolución u horario" [value]="busqueda()" (input)="buscar(buscador.value)"></div>
+            @if (cooperativaIdAutenticada() === null) {
           <div class="col-12 col-sm-6 col-lg-3"><label for="filtro-cooperativa" class="form-label">Cooperativa</label><select #cooperativa id="filtro-cooperativa" class="form-select" [value]="filtroCooperativa()" (change)="filtrarCooperativa(cooperativa.value)"><option value="">Todas</option>@for (c of cooperativasFiltro(); track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }</select></div>
+            }
           <div class="col-12 col-sm-6 col-lg-2"><label for="filtro-estado" class="form-label">Estado</label><select #estado id="filtro-estado" class="form-select" [value]="filtroEstado()" (change)="filtrarEstado(estado.value)"><option value="">Todas</option><option value="activa">Activas</option><option value="inactiva">Inactivas</option></select></div>
           <div class="col-12 col-lg-3"><button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()">Limpiar filtros</button></div>
         </div>

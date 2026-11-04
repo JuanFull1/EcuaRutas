@@ -62,77 +62,6 @@ export const routes: Routes = [
       },
 
       {
-        path: 'lugares',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
-        loadComponent: () =>
-          import('./admin/lugares/lugares-lista')
-            .then(m => m.LugaresLista)
-      },
-
-      {
-        path: 'rutas',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
-        loadComponent: () =>
-          import('./admin/rutas/rutas-lista')
-            .then(m => m.RutasLista)
-      },
-
-      {
-        path: 'paradas',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
-        loadComponent: () =>
-          import('./admin/paradas/paradas-lista')
-            .then(m => m.ParadasLista)
-      },
-
-      {
-        path: 'mapas/lugares',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
-        loadComponent: () =>
-          import('./admin/mapas/lugares/lugares-mapa')
-            .then(m => m.LugaresMapa)
-      },
-
-      {
-        path: 'mapas/rutas',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
-        loadComponent: () =>
-          import('./admin/mapas/rutas/rutas-mapa')
-            .then(m => m.RutasMapa)
-      },
-
-      {
-        path: 'resoluciones-ant',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
-        loadComponent: () =>
-          import('./admin/resoluciones-ant/resoluciones-ant-lista')
-            .then(m => m.ResolucionesAntLista)
-      },
-
-      {
-        path: 'frecuencias',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
-        loadComponent: () =>
-          import('./admin/frecuencias/frecuencias-lista')
-            .then(m => m.FrecuenciasLista)
-      },
-
-      {
-        path: 'tarifas',
-        canActivate: [authGuard, roleGuard],
-        data: { roles: ['ADMIN'] },
-        loadComponent: () =>
-          import('./admin/tarifas-frecuencia/tarifas-frecuencia-lista')
-            .then(m => m.TarifasFrecuenciaLista)
-      },
-
         path: 'usuarios',
 
         loadComponent: () =>
@@ -191,6 +120,78 @@ export const routes: Routes = [
             .then(
               m => m.InicioCooperativa
             )
+      },
+
+      {
+        path: 'lugares',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['COOPERATIVA'] },
+        loadComponent: () =>
+          import('./admin/lugares/lugares-lista')
+            .then(m => m.LugaresLista)
+      },
+
+      {
+        path: 'rutas',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['COOPERATIVA'] },
+        loadComponent: () =>
+          import('./admin/rutas/rutas-lista')
+            .then(m => m.RutasLista)
+      },
+
+      {
+        path: 'paradas',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['COOPERATIVA'] },
+        loadComponent: () =>
+          import('./admin/paradas/paradas-lista')
+            .then(m => m.ParadasLista)
+      },
+
+      {
+        path: 'mapas/lugares',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['COOPERATIVA'] },
+        loadComponent: () =>
+          import('./admin/mapas/lugares/lugares-mapa')
+            .then(m => m.LugaresMapa)
+      },
+
+      {
+        path: 'mapas/rutas',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['COOPERATIVA'] },
+        loadComponent: () =>
+          import('./admin/mapas/rutas/rutas-mapa')
+            .then(m => m.RutasMapa)
+      },
+
+      {
+        path: 'resoluciones-ant',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['COOPERATIVA'] },
+        loadComponent: () =>
+          import('./admin/resoluciones-ant/resoluciones-ant-lista')
+            .then(m => m.ResolucionesAntLista)
+      },
+
+      {
+        path: 'frecuencias',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['COOPERATIVA'] },
+        loadComponent: () =>
+          import('./admin/frecuencias/frecuencias-lista')
+            .then(m => m.FrecuenciasLista)
+      },
+
+      {
+        path: 'tarifas',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['COOPERATIVA'] },
+        loadComponent: () =>
+          import('./admin/tarifas-frecuencia/tarifas-frecuencia-lista')
+            .then(m => m.TarifasFrecuenciaLista)
       },
 
       {

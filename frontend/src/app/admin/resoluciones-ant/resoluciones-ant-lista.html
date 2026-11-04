@@ -1,6 +1,6 @@
 <div class="container-fluid px-0">
   <section class="bg-white border rounded-4 p-4 mb-4">
-    <span class="badge text-bg-primary mb-3">Administrador</span>
+    <span class="badge text-bg-primary mb-3">{{ cooperativaIdAutenticada() !== null ? 'Cooperativa' : 'Administrador' }}</span>
     <h1 class="h3 fw-bold">Gestión de resoluciones ANT</h1>
     <p class="text-secondary mb-0">Administra las resoluciones de la Agencia Nacional de Tránsito asociadas a las cooperativas.</p>
     @if (puedeGestionar()) {
@@ -11,7 +11,7 @@
   </section>
 
   @if (!puedeGestionar()) {
-    <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol ADMIN para consultar y gestionar resoluciones ANT.</div>
+    <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol ADMIN, o COOPERATIVA con una cooperativa válida, para consultar y gestionar resoluciones ANT.</div>
   } @else {
     @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
     @if (error(); as mensaje) {

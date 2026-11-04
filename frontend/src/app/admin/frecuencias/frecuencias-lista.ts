@@ -1,6 +1,6 @@
 import { Component, DestroyRef, ElementRef, OnInit, WritableSignal, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, finalize } from 'rxjs';
+import { Observable, finalize, map } from 'rxjs';
 import { CooperativaResumen } from '../../models/admin-usuario.model';
 import { AuthService } from '../../services/auth.service';
 import { UsuariosAdminService } from '../../services/usuarios-admin.service';
@@ -72,14 +72,24 @@ export class FrecuenciasLista implements OnInit {
   readonly paginaActual = computed(() => Math.max(1, Math.min(this.pagina(), this.totalPaginas())));
   readonly filasPagina = computed(() => this.filtradas().slice((this.paginaActual() - 1) * this.tamanoPagina, this.paginaActual() * this.tamanoPagina));
 
-  puedeGestionar(): boolean { return this.auth.tieneRol('ADMIN'); }
+  readonly cooperativaIdAutenticada = computed(() => {
+    const usuario = this.auth.usuarioActual();
+    const id = usuario?.cooperativaId;
+    return usuario?.rol === 'COOPERATIVA' && typeof id === 'number' && Number.isSafeInteger(id) && id > 0 ? id : null;
+  });
+  puedeGestionar(): boolean {
+    return this.auth.tieneRol('ADMIN') || (this.auth.tieneRol('COOPERATIVA') && this.cooperativaIdAutenticada() !== null);
+  }
+  private pertenece(cooperativaId: number): boolean {
+    return this.puedeGestionar() && (this.auth.tieneRol('ADMIN') || cooperativaId === this.cooperativaIdAutenticada());
+  }
   ngOnInit(): void { this.cargar(); }
   nombreCooperativa(id: number): string { return this.nombresCooperativas().get(id) ?? `Cooperativa #${id}`; }
   nombreRuta(id: number): string { return this.nombresRutas().get(id) ?? `Ruta #${id}`; }
   numeroResolucion(id: number): string { return this.numerosResoluciones().get(id) ?? `Resolución #${id}`; }
   identificar(f: FrecuenciaDto): string { return `${f.codigo || `Frecuencia #${f.id}`} · ${this.nombreRuta(f.rutaId)} · ${f.horaSalida}`; }
   buscar(valor: string): void { this.busqueda.set(valor); this.pagina.set(1); }
-  filtrarCooperativa(valor: string): void { this.filtroCooperativa.set(valor); this.pagina.set(1); }
+  filtrarCooperativa(valor: string): void { this.filtroCooperativa.set(this.cooperativaIdAutenticada()?.toString() ?? valor); this.pagina.set(1); }
   filtrarEstado(valor: string): void { this.filtroEstado.set(valor); this.pagina.set(1); }
   limpiarFiltros(): void { this.buscar(''); this.filtrarCooperativa(''); this.filtrarEstado(''); }
   cambiarPagina(delta: number): void { this.pagina.set(Math.max(1, Math.min(this.paginaActual() + delta, this.totalPaginas()))); }
@@ -88,15 +98,19 @@ export class FrecuenciasLista implements OnInit {
     if (!this.puedeGestionar() || this.ocupado() || this.panelAbierto()) return;
     this.error.set(null); this.cargando.set(true);
     this.servicio.listar().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
-      next: datos => this.frecuencias.set(datos), error: (e: unknown) => this.error.set(mensajeErrorFrecuencia(e))
+      next: datos => this.frecuencias.set(datos.filter(f => this.pertenece(f.cooperativaId))), error: (e: unknown) => this.error.set(mensajeErrorFrecuencia(e))
     });
     this.cargarCatalogos();
   }
   cargarCatalogos(): void {
     if (!this.puedeGestionar() || this.guardando() || this.desactivando()) return;
-    this.cargarCatalogo('cooperativas', this.cooperativaService.listarCooperativas(), this.cooperativas);
+    const propia = this.cooperativaIdAutenticada();
+    if (propia !== null) {
+      this.cooperativas.set([{ id: propia, nombre: `Cooperativa #${propia}` }]);
+      this.fallosCatalogos.update(c => ({ ...c, cooperativas: null }));
+    } else this.cargarCatalogo('cooperativas', this.cooperativaService.listarCooperativas(), this.cooperativas);
     this.cargarCatalogo('rutas', this.rutaService.listar(), this.rutas);
-    this.cargarCatalogo('resoluciones', this.resolucionService.listar(), this.resoluciones);
+    this.cargarCatalogo('resoluciones', this.resolucionService.listar().pipe(map(datos => datos.filter(r => this.pertenece(r.cooperativaId)))), this.resoluciones);
   }
   private cargarCatalogo<T>(tipo: Catalogo, solicitud: Observable<T[]>, destino: WritableSignal<T[]>): void {
     if (this.cargasCatalogos()[tipo]) return;
@@ -111,10 +125,10 @@ export class FrecuenciasLista implements OnInit {
     this.seleccionada.set(null); this.errorFormulario.set(null); this.exito.set(null); this.formularioVisible.set(true);
   }
   abrir(frecuencia: FrecuenciaDto, modo: 'consultar' | 'editar'): void {
-    if (!this.puedeGestionar() || this.ocupado() || this.panelAbierto()) return;
+    if (!this.pertenece(frecuencia.cooperativaId) || this.ocupado() || this.panelAbierto()) return;
     this.error.set(null); this.exito.set(null); this.cargandoDetalle.set(true);
     this.servicio.obtener(frecuencia.id).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargandoDetalle.set(false))).subscribe({
-      next: actual => { this.seleccionada.set(actual); this.errorFormulario.set(null); this.formularioVisible.set(modo === 'editar'); this.detalleVisible.set(modo === 'consultar'); },
+      next: actual => { if (!this.pertenece(actual.cooperativaId)) { this.error.set('La frecuencia no pertenece a la cooperativa autorizada.'); return; } this.seleccionada.set(actual); this.errorFormulario.set(null); this.formularioVisible.set(modo === 'editar'); this.detalleVisible.set(modo === 'consultar'); },
       error: (e: unknown) => this.error.set(mensajeErrorFrecuencia(e))
     });
   }
@@ -124,7 +138,9 @@ export class FrecuenciasLista implements OnInit {
   }
   guardar(evento: GuardarFrecuencia): void {
     if (!this.puedeGestionar() || this.ocupado() || this.cargandoCatalogos() || !this.formularioVisible()) return;
+    if (!this.pertenece(evento.datos.cooperativaId)) { this.errorFormulario.set('La cooperativa no corresponde a la sesión autenticada.'); return; }
     const actual = this.seleccionada();
+    if (actual && !this.pertenece(actual.cooperativaId)) return;
     if (evento.modo === 'editar' ? actual?.id !== evento.id || actual.activa !== evento.datos.activa : actual !== null) return;
     if (this.erroresCatalogos().length && (!actual || cambiaEstructura(actual, evento.datos))) return;
     const resolucion = this.resoluciones().find(r => r.id === evento.datos.resolucionAntId);
@@ -142,7 +158,7 @@ export class FrecuenciasLista implements OnInit {
     });
   }
   solicitarBaja(frecuencia: FrecuenciaDto): void {
-    if (!this.puedeGestionar() || this.ocupado() || this.panelAbierto() || !frecuencia.activa) return;
+    if (!this.pertenece(frecuencia.cooperativaId) || this.ocupado() || this.panelAbierto() || !frecuencia.activa) return;
     this.pendienteBaja.set(frecuencia); this.errorBaja.set(null); this.exito.set(null); this.dialogo().nativeElement.showModal();
   }
   cancelarBaja(evento?: Event): void {
@@ -151,7 +167,7 @@ export class FrecuenciasLista implements OnInit {
   }
   confirmarBaja(): void {
     const actual = this.pendienteBaja(); if (!actual || !actual.activa || this.ocupado()) return;
-    if (!this.puedeGestionar()) { this.errorBaja.set('Se requiere una sesión vigente con rol ADMIN.'); return; }
+    if (!this.pertenece(actual.cooperativaId)) { this.errorBaja.set('Se requiere una sesión vigente y autorizada para esta cooperativa.'); return; }
     this.desactivando.set(true); this.errorBaja.set(null);
     this.servicio.darDeBaja(actual.id).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.desactivando.set(false))).subscribe({
       next: () => {

@@ -5,7 +5,7 @@
     <p class="text-secondary mb-0">Administra los lugares, el orden y los permisos de ascenso y descenso de las paradas de cada ruta.</p>
     <div class="d-flex flex-wrap gap-2 mt-3">
       @if (rutaSeleccionada()) {
-        <a class="btn btn-outline-secondary" routerLink="/admin/mapas/rutas" [queryParams]="{ rutaId: rutaId() }">
+        <a class="btn btn-outline-secondary" routerLink="/cooperativas/mapas/rutas" [queryParams]="{ rutaId: rutaId() }">
           <i class="bi bi-map me-1" aria-hidden="true"></i>Ver ruta en mapa
         </a>
       }
@@ -101,7 +101,7 @@
           <thead class="table-light"><tr>
             <th scope="col">Orden</th><th scope="col">Lugar</th><th scope="col">Kilómetros acumulados</th>
             <th scope="col">Minutos acumulados</th><th scope="col">Ascenso</th><th scope="col">Descenso</th>
-            @if (puedeEscribir()) { <th scope="col">Acciones</th> }
+            <th scope="col">Acciones</th>
           </tr></thead>
           <tbody>
             @for (parada of paradasOrdenadas(); track parada.id) {
@@ -114,16 +114,16 @@
                 <td class="acumulado">{{ parada.minutosAcumulados ?? 'Sin dato' }}</td>
                 <td><span class="badge" [class.text-bg-success]="parada.permiteAscenso" [class.text-bg-secondary]="!parada.permiteAscenso">{{ parada.permiteAscenso ? 'Permitido' : 'No permitido' }}</span></td>
                 <td><span class="badge" [class.text-bg-success]="parada.permiteDescenso" [class.text-bg-secondary]="!parada.permiteDescenso">{{ parada.permiteDescenso ? 'Permitido' : 'No permitido' }}</span></td>
-                @if (puedeEscribir()) {
                   <td><div class="d-flex flex-wrap gap-2 acciones">
-                    <a class="btn btn-sm btn-outline-secondary" routerLink="/admin/mapas/rutas" [queryParams]="{ rutaId: rutaId(), paradaId: parada.id }"
+                    <a class="btn btn-sm btn-outline-secondary" routerLink="/cooperativas/mapas/rutas" [queryParams]="{ rutaId: rutaId(), paradaId: parada.id }"
                       [attr.aria-label]="'Ver en mapa parada ' + parada.orden + ' de ' + nombreLugar(parada.lugarId)"><i class="bi bi-map me-1" aria-hidden="true"></i>Ver en mapa</a>
+                    @if (puedeEscribir()) {
                     <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || formularioVisible()"
                       [attr.aria-label]="'Editar parada ' + parada.orden + ' de ' + nombreLugar(parada.lugarId)" (click)="editar(parada)"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar</button>
                     <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || formularioVisible()"
                       [attr.aria-label]="'Eliminar parada ' + parada.orden + ' de ' + nombreLugar(parada.lugarId)" (click)="solicitarEliminar(parada)"><i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar</button>
+                    }
                   </div></td>
-                }
               </tr>
             }
           </tbody>

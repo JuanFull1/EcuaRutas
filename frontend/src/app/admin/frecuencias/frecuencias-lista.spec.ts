@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { API_URL } from '../../services/api.config';
+import { RolUsuario } from '../../models/usuario.model';
 import { AuthService } from '../../services/auth.service';
 import { FrecuenciaFormulario } from './frecuencia-formulario';
 import { FrecuenciaDto } from './frecuencia.model';
@@ -15,15 +16,18 @@ describe('FrecuenciasLista', () => {
   const resoluciones = `${API_URL}/resoluciones-ant`;
   const actual: FrecuenciaDto = { id: 7, cooperativaId: 4, rutaId: 2, resolucionAntId: 3, codigo: null, horaSalida: '00:00:00', activa: true };
   let http: HttpTestingController; let autorizado: boolean;
+  let rolActual: RolUsuario;
+  let cooperativaId: number | null;
   beforeEach(() => {
-    autorizado = true;
+    autorizado = true; rolActual = 'ADMIN'; cooperativaId = 4;
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
-      { provide: AuthService, useValue: { tieneRol: (rol: string) => autorizado && rol === 'ADMIN' } }] });
+      { provide: AuthService, useValue: { usuarioActual: () => ({ rol: rolActual, cooperativaId }), tieneRol: (rol: string) => autorizado && rol === rolActual } }] });
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
   const completarCatalogos = () => {
-    http.expectOne(coops).flush([{ id: 4, nombre: 'Cooperativa A' }, { id: 5, nombre: 'Cooperativa B' }]);
+    if (rolActual === 'ADMIN') http.expectOne(coops).flush([{ id: 4, nombre: 'Cooperativa A' }, { id: 5, nombre: 'Cooperativa B' }]);
+    else http.expectNone(coops);
     http.expectOne(rutas).flush([{ id: 2, nombre: 'Quito – Cuenca', origenLugarId: 11, destinoLugarId: 22, tipoViaje: 'DIRECTO', activa: true }]);
     http.expectOne(resoluciones).flush([{ id: 3, cooperativaId: 4, numeroResolucion: 'ANT-01', fechaResolucion: null, archivoUrl: null, activa: true },
       { id: 30, cooperativaId: 5, numeroResolucion: 'ANT-B', fechaResolucion: null, archivoUrl: null, activa: true }]);
@@ -33,6 +37,49 @@ describe('FrecuenciasLista', () => {
     const fixture = TestBed.createComponent(FrecuenciasLista); fixture.detectChanges(); completarCarga(filas); fixture.detectChanges(); return fixture;
   };
   const dialogo = (elemento: HTMLElement) => { const d = elemento.querySelector('dialog')!; d.showModal = vi.fn(); d.close = vi.fn(); return d; };
+
+  it('COOPERATIVA filtra frecuencias y resoluciones y no ofrece el filtro global de cooperativas', () => {
+    rolActual = 'COOPERATIVA'; const fixture = crear([actual, { ...actual, id: 8, cooperativaId: 5 }]); const lista = fixture.componentInstance;
+    expect(lista.frecuencias()).toEqual([actual]); expect(lista.resoluciones().map(r => r.id)).toEqual([3]);
+    expect(lista.cooperativas().map(c => c.id)).toEqual([4]); expect(fixture.nativeElement.querySelector('#filtro-cooperativa')).toBeNull();
+    lista.filtrarCooperativa('5'); expect(lista.filtroCooperativa()).toBe('4'); expect(lista.filtradas()).toEqual([actual]);
+    lista.nueva(); fixture.detectChanges();
+    const formulario = fixture.debugElement.query(By.directive(FrecuenciaFormulario)).componentInstance as FrecuenciaFormulario;
+    expect(formulario.cooperativas().map(c => c.id)).toEqual([4]);
+    formulario.form.patchValue({ cooperativaId: 5, rutaId: 2, resolucionAntId: 30, horaSalida: '00:00' }); formulario.guardar();
+    expect(formulario.form.invalid).toBe(true); http.expectNone(r => r.method === 'POST');
+    formulario.cancelar.emit(); fixture.detectChanges(); expect(lista.formularioVisible()).toBe(false);
+  });
+
+  it('COOPERATIVA conserva el alta propia y no envia un identificador ajeno del evento', () => {
+    rolActual = 'COOPERATIVA'; const lista = crear([]).componentInstance; lista.nueva();
+    lista.guardar({ modo: 'crear', datos: { ...actual, cooperativaId: 5 } });
+    expect(lista.errorFormulario()).toContain('autenticada'); http.expectNone(r => r.method === 'POST');
+    lista.guardar({ modo: 'crear', datos: { cooperativaId: 4, rutaId: 2, resolucionAntId: 3, codigo: null, horaSalida: '00:00:00' } });
+    const alta = http.expectOne(url); expect(alta.request.body.cooperativaId).toBe(4); expect(alta.request.body.horaSalida).toBe('00:00:00');
+    alta.flush(actual); completarCarga(); expect(lista.formularioVisible()).toBe(false);
+  });
+
+  it('COOPERATIVA rechaza edicion y baja de frecuencias ajenas', () => {
+    rolActual = 'COOPERATIVA'; const lista = crear().componentInstance; const ajena = { ...actual, id: 8, cooperativaId: 5 };
+    lista.abrir(ajena, 'editar'); lista.solicitarBaja(ajena); lista.pendienteBaja.set(ajena); lista.confirmarBaja();
+    http.expectNone(r => r.url.endsWith('/8'));
+    lista.pendienteBaja.set(null); lista.abrir(actual, 'editar'); http.expectOne(`${url}/7`).flush(actual);
+    lista.guardar({ modo: 'editar', id: 7, datos: { ...actual, cooperativaId: 5 } });
+    expect(lista.errorFormulario()).toContain('autenticada'); http.expectNone(r => r.method === 'PUT');
+  });
+
+  it.each([null, 0, -1, 1.5, NaN, Number.MAX_SAFE_INTEGER + 1])('COOPERATIVA sin identificador valido %s no consulta ni habilita acciones', id => {
+    rolActual = 'COOPERATIVA'; cooperativaId = id;
+    const fixture = TestBed.createComponent(FrecuenciasLista); fixture.detectChanges();
+    expect(fixture.componentInstance.puedeGestionar()).toBe(false);
+    http.expectNone(() => true);
+  });
+
+  it.each(['CLIENTE', 'OFICINISTA', 'BUS'] as const)('el listado rechaza el rol %s aunque tenga cooperativa', rol => {
+    rolActual = rol; const fixture = TestBed.createComponent(FrecuenciasLista); fixture.detectChanges();
+    expect(fixture.componentInstance.puedeGestionar()).toBe(false); http.expectNone(() => true);
+  });
 
   it('renderiza cooperativa, ruta, resolución, medianoche, código nulo e inactivas', () => {
     const fixture = crear([actual, { ...actual, id: 8, activa: false }]); const html = fixture.nativeElement as HTMLElement;
@@ -134,7 +181,7 @@ describe('FrecuenciasLista', () => {
     const fixture = crear(); const componente = fixture.componentInstance; dialogo(fixture.nativeElement as HTMLElement); componente.solicitarBaja(actual); componente.confirmarBaja();
     http.expectOne(`${url}/7`).flush({ mensaje: 'Conflicto de baja.' }, { status: 409, statusText: 'Conflict' });
     expect(componente.errorBaja()).toBe('Conflicto de baja.'); expect(componente.desactivando()).toBe(false);
-    autorizado = false; componente.confirmarBaja(); expect(componente.errorBaja()).toContain('ADMIN'); http.expectNone(`${url}/7`);
+    autorizado = false; componente.confirmarBaja(); expect(componente.errorBaja()).toContain('autorizada'); http.expectNone(`${url}/7`);
   });
   it('filtra localmente por código, cooperativa, estado e información visible con paginación', () => {
     const filas = Array.from({ length: 12 }, (_, i) => ({ ...actual, id: i + 1, codigo: `F-${i + 1}`, cooperativaId: i === 11 ? 5 : 4, activa: i !== 11 }));

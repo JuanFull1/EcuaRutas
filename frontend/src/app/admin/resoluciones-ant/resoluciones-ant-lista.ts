@@ -59,7 +59,17 @@ export class ResolucionesAntLista implements OnInit {
   readonly paginaActual = computed(() => Math.max(1, Math.min(this.pagina(), this.totalPaginas())));
   readonly filasPagina = computed(() => this.filtradas().slice((this.paginaActual() - 1) * this.tamanoPagina, this.paginaActual() * this.tamanoPagina));
 
-  puedeGestionar(): boolean { return this.auth.tieneRol('ADMIN'); }
+  readonly cooperativaIdAutenticada = computed(() => {
+    const usuario = this.auth.usuarioActual();
+    const id = usuario?.cooperativaId;
+    return usuario?.rol === 'COOPERATIVA' && typeof id === 'number' && Number.isSafeInteger(id) && id > 0 ? id : null;
+  });
+  puedeGestionar(): boolean {
+    return this.auth.tieneRol('ADMIN') || (this.auth.tieneRol('COOPERATIVA') && this.cooperativaIdAutenticada() !== null);
+  }
+  private pertenece(cooperativaId: number): boolean {
+    return this.puedeGestionar() && (this.auth.tieneRol('ADMIN') || cooperativaId === this.cooperativaIdAutenticada());
+  }
 
   ngOnInit(): void { this.cargar(); }
 
@@ -68,7 +78,7 @@ export class ResolucionesAntLista implements OnInit {
     this.cargando.set(true);
     this.error.set(null);
     this.servicio.listar().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
-      next: datos => this.resoluciones.set(datos),
+      next: datos => this.resoluciones.set(datos.filter(r => this.pertenece(r.cooperativaId))),
       error: (error: unknown) => this.error.set(mensajeErrorResolucion(error))
     });
     // Un fallo del catálogo no oculta resoluciones ni altera sus identificadores.
@@ -77,6 +87,12 @@ export class ResolucionesAntLista implements OnInit {
 
   cargarCooperativas(): void {
     if (!this.puedeGestionar() || this.cargandoCooperativas() || this.guardando() || this.desactivando()) return;
+    const propia = this.cooperativaIdAutenticada();
+    if (propia !== null) {
+      this.cooperativas.set([{ id: propia, nombre: `Cooperativa #${propia}` }]);
+      this.errorCooperativas.set(null);
+      return;
+    }
     this.cargandoCooperativas.set(true);
     this.errorCooperativas.set(null);
     this.catalogo.listarCooperativas().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargandoCooperativas.set(false))).subscribe({
@@ -100,12 +116,13 @@ export class ResolucionesAntLista implements OnInit {
   }
 
   abrir(resolucion: ResolucionAntDto, modo: 'consultar' | 'editar'): void {
-    if (!this.puedeGestionar() || this.ocupado() || this.panelAbierto()) return;
+    if (!this.pertenece(resolucion.cooperativaId) || this.ocupado() || this.panelAbierto()) return;
     this.cargandoDetalle.set(true);
     this.error.set(null);
     this.exito.set(null);
     this.servicio.obtener(resolucion.id).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargandoDetalle.set(false))).subscribe({
       next: actual => {
+        if (!this.pertenece(actual.cooperativaId)) { this.error.set('La resolución no pertenece a la cooperativa autorizada.'); return; }
         this.seleccionada.set(actual);
         this.errorFormulario.set(null);
         this.formularioVisible.set(modo === 'editar');
@@ -125,7 +142,9 @@ export class ResolucionesAntLista implements OnInit {
 
   guardar(evento: GuardarResolucionAnt): void {
     if (!this.puedeGestionar() || this.ocupado() || this.cargandoCooperativas() || !this.formularioVisible()) return;
+    if (!this.pertenece(evento.datos.cooperativaId)) { this.errorFormulario.set('La cooperativa no corresponde a la sesión autenticada.'); return; }
     const actual = this.seleccionada();
+    if (actual && !this.pertenece(actual.cooperativaId)) return;
     if (evento.modo === 'editar') {
       if (actual?.id !== evento.id || actual.activa !== evento.datos.activa) return;
     } else if (actual !== null || this.errorCooperativas()) return;
@@ -148,7 +167,7 @@ export class ResolucionesAntLista implements OnInit {
   }
 
   solicitarBaja(resolucion: ResolucionAntDto): void {
-    if (!this.puedeGestionar() || this.ocupado() || this.panelAbierto() || !resolucion.activa) return;
+    if (!this.pertenece(resolucion.cooperativaId) || this.ocupado() || this.panelAbierto() || !resolucion.activa) return;
     this.pendienteBaja.set(resolucion);
     this.errorBaja.set(null);
     this.exito.set(null);
@@ -166,7 +185,7 @@ export class ResolucionesAntLista implements OnInit {
   confirmarBaja(): void {
     const actual = this.pendienteBaja();
     if (!actual || !actual.activa || this.ocupado()) return;
-    if (!this.puedeGestionar()) { this.errorBaja.set('Se requiere una sesión vigente con rol ADMIN.'); return; }
+    if (!this.pertenece(actual.cooperativaId)) { this.errorBaja.set('Se requiere una sesión vigente y autorizada para esta cooperativa.'); return; }
     this.desactivando.set(true);
     this.errorBaja.set(null);
     this.servicio.darDeBaja(actual.id).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.desactivando.set(false))).subscribe({

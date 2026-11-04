@@ -33,12 +33,12 @@ const pantallas = [
 ] as const;
 
 describe('Rutas del PR 7', () => {
-  it.each(pantallas)('registra una sola ruta diferida ADMIN para $path', async pantalla => {
-    const admin = routes.find(r => r.path === 'admin')!;
-    expect(admin.canActivate).toEqual([authGuard, roleGuard]); expect(admin.data?.['roles']).toEqual(['ADMIN']);
-    const coincidencias = admin.children!.filter(r => r.path === pantalla.path); expect(coincidencias).toHaveLength(1);
+  it.each(pantallas)('registra una sola ruta diferida COOPERATIVA para $path', async pantalla => {
+    const cooperativa = routes.find(r => r.path === 'cooperativas')!;
+    expect(cooperativa.canActivate).toEqual([authGuard, roleGuard]); expect(cooperativa.data?.['roles']).toEqual(['COOPERATIVA']);
+    const coincidencias = cooperativa.children!.filter(r => r.path === pantalla.path); expect(coincidencias).toHaveLength(1);
     const ruta = coincidencias[0]; expect(ruta.component).toBeUndefined(); expect(ruta.canActivate).toEqual([authGuard, roleGuard]);
-    expect(ruta.data?.['roles']).toEqual(['ADMIN']); expect(await ruta.loadComponent!()).toBe(pantalla.componente);
+    expect(ruta.data?.['roles']).toEqual(['COOPERATIVA']); expect(await ruta.loadComponent!()).toBe(pantalla.componente);
   });
   it('conserva rutas, orden y redirecciones previas sin rutas hermanas duplicadas', () => {
     expect(routes.map(r => r.path)).toEqual(['login', 'admin', 'cooperativas', 'viajes', 'ventas', 'cliente', 'personal-bus', '', '**']);
@@ -47,17 +47,19 @@ describe('Rutas del PR 7', () => {
       for (const ruta of configuracion) if (ruta.children) comprobar(ruta.children);
     };
     for (const configuracion of [routes, VIAJES_ROUTES, VENTAS_ROUTES, CLIENTE_ROUTES]) comprobar(configuracion);
-    const nuevas = pantallas.map(p => p.path as string);
-    expect(routes.find(r => r.path === 'admin')!.children!.filter(r => !nuevas.includes(r.path!)).map(r => r.path))
-      .toEqual(['inicio', 'lugares', 'rutas', 'paradas', 'usuarios', 'roles', '']);
-    expect(routes.find(r => r.path === 'cooperativas')!.children!.map(r => r.path)).toEqual(['inicio', 'buses/nuevo', 'buses', '']);
+    expect(routes.find(r => r.path === 'admin')!.children!.map(r => r.path))
+      .toEqual(['inicio', 'cooperativas', 'usuarios', 'roles', '']);
+    expect(routes.find(r => r.path === 'cooperativas')!.children!.map(r => r.path)).toEqual([
+      'inicio', 'lugares', 'rutas', 'paradas', 'mapas/lugares', 'mapas/rutas', 'resoluciones-ant', 'frecuencias', 'tarifas',
+      'configuracion', 'buses/nuevo', 'buses/:id/editar', 'buses', 'grupos', 'plantillas', ''
+    ]);
     expect(routes.find(r => r.path === '')?.redirectTo).toBe('login'); expect(routes.find(r => r.path === '**')?.redirectTo).toBe('login');
   });
 });
 
 // Navegación real de Angular: router, guards, AuthService, layout y JWT del
 // proyecto. HttpTestingController simula la API, sin credenciales ni DB reales.
-describe('Integración administrativa del PR 7', () => {
+describe('Integración de los módulos operativos', () => {
   const resolucion: ResolucionAntDto = { id: 3, cooperativaId: 4, numeroResolucion: 'ANT-01', fechaResolucion: '2026-11-04', archivoUrl: null, activa: true };
   const frecuencia: FrecuenciaDto = { id: 11, cooperativaId: 4, rutaId: 22, resolucionAntId: 3, codigo: null, horaSalida: '00:00:00', activa: true };
   const tarifa: TarifaFrecuenciaDto = { id: 7, frecuenciaId: 11, origenRutaParadaId: 90, destinoRutaParadaId: 10, precioBase: 5.25, activa: true };
@@ -75,8 +77,8 @@ describe('Integración administrativa del PR 7', () => {
     try { http.verify(); }
     finally { localStorage.removeItem(AUTH_SESSION_KEY); TestBed.resetTestingModule(); }
   });
-  function sesion(rol: RolUsuario = 'ADMIN', vigente = true): void {
-    const usuario: Usuario = { id: 1, nombres: 'Prueba', apellidos: 'Navegación', correo: 'prueba@example.invalid', rol, cooperativaId: rol === 'COOPERATIVA' ? 5 : null };
+  function sesion(rol: RolUsuario = 'COOPERATIVA', vigente = true): void {
+    const usuario: Usuario = { id: 1, nombres: 'Prueba', apellidos: 'Navegación', correo: 'prueba@example.invalid', rol, cooperativaId: rol === 'COOPERATIVA' ? 4 : null };
     auth.login(usuario.correo, 'solo-prueba-simulada').subscribe();
     http.expectOne(`${API_URL}/auth/login`).flush({ token: `jwt-simulado-${rol}`, expiraEn: new Date(Date.now() + (vigente ? 3600000 : -3600000)).toISOString(), usuario });
   }
@@ -106,7 +108,7 @@ describe('Integración administrativa del PR 7', () => {
         else if (url === `${API_URL}/frecuencias/11/tarifas`) peticion.flush(tarifas);
         else if (/\/frecuencias\/11\/tarifas\/\d+$/.test(url)) peticion.flush(tarifas.find(t => t.id === Number(url.split('/').pop()))!);
         else if (url === `${API_URL}/buses` || url === `${API_URL}/plantillas`) {
-          expect(peticion.request.params.get('cooperativaId')).toBe('5'); peticion.flush([]);
+          expect(peticion.request.params.get('cooperativaId')).toBe('4'); peticion.flush([]);
         } else throw new Error(`GET no previsto: ${peticion.request.urlWithParams}`);
       }
     }
@@ -117,62 +119,69 @@ describe('Integración administrativa del PR 7', () => {
   function modal(): HTMLDialogElement {
     const dialogo = harness.routeNativeElement!.querySelector('dialog')!; dialogo.showModal = vi.fn(); dialogo.close = vi.fn(); return dialogo;
   }
-  async function abrir(path: string): Promise<void> { await harness.navigateByUrl(`/admin/${path}`, Layout); lecturas(); }
+  async function abrir(path: string): Promise<void> { await harness.navigateByUrl(`/cooperativas/${path}`, Layout); lecturas(); }
   async function enlace(path: string): Promise<void> {
     const fin = firstValueFrom(router.events.pipe(filter(e => e instanceof NavigationEnd), take(1)));
     menu().querySelector<HTMLAnchorElement>(`a[href="${path}"]`)!.click(); await fin; lecturas();
   }
 
-  it.each(pantallas)('ADMIN accede por URL a $path con un solo layout y enlace activo', async pantalla => {
+  for (const rol of ['ADMIN', 'COOPERATIVA'] as const) {
+    it.each(pantallas)(`${rol} no abre $path desde la antigua ruta ADMIN`, async pantalla => {
+      sesion(rol);
+      await harness.navigateByUrl(`/admin/${pantalla.path}`);
+      expect(router.url).toBe('/login');
+      expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeNull();
+      http.expectNone(request => request.method === 'GET');
+    });
+  }
+
+  it.each(pantallas)('COOPERATIVA accede por URL a $path con un solo layout y enlace activo', async pantalla => {
     sesion(); await abrir(pantalla.path);
     expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeTruthy();
     expect(harness.routeNativeElement!.querySelector('h1')!.textContent).toContain(pantalla.titulo);
     expect(harness.routeNativeElement!.querySelectorAll('aside')).toHaveLength(1); expect(harness.routeNativeElement!.querySelectorAll('header.navbar')).toHaveLength(1);
-    expect(menu().querySelector(`a[href="/admin/${pantalla.path}"]`)!.classList.contains('active')).toBe(true);
+    expect(menu().querySelector(`a[href="/cooperativas/${pantalla.path}"]`)!.classList.contains('active')).toBe(true);
   });
   it.each(pantallas)('anónimo no puede abrir $path', async pantalla => {
-    await harness.navigateByUrl(`/admin/${pantalla.path}`, Login); expect(router.url).toBe('/login'); http.expectNone(r => r.method === 'GET');
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Login); expect(router.url).toBe('/login'); http.expectNone(r => r.method === 'GET');
   });
-  for (const rol of ['COOPERATIVA', 'OFICINISTA', 'CLIENTE', 'BUS'] as const) {
+  for (const rol of ['ADMIN', 'OFICINISTA', 'CLIENTE', 'BUS'] as const) {
     it.each(pantallas)(`${rol} no accede por URL a $path ni ve enlaces administrativos`, async pantalla => {
-      sesion(rol); await harness.navigateByUrl(`/admin/${pantalla.path}`, Layout); lecturas();
+      sesion(rol); await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Layout); lecturas();
       expect(router.url).toBe(auth.obtenerRutaInicio(rol)); expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeNull();
-      expect(menu().querySelector('a[href^="/admin/"]')).toBeNull();
+      expect(menu().querySelector('a[href^="/cooperativas/"]')).toBeNull();
     });
   }
   it.each(pantallas)('revalida sesión expirada al navegar entre hijos de admin hacia $path', async pantalla => {
-    sesion(); await abrir('inicio'); sesion('ADMIN', false);
-    await harness.navigateByUrl(`/admin/${pantalla.path}`, Login); expect(router.url).toBe('/login'); http.expectNone(r => r.method === 'GET');
+    sesion(); await abrir('inicio'); sesion('COOPERATIVA', false);
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Login); expect(router.url).toBe('/login'); http.expectNone(r => r.method === 'GET');
   });
   it.each(pantallas)('revalida cambio de rol dentro del mismo layout para $path', async pantalla => {
     sesion(); await abrir('inicio'); sesion('CLIENTE');
-    await harness.navigateByUrl(`/admin/${pantalla.path}`, Layout); expect(router.url).toBe('/cliente/inicio'); http.expectNone(r => r.method === 'GET');
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Layout); expect(router.url).toBe('/cliente/inicio'); http.expectNone(r => r.method === 'GET');
   });
-  it('conserva todas las entradas ADMIN previas, sus iconos y orden, y añade tres enlaces únicos', async () => {
-    sesion(); const layout = await harness.navigateByUrl('/admin/inicio', Layout);
-    const nuevas = pantallas.map(p => p.texto as string);
-    expect(layout.menuItems().filter(item => !nuevas.includes(item.texto))).toEqual([
-      { texto: 'Inicio', icono: 'bi-grid', ruta: '/admin/inicio' }, { texto: 'Usuarios', icono: 'bi-people', ruta: '/admin/usuarios' },
-      { texto: 'Cooperativas', icono: 'bi-building' }, { texto: 'Lugares', icono: 'bi-geo-alt', ruta: '/admin/lugares' },
-      { texto: 'Rutas', icono: 'bi-signpost-2', ruta: '/admin/rutas' }, { texto: 'Paradas', icono: 'bi-pin-map', ruta: '/admin/paradas' },
-      { texto: 'Roles', icono: 'bi-person-gear', ruta: '/admin/roles' }, { texto: 'Configuración', icono: 'bi-gear' }
+  it('COOPERATIVA conserva las opciones previas y recibe ocho enlaces unicos', async () => {
+    sesion(); const layout = await harness.navigateByUrl('/cooperativas/inicio', Layout); lecturas();
+    expect(layout.menuItems().map(item => item.texto)).toEqual([
+      'Inicio', 'Lugares', 'Rutas', 'Paradas', 'Mapa de lugares', 'Mapa de rutas y paradas',
+      'Resoluciones ANT', 'Frecuencias', 'Tarifas', 'Mi cooperativa', 'Buses', 'Grupos', 'Plantillas', 'Hojas de Ruta', 'Viajes'
     ]);
     for (const pantalla of pantallas) {
-      const enlaces = menu().querySelectorAll(`a[href="/admin/${pantalla.path}"]`); expect(enlaces).toHaveLength(1);
+      const enlaces = menu().querySelectorAll(`a[href="/cooperativas/${pantalla.path}"]`); expect(enlaces).toHaveLength(1);
       expect(enlaces[0].querySelector('i.bi')).toBeTruthy(); expect(enlaces[0].textContent).toContain(pantalla.texto);
     }
     const hrefs = Array.from(menu().querySelectorAll('a')).map(a => a.getAttribute('href')); expect(new Set(hrefs).size).toBe(hrefs.length);
   });
   it('navega por sidebar entre las tres pantallas y preserva apertura, overlay y cierre móvil', async () => {
-    sesion(); const layout = await harness.navigateByUrl('/admin/inicio', Layout);
+    sesion(); const layout = await harness.navigateByUrl('/cooperativas/inicio', Layout); lecturas();
     const boton = harness.routeNativeElement!.querySelector<HTMLButtonElement>('button[aria-label="Abrir menú"]')!;
     boton.click(); harness.detectChanges(); expect(layout.menuAbierto()).toBe(true);
     (harness.routeNativeElement!.querySelector('.sidebar-overlay') as HTMLElement).click(); harness.detectChanges(); expect(layout.menuAbierto()).toBe(false);
     for (const pantalla of pantallas) {
-      boton.click(); harness.detectChanges(); await enlace(`/admin/${pantalla.path}`); expect(layout.menuAbierto()).toBe(false);
-      expect(router.url).toBe(`/admin/${pantalla.path}`); expect(menu().querySelectorAll('a.active')).toHaveLength(1);
+      boton.click(); harness.detectChanges(); await enlace(`/cooperativas/${pantalla.path}`); expect(layout.menuAbierto()).toBe(false);
+      expect(router.url).toBe(`/cooperativas/${pantalla.path}`); expect(menu().querySelectorAll('a.active')).toHaveLength(1);
     }
-    await enlace('/admin/inicio'); expect(harness.routeNativeElement!.textContent).toContain('Panel principal');
+    await enlace('/cooperativas/inicio'); expect(harness.routeNativeElement!.textContent).toContain('Panel de Cooperativa');
   });
   it('integra registro, consulta, edición inactiva y baja de resoluciones con JWT', async () => {
     sesion(); await abrir('resoluciones-ant'); const lista = componente(ResolucionesAntLista);
@@ -197,7 +206,7 @@ describe('Integración administrativa del PR 7', () => {
   it('integra frecuencia a medianoche, filtro de resoluciones, edición y baja', async () => {
     sesion(); await abrir('frecuencias'); const lista = componente(FrecuenciasLista); lista.nueva(); harness.detectChanges(); const formulario = componente(FrecuenciaFormulario);
     formulario.form.patchValue({ cooperativaId: 4, rutaId: 22, resolucionAntId: 9, horaSalida: '00:00' });
-    expect(formulario.form.hasError('resolucionAjena')).toBe(true); formulario.guardar(); http.expectNone(r => r.method === 'POST');
+    expect(formulario.form.invalid).toBe(true); formulario.guardar(); http.expectNone(r => r.method === 'POST');
     expect(formulario.resolucionesDisponibles().map(r => r.id)).toEqual([3]); formulario.form.controls.resolucionAntId.setValue(3); formulario.guardar();
     const alta = http.expectOne(`${API_URL}/frecuencias`); comprobarJwt(alta.request.headers.get('Authorization')); expect(alta.request.body).toEqual({ cooperativaId: 4, rutaId: 22, resolucionAntId: 3, codigo: null, horaSalida: '00:00:00' });
     const creada = { ...frecuencia, id: 12 }; frecuencias.push(creada); alta.flush(creada, { status: 201, statusText: 'Created' }); lecturas();
@@ -235,9 +244,9 @@ describe('Integración administrativa del PR 7', () => {
     harness.detectChanges(); expect(lista.formularioVisible()).toBe(true); expect(harness.routeNativeElement!.textContent).toContain('referenciada');
   });
   it('maneja la dependencia real de rutas y paradas pendientes sin inventar datos', async () => {
-    sesion(); await harness.navigateByUrl('/admin/frecuencias', Layout); lecturas(true); const frecuenciasLista = componente(FrecuenciasLista);
+    sesion(); await harness.navigateByUrl('/cooperativas/frecuencias', Layout); lecturas(true); const frecuenciasLista = componente(FrecuenciasLista);
     expect(frecuenciasLista.frecuencias()).toHaveLength(1); expect(frecuenciasLista.erroresCatalogos()).toHaveLength(1);
-    await harness.navigateByUrl('/admin/tarifas', Layout); lecturas(true); const lista = componente(TarifasFrecuenciaLista); lista.seleccionarFrecuencia(11); lecturas(true);
+    await harness.navigateByUrl('/cooperativas/tarifas', Layout); lecturas(true); const lista = componente(TarifasFrecuenciaLista); lista.seleccionarFrecuencia(11); lecturas(true);
     expect(lista.tarifas()).toHaveLength(1); expect(lista.puedeCrear()).toBe(false); expect(lista.tramoDisponible()).toBe(false);
     expect(harness.routeNativeElement!.textContent).toContain('No se pueden registrar ni editar');
   });

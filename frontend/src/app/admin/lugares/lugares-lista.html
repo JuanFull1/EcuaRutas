@@ -64,7 +64,7 @@
           <thead class="table-light"><tr>
             <th scope="col">ID</th><th scope="col">Nombre</th><th scope="col">Provincia</th><th scope="col">Cantón</th>
             <th scope="col">Tipo</th><th scope="col">Coordenadas</th><th scope="col">Estado</th>
-            @if (puedeEscribir()) { <th scope="col">Acciones</th> }
+            <th scope="col">Acciones</th>
           </tr></thead>
           <tbody>
             @for (lugar of lugaresFiltrados(); track lugar.id) {
@@ -77,18 +77,18 @@
                   } @else { <span class="text-secondary">Sin ubicación</span> }
                 </td>
                 <td><span class="badge" [class.text-bg-success]="lugar.activo" [class.text-bg-secondary]="!lugar.activo">{{ lugar.activo ? 'Activo' : 'Inactivo' }}</span></td>
-                @if (puedeEscribir()) {
                   <td><div class="d-flex flex-wrap gap-2 acciones">
-                    <a class="btn btn-sm btn-outline-secondary" routerLink="/admin/mapas/lugares" [queryParams]="{ lugarId: lugar.id }"
+                    <a class="btn btn-sm btn-outline-secondary" routerLink="/cooperativas/mapas/lugares" [queryParams]="{ lugarId: lugar.id }"
                       [attr.aria-label]="'Ver en mapa ' + lugar.nombre"><i class="bi bi-map me-1" aria-hidden="true"></i>Ver en mapa</a>
+                    @if (puedeEscribir()) {
                     <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || formularioVisible()"
                       [attr.aria-label]="'Editar ' + lugar.nombre" (click)="editar(lugar)">Editar</button>
                     @if (lugar.activo) {
                       <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || formularioVisible()"
                         [attr.aria-label]="'Desactivar ' + lugar.nombre" (click)="solicitarBaja(lugar)">Desactivar</button>
                     }
+                    }
                   </div></td>
-                }
               </tr>
             }
           </tbody>

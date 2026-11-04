@@ -171,23 +171,23 @@ try {
   await cdp.enviar('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
   await cdp.enviar('Page.navigate', { url: `http://127.0.0.1:${servidor.address().port}/` });
   await esperar('!!window.ecuarutasPrueba', 'No inició la aplicación de pruebas');
-  await navegar('/admin/inicio');
-  await esperar(`document.querySelector('aside a[href="/admin/mapas/lugares"]') && document.querySelector('aside a[href="/admin/mapas/rutas"]')`, 'Faltan accesos administrativos');
-  await pulsar('aside a[href="/admin/mapas/lugares"]');
+  await navegar('/cooperativas/inicio');
+  await esperar(`document.querySelector('aside a[href="/cooperativas/mapas/lugares"]') && document.querySelector('aside a[href="/cooperativas/mapas/rutas"]')`, 'Faltan accesos operativos');
+  await pulsar('aside a[href="/cooperativas/mapas/lugares"]');
   await mapaCargado();
   await esperar(`document.querySelectorAll('button.maplibregl-marker').length === 3`, 'No aparecen los lugares geográficos');
-  await pulsar('aside a[href="/admin/lugares"]');
+  await pulsar('aside a[href="/cooperativas/lugares"]');
   await esperar(`document.querySelector('a[aria-label="Ver en mapa Quito"]')`, 'No cargó gestión de lugares');
   await pulsar('a[aria-label="Ver en mapa Quito"]');
   await mapaCargado();
   await esperar(`${seleccionar('app-lugares-mapa', 'seleccionado()')}?.id === 11`, 'La navegación no seleccionó Quito');
-  if (!await evaluar(`document.querySelector('aside a[href="/admin/mapas/lugares"]').classList.contains('active')`)) throw new Error('No está activo el enlace del mapa de lugares.');
+  if (!await evaluar(`document.querySelector('aside a[href="/cooperativas/mapas/lugares"]').classList.contains('active')`)) throw new Error('No está activo el enlace del mapa de lugares.');
   await evaluar(`void (window.mapaAnterior = ${mapaReal})`);
   await capturaMapa('lugares-escritorio.png');
-  await navegar('/admin/mapas/lugares?lugarId=44');
+  await navegar('/cooperativas/mapas/lugares?lugarId=44');
   await esperar(`${seleccionar('app-lugares-mapa', 'seleccionado()')}?.id === 44`, 'No seleccionó el lugar sin coordenadas');
   if (!await evaluar(`${mapaReal} === window.mapaAnterior && document.querySelector('app-lugares-mapa').textContent.includes('Sin coordenadas')`)) throw new Error('Se recreó el mapa o faltó el mensaje sin coordenadas.');
-  await navegar('/admin/mapas/lugares?lugarId=11');
+  await navegar('/cooperativas/mapas/lugares?lugarId=11');
   await mapaCargado();
   await cdp.enviar('Emulation.setDeviceMetricsOverride', { width: 390, height: 1100, deviceScaleFactor: 1, mobile: true });
   await pausa(500);
@@ -196,7 +196,7 @@ try {
   await pulsar('nav[aria-label="Volver a la gestión"] a');
   await esperar(`document.querySelector('app-lugares-lista')`, 'No regresó a gestión de lugares');
   if (!await evaluar(`window.mapaAnterior._removed === true && !document.querySelector('.maplibregl-canvas')`)) throw new Error('El mapa de lugares no se liberó al salir.');
-  await navegar('/admin/rutas');
+  await navegar('/cooperativas/rutas');
   await esperar(`document.querySelector('a[aria-label="Ver en mapa Quito – Cuenca"]')`, 'No cargó gestión de rutas');
   await pulsar('a[aria-label="Ver en mapa Quito – Cuenca"]');
   await mapaCargado();
@@ -215,7 +215,7 @@ try {
   await evaluar(`Array.from(document.querySelectorAll('button')).find(boton => boton.textContent.includes('Mostrar recorrido completo')).click()`);
   await mapaCargado();
   await capturaMapa('rutas-escritorio.png');
-  await navegar('/admin/paradas');
+  await navegar('/cooperativas/paradas');
   await esperar(`document.querySelector('#paradas-ruta option[value="7"]')`, 'No cargó gestión de paradas');
   await evaluar(`(() => { const selector = document.querySelector('#paradas-ruta'); selector.value = '7'; selector.dispatchEvent(new Event('change')); })()`);
   await esperar(`document.querySelector('a[aria-label="Ver en mapa parada 5 de Ambato"]')`, 'No cargaron las paradas');
@@ -224,10 +224,10 @@ try {
   await esperar(`${seleccionar('app-rutas-mapa', 'puntoSeleccionado()')}?.parada?.id === 102`, 'La navegación no seleccionó la parada de Ambato');
   if (!await evaluar(`document.querySelector('.maplibregl-popup-content')?.textContent.includes('Ambato')`)) throw new Error('No abrió la información de la parada.');
   await evaluar(`void (window.mapaAnterior = ${mapaReal})`);
-  await navegar('/admin/mapas/rutas?rutaId=7&paradaId=101');
+  await navegar('/cooperativas/mapas/rutas?rutaId=7&paradaId=101');
   await esperar(`${seleccionar('app-rutas-mapa', 'puntoSeleccionado()')}?.parada?.id === 101`, 'No actualizó la parada por parámetros');
   if (!await evaluar(`${mapaReal} === window.mapaAnterior`)) throw new Error('Se recreó el mapa al cambiar los parámetros.');
-  await pulsar('aside a[href="/admin/inicio"]');
+  await pulsar('aside a[href="/cooperativas/inicio"]');
   await esperar(`!document.querySelector('app-mapa') && window.mapaAnterior._removed === true`, 'No se liberó el mapa de rutas');
   const reporte = {
     resultado: 'aprobado', datosHTTPySesionSimulados: true, routerGuardsLayoutReales: true,

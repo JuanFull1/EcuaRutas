@@ -113,50 +113,6 @@ export class Layout {
             },
 
             {
-              texto: 'Lugares',
-              icono: 'bi-geo-alt',
-              ruta: '/admin/lugares'
-            },
-
-            {
-              texto: 'Rutas',
-              icono: 'bi-signpost-2',
-              ruta: '/admin/rutas'
-            },
-
-            {
-              texto: 'Paradas',
-              icono: 'bi-pin-map',
-              ruta: '/admin/paradas'
-            },
-
-            {
-              texto: 'Mapa de lugares',
-              icono: 'bi-map',
-              ruta: '/admin/mapas/lugares'
-            },
-            {
-              texto: 'Mapa de rutas y paradas',
-              icono: 'bi-signpost-split',
-              ruta: '/admin/mapas/rutas'
-            },
-            {
-              texto: 'Resoluciones ANT',
-              icono: 'bi-file-earmark-text',
-              ruta: '/admin/resoluciones-ant'
-            },
-            {
-              texto: 'Frecuencias',
-              icono: 'bi-clock',
-              ruta: '/admin/frecuencias'
-            },
-            {
-              texto: 'Tarifas',
-              icono: 'bi-cash-coin',
-              ruta: '/admin/tarifas'
-            },
-
-            {
               texto: 'Roles',
               icono: 'bi-person-gear',
               ruta: '/admin/roles'
@@ -178,6 +134,50 @@ export class Layout {
               icono: 'bi-grid',
               ruta:
                 '/cooperativas/inicio'
+            },
+
+            {
+              texto: 'Lugares',
+              icono: 'bi-geo-alt',
+              ruta: '/cooperativas/lugares'
+            },
+
+            {
+              texto: 'Rutas',
+              icono: 'bi-signpost-2',
+              ruta: '/cooperativas/rutas'
+            },
+
+            {
+              texto: 'Paradas',
+              icono: 'bi-pin-map',
+              ruta: '/cooperativas/paradas'
+            },
+
+            {
+              texto: 'Mapa de lugares',
+              icono: 'bi-map',
+              ruta: '/cooperativas/mapas/lugares'
+            },
+            {
+              texto: 'Mapa de rutas y paradas',
+              icono: 'bi-signpost-split',
+              ruta: '/cooperativas/mapas/rutas'
+            },
+            {
+              texto: 'Resoluciones ANT',
+              icono: 'bi-file-earmark-text',
+              ruta: '/cooperativas/resoluciones-ant'
+            },
+            {
+              texto: 'Frecuencias',
+              icono: 'bi-clock',
+              ruta: '/cooperativas/frecuencias'
+            },
+            {
+              texto: 'Tarifas',
+              icono: 'bi-cash-coin',
+              ruta: '/cooperativas/tarifas'
             },
 
             {
@@ -217,16 +217,6 @@ export class Layout {
               icono: 'bi-map',
               ruta:
                 '/viajes/lista'
-            },
-
-            {
-              texto: 'Rutas',
-              icono: 'bi-signpost-2'
-            },
-
-            {
-              texto: 'Frecuencias',
-              icono: 'bi-clock'
             }
 
           ];

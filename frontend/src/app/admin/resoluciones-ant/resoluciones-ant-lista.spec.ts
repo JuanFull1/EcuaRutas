@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { API_URL } from '../../services/api.config';
+import { RolUsuario } from '../../models/usuario.model';
 import { AuthService } from '../../services/auth.service';
 import { ResolucionAntFormulario } from './resolucion-ant-formulario';
 import { ResolucionAntDto } from './resolucion-ant.model';
@@ -16,17 +17,20 @@ describe('ResolucionesAntLista', () => {
   let http: HttpTestingController;
   let autorizado: boolean;
 
+  let rolActual: RolUsuario;
+  let cooperativaId: number | null;
   beforeEach(() => {
-    autorizado = true;
+    autorizado = true; rolActual = 'ADMIN'; cooperativaId = 4;
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
-      { provide: AuthService, useValue: { tieneRol: (rol: string) => autorizado && rol === 'ADMIN' } }] });
+      { provide: AuthService, useValue: { usuarioActual: () => ({ rol: rolActual, cooperativaId }), tieneRol: (rol: string) => autorizado && rol === rolActual } }] });
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
 
   const completarCarga = (filas: ResolucionAntDto[] = [actual]) => {
     http.expectOne(url).flush(filas);
-    http.expectOne(catalogo).flush([{ id: 4, nombre: 'Cooperativa de prueba' }]);
+    if (rolActual === 'ADMIN') http.expectOne(catalogo).flush([{ id: 4, nombre: 'Cooperativa de prueba' }]);
+    else http.expectNone(catalogo);
   };
   const crear = (filas: ResolucionAntDto[] = [actual]) => {
     const fixture = TestBed.createComponent(ResolucionesAntLista);
@@ -36,6 +40,56 @@ describe('ResolucionesAntLista', () => {
     const dialogo = elemento.querySelector('dialog')!;
     dialogo.showModal = vi.fn(); dialogo.close = vi.fn(); return dialogo;
   };
+
+  it('COOPERATIVA consulta solo sus resoluciones y entrega al formulario su unica cooperativa', () => {
+    rolActual = 'COOPERATIVA';
+    const fixture = crear([actual, { ...actual, id: 8, cooperativaId: 5 }]); const lista = fixture.componentInstance;
+    expect(lista.resoluciones()).toEqual([actual]);
+    expect(lista.cooperativas().map(c => c.id)).toEqual([4]);
+    lista.nueva(); fixture.detectChanges();
+    const formulario = fixture.debugElement.query(By.directive(ResolucionAntFormulario)).componentInstance as ResolucionAntFormulario;
+    expect(formulario.cooperativas().map(c => c.id)).toEqual([4]);
+    formulario.form.patchValue({ cooperativaId: 5, numeroResolucion: 'AJENA' }); formulario.guardar();
+    expect(formulario.form.invalid).toBe(true); http.expectNone(r => r.method === 'POST');
+    formulario.cancelar.emit(); fixture.detectChanges(); expect(lista.formularioVisible()).toBe(false);
+  });
+
+  it('COOPERATIVA conserva el alta propia y rechaza un evento que suplanta la cooperativa', () => {
+    rolActual = 'COOPERATIVA'; const lista = crear([]).componentInstance; lista.nueva();
+    lista.guardar({ modo: 'crear', datos: { cooperativaId: 5, numeroResolucion: 'AJENA', fechaResolucion: null, archivoUrl: null } });
+    expect(lista.errorFormulario()).toContain('autenticada'); http.expectNone(r => r.method === 'POST');
+    lista.guardar({ modo: 'crear', datos: { cooperativaId: 4, numeroResolucion: 'ANT-01', fechaResolucion: null, archivoUrl: null } });
+    const alta = http.expectOne(url); expect(alta.request.body).toEqual({ cooperativaId: 4, numeroResolucion: 'ANT-01', fechaResolucion: null, archivoUrl: null });
+    alta.flush(actual); completarCarga(); expect(lista.formularioVisible()).toBe(false);
+  });
+
+  it('COOPERATIVA rechaza detalle, edicion y baja ajenos incluso por llamadas directas', () => {
+    rolActual = 'COOPERATIVA'; const lista = crear().componentInstance; const ajena = { ...actual, id: 8, cooperativaId: 5 };
+    lista.abrir(ajena, 'editar'); lista.solicitarBaja(ajena);
+    lista.pendienteBaja.set(ajena); lista.confirmarBaja();
+    http.expectNone(r => r.url.endsWith('/8'));
+    lista.pendienteBaja.set(null); lista.abrir(actual, 'editar'); http.expectOne(`${url}/7`).flush(actual);
+    lista.guardar({ modo: 'editar', id: 7, datos: { ...actual, cooperativaId: 5 } });
+    expect(lista.errorFormulario()).toContain('autenticada'); http.expectNone(r => r.method === 'PUT');
+  });
+
+  it('COOPERATIVA mantiene visibles los errores HTTP de autorizacion sin abrir un registro', () => {
+    rolActual = 'COOPERATIVA'; const lista = crear().componentInstance; lista.abrir(actual, 'editar');
+    http.expectOne(`${url}/7`).flush({}, { status: 404, statusText: 'Not Found' });
+    expect(lista.error()).toBeTruthy(); expect(lista.formularioVisible()).toBe(false);
+  });
+
+  it.each([null, 0, -1, 1.5, NaN, Number.MAX_SAFE_INTEGER + 1])('COOPERATIVA sin identificador valido %s no consulta ni habilita acciones', id => {
+    rolActual = 'COOPERATIVA'; cooperativaId = id;
+    const fixture = TestBed.createComponent(ResolucionesAntLista); fixture.detectChanges();
+    expect(fixture.componentInstance.puedeGestionar()).toBe(false);
+    http.expectNone(() => true);
+  });
+
+  it.each(['CLIENTE', 'OFICINISTA', 'BUS'] as const)('el listado rechaza el rol %s aunque tenga cooperativa', rol => {
+    rolActual = rol; const fixture = TestBed.createComponent(ResolucionesAntLista); fixture.detectChanges();
+    expect(fixture.componentInstance.puedeGestionar()).toBe(false); http.expectNone(() => true);
+  });
 
   it('renderiza encabezado, nombres, fecha civil, estados y columnas responsive', () => {
     const fixture = crear([actual, { ...actual, id: 8, activa: false }]); const html = fixture.nativeElement as HTMLElement;
@@ -152,7 +206,7 @@ describe('ResolucionesAntLista', () => {
     componente.solicitarBaja(actual); componente.confirmarBaja();
     http.expectOne(`${url}/7`).flush({ mensaje: 'Conflicto de operación.' }, { status: 409, statusText: 'Conflict' });
     expect(componente.errorBaja()).toBe('Conflicto de operación.'); expect(componente.desactivando()).toBe(false);
-    autorizado = false; componente.confirmarBaja(); http.expectNone(`${url}/7`); expect(componente.errorBaja()).toContain('ADMIN');
+    autorizado = false; componente.confirmarBaja(); http.expectNone(`${url}/7`); expect(componente.errorBaja()).toContain('autorizada');
   });
 
   it('mantiene la baja local si falla la recarga posterior', () => {

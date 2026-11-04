@@ -74,7 +74,7 @@
           <thead class="table-light"><tr>
             <th scope="col">ID</th><th scope="col">Nombre</th><th scope="col">Origen</th><th scope="col">Destino</th>
             <th scope="col">Tipo de viaje</th><th scope="col">Estado</th>
-            @if (puedeEscribir()) { <th scope="col">Acciones</th> }
+            <th scope="col">Acciones</th>
           </tr></thead>
           <tbody>
             @for (ruta of rutasFiltradas(); track ruta.id) {
@@ -88,18 +88,18 @@
                 </td>
                 <td>{{ ruta.tipoViaje === 'DIRECTO' ? 'Directo' : 'Con paradas' }}</td>
                 <td><span class="badge" [class.text-bg-success]="ruta.activa" [class.text-bg-secondary]="!ruta.activa">{{ ruta.activa ? 'Activa' : 'Inactiva' }}</span></td>
-                @if (puedeEscribir()) {
                   <td><div class="d-flex flex-wrap gap-2 acciones">
-                    <a class="btn btn-sm btn-outline-secondary" routerLink="/admin/mapas/rutas" [queryParams]="{ rutaId: ruta.id }"
+                    <a class="btn btn-sm btn-outline-secondary" routerLink="/cooperativas/mapas/rutas" [queryParams]="{ rutaId: ruta.id }"
                       [attr.aria-label]="'Ver en mapa ' + ruta.nombre"><i class="bi bi-map me-1" aria-hidden="true"></i>Ver en mapa</a>
+                    @if (puedeEscribir()) {
                     <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || formularioVisible()"
                       [attr.aria-label]="'Editar ' + ruta.nombre" (click)="editar(ruta)"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar</button>
                     @if (ruta.activa) {
                       <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || formularioVisible()"
                         [attr.aria-label]="'Desactivar ' + ruta.nombre" (click)="solicitarBaja(ruta)"><i class="bi bi-slash-circle me-1" aria-hidden="true"></i>Desactivar</button>
                     }
+                    }
                   </div></td>
-                }
               </tr>
             }
           </tbody>

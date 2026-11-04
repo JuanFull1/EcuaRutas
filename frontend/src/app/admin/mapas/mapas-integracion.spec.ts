@@ -96,10 +96,10 @@ const pantallas = [
 
 describe('Registro de los mapas administrativos', () => {
   it.each(pantallas)('carga $path de forma diferida con ambos guards administrativos', async pantalla => {
-    const admin = routes.find(ruta => ruta.path === 'admin')!;
-    const ruta = admin.children!.find(ruta => ruta.path === pantalla.path)!;
+    const cooperativa = routes.find(ruta => ruta.path === 'cooperativas')!;
+    const ruta = cooperativa.children!.find(ruta => ruta.path === pantalla.path)!;
     expect(ruta.canActivate).toEqual([authGuard, roleGuard]);
-    expect(ruta.data?.['roles']).toEqual(['ADMIN']);
+    expect(ruta.data?.['roles']).toEqual(['COOPERATIVA']);
     expect(ruta.component).toBeUndefined();
     expect(await ruta.loadComponent!()).toBe(pantalla.componente);
   });
@@ -111,7 +111,7 @@ describe('Registro de los mapas administrativos', () => {
     };
     comprobar(routes);
     expect(routes.find(ruta => ruta.path === 'admin')!.children!.map(ruta => ruta.path))
-      .toEqual(['inicio', 'lugares', 'rutas', 'mapas/lugares', 'mapas/rutas', 'paradas', '']);
+      .toEqual(['inicio', 'cooperativas', 'usuarios', 'roles', '']);
   });
 
   it.each(['', '0', '-1', '1.5', '1e2', 'NaN', 'Infinity', '2147483648', ' 11', '11x'])('rechaza el identificador %s', valor => {
@@ -124,7 +124,7 @@ describe('Registro de los mapas administrativos', () => {
   });
 });
 
-describe('Integración de mapas con la navegación administrativa', () => {
+describe('Integración de mapas con la navegación de cooperativa', () => {
   let http: HttpTestingController;
   let auth: AuthService;
   let router: Router;
@@ -141,7 +141,7 @@ describe('Integración de mapas con la navegación administrativa', () => {
   });
   afterEach(() => { http.verify(); localStorage.removeItem(AUTH_SESSION_KEY); });
 
-  function iniciarSesion(rol: 'ADMIN' | 'CLIENTE' | 'COOPERATIVA' | 'OFICINISTA' | 'BUS' = 'ADMIN', vigente = true): void {
+  function iniciarSesion(rol: 'ADMIN' | 'CLIENTE' | 'COOPERATIVA' | 'OFICINISTA' | 'BUS' = 'COOPERATIVA', vigente = true): void {
     auth.login('mapas@example.test', 'prueba').subscribe();
     http.expectOne(`${API_URL}/auth/login`).flush({
       token: 'token-de-prueba', expiraEn: new Date(Date.now() + (vigente ? 3600000 : -3600000)).toISOString(),
@@ -161,6 +161,7 @@ describe('Integración de mapas con la navegación administrativa', () => {
         else if (url === `${API_URL}/rutas`) peticion.flush(rutas);
         else if (url === `${API_URL}/rutas/7/paradas`) peticion.flush(paradas);
         else if (url === `${API_URL}/rutas/8/paradas`) peticion.flush([]);
+        else if (url === `${API_URL}/buses` || url === `${API_URL}/plantillas`) peticion.flush([]);
         else throw new Error(`Consulta inesperada: ${url}`);
       }
     }
@@ -185,60 +186,70 @@ describe('Integración de mapas con la navegación administrativa', () => {
     responder();
   }
 
-  it.each(pantallas)('ADMIN abre $path dentro del layout, con menú activo y regreso a gestión', async pantalla => {
+  for (const rol of ['ADMIN', 'COOPERATIVA'] as const) {
+    it.each(pantallas)(`${rol} no abre $path desde la antigua ruta ADMIN`, async pantalla => {
+      iniciarSesion(rol);
+      await harness.navigateByUrl(`/admin/${pantalla.path}`);
+      expect(router.url).toBe('/login');
+      expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeNull();
+      http.expectNone(request => request.method === 'GET');
+    });
+  }
+
+  it.each(pantallas)('COOPERATIVA abre $path dentro del layout, con menú activo y regreso a gestión', async pantalla => {
     iniciarSesion();
-    await abrir(`/admin/${pantalla.path}`);
+    await abrir(`/cooperativas/${pantalla.path}`);
     expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeTruthy();
     expect(harness.routeNativeElement!.querySelectorAll('aside')).toHaveLength(1);
-    expect(harness.routeNativeElement!.querySelectorAll(`aside a[href="/admin/${pantalla.path}"].active`)).toHaveLength(1);
+    expect(harness.routeNativeElement!.querySelectorAll(`aside a[href="/cooperativas/${pantalla.path}"].active`)).toHaveLength(1);
     expect(harness.routeNativeElement!.querySelector('nav[aria-label="Volver a la gestión"] a')).toBeTruthy();
   });
 
-  for (const rol of [null, 'CLIENTE', 'COOPERATIVA', 'OFICINISTA', 'BUS'] as const) {
+  for (const rol of [null, 'CLIENTE', 'ADMIN', 'OFICINISTA', 'BUS'] as const) {
     it.each(pantallas)(`${rol ?? 'Sin sesión'} no puede acceder a $path`, async pantalla => {
       if (rol) iniciarSesion(rol);
-      await harness.navigateByUrl(`/admin/${pantalla.path}?rutaId=7`);
+      await harness.navigateByUrl(`/cooperativas/${pantalla.path}?rutaId=7`);
       expect(router.url).toBe(rol ? auth.obtenerRutaInicio(rol) : '/login');
       expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeNull();
-      expect(harness.routeNativeElement!.querySelector('a[href^="/admin/mapas/"]')).toBeNull();
+      expect(harness.routeNativeElement!.querySelector('a[href^="/cooperativas/mapas/"]')).toBeNull();
       http.expectNone(request => request.method === 'GET');
     });
   }
 
   it.each(pantallas)('vuelve a comprobar sesión y rol al abrir $path desde admin', async pantalla => {
     iniciarSesion();
-    await abrir('/admin/inicio');
-    iniciarSesion('ADMIN', false);
-    await harness.navigateByUrl(`/admin/${pantalla.path}`);
+    await abrir('/cooperativas/inicio');
+    iniciarSesion('COOPERATIVA', false);
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`);
     expect(router.url).toBe('/login');
     iniciarSesion();
-    await abrir('/admin/inicio');
+    await abrir('/cooperativas/inicio');
     iniciarSesion('CLIENTE');
-    await harness.navigateByUrl(`/admin/${pantalla.path}`);
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`);
     expect(router.url).toBe('/cliente/inicio');
     http.expectNone(request => request.method === 'GET');
   });
 
   it('abre ambos mapas desde el menú, conserva sus iconos y cierra el menú móvil', async () => {
     iniciarSesion();
-    await abrir('/admin/inicio');
+    await abrir('/cooperativas/inicio');
     for (const pantalla of pantallas) {
       const layout = harness.routeDebugElement!.componentInstance as Layout;
       layout.toggleMenu(); harness.detectChanges();
-      await pulsar(`aside a[href="/admin/${pantalla.path}"]`);
+      await pulsar(`aside a[href="/cooperativas/${pantalla.path}"]`);
       expect(layout.menuAbierto()).toBe(false);
       expect(harness.routeNativeElement!.querySelectorAll('aside a.active')).toHaveLength(1);
       expect(harness.routeNativeElement!.querySelector('aside a.active i.bi')).toBeTruthy();
     }
     await pulsar('nav[aria-label="Volver a la gestión"] a');
-    expect(router.url).toBe('/admin/rutas');
+    expect(router.url).toBe('/cooperativas/rutas');
   });
 
   it('abre un lugar desde su listado, consulta el catálogo y centra sus coordenadas', async () => {
-    iniciarSesion(); await abrir('/admin/lugares');
+    iniciarSesion(); await abrir('/cooperativas/lugares');
     await pulsar('a[aria-label="Ver en mapa Quito"]');
-    expect(router.url).toBe('/admin/mapas/lugares?lugarId=11');
-    expect(harness.routeNativeElement!.querySelector('aside a[href="/admin/mapas/lugares"].active')).toBeTruthy();
+    expect(router.url).toBe('/cooperativas/mapas/lugares?lugarId=11');
+    expect(harness.routeNativeElement!.querySelector('aside a[href="/cooperativas/mapas/lugares"].active')).toBeTruthy();
     expect(lugarMapa().seleccionado()?.id).toBe(11);
     const real = dobles.crearMapa.mock.results.at(-1)!.value;
     real.emitir('load'); harness.detectChanges();
@@ -246,29 +257,29 @@ describe('Integración de mapas con la navegación administrativa', () => {
   });
 
   it('conserva el mapa al cambiar de lugar e informa de coordenadas ausentes y registros inexistentes', async () => {
-    iniciarSesion(); await abrir('/admin/mapas/lugares?lugarId=11');
+    iniciarSesion(); await abrir('/cooperativas/mapas/lugares?lugarId=11');
     const instancia = lugarMapa();
-    await abrir('/admin/mapas/lugares?lugarId=33');
+    await abrir('/cooperativas/mapas/lugares?lugarId=33');
     expect(lugarMapa()).toBe(instancia);
     expect(instancia.seleccionado()?.id).toBe(33);
     expect(instancia.coordenadasSeleccionadas()).toBeNull();
     expect(texto()).toContain('Sin coordenadas');
-    await abrir('/admin/mapas/lugares?lugarId=999');
+    await abrir('/cooperativas/mapas/lugares?lugarId=999');
     expect(instancia.seleccionado()).toBeNull();
     expect(texto()).toContain('no existe');
     expect(dobles.crearMapa).toHaveBeenCalledTimes(1);
   });
 
   it.each(['abc', '0', '-3', '11&lugarId=22'])('informa de lugarId inválido %s sin seleccionar otro registro', async valor => {
-    iniciarSesion(); await abrir(`/admin/mapas/lugares?lugarId=${valor}`);
+    iniciarSesion(); await abrir(`/cooperativas/mapas/lugares?lugarId=${valor}`);
     expect(lugarMapa().seleccionado()).toBeNull();
     expect(texto()).toContain('identificador del lugar no es válido');
   });
 
   it('abre una ruta desde su listado y ajusta la vista al recorrido', async () => {
-    iniciarSesion(); await abrir('/admin/rutas');
+    iniciarSesion(); await abrir('/cooperativas/rutas');
     await pulsar('a[aria-label="Ver en mapa Quito – Cuenca"]');
-    expect(router.url).toBe('/admin/mapas/rutas?rutaId=7');
+    expect(router.url).toBe('/cooperativas/mapas/rutas?rutaId=7');
     expect(rutaMapa().rutaId()).toBe(7);
     expect(harness.routeNativeElement!.querySelector<HTMLSelectElement>('#ruta-mapa-selector')!.value).toBe('7');
     expect(rutaMapa().recorrido()?.puntos.map(punto => punto.clave)).toEqual(['origen', 'parada:101', 'destino']);
@@ -278,21 +289,21 @@ describe('Integración de mapas con la navegación administrativa', () => {
   });
 
   it('abre la ruta y una parada concreta desde gestión de paradas', async () => {
-    iniciarSesion(); await abrir('/admin/paradas');
+    iniciarSesion(); await abrir('/cooperativas/paradas');
     const listado = harness.routeDebugElement!.query(By.directive(ParadasLista)).componentInstance as ParadasLista;
     listado.seleccionarRuta(7); responder();
-    expect(harness.routeNativeElement!.querySelector('a[href="/admin/mapas/rutas?rutaId=7"]')).toBeTruthy();
+    expect(harness.routeNativeElement!.querySelector('a[href="/cooperativas/mapas/rutas?rutaId=7"]')).toBeTruthy();
     await pulsar('a[aria-label="Ver en mapa parada 0 de Quito"]');
-    expect(router.url).toBe('/admin/mapas/rutas?rutaId=7&paradaId=101');
+    expect(router.url).toBe('/cooperativas/mapas/rutas?rutaId=7&paradaId=101');
     expect(harness.routeNativeElement!.querySelectorAll('aside a.active')).toHaveLength(1);
-    expect(harness.routeNativeElement!.querySelector('aside a[href="/admin/mapas/rutas"].active')).toBeTruthy();
+    expect(harness.routeNativeElement!.querySelector('aside a[href="/cooperativas/mapas/rutas"].active')).toBeTruthy();
     expect(rutaMapa().puntoSeleccionado()?.parada?.id).toBe(101);
   });
 
   it('actualiza parámetros sin recrear el mapa y maneja ruta inactiva sin paradas', async () => {
-    iniciarSesion(); await abrir('/admin/mapas/rutas?rutaId=7&paradaId=101');
+    iniciarSesion(); await abrir('/cooperativas/mapas/rutas?rutaId=7&paradaId=101');
     const instancia = rutaMapa();
-    await abrir('/admin/mapas/rutas?rutaId=8');
+    await abrir('/cooperativas/mapas/rutas?rutaId=8');
     expect(rutaMapa()).toBe(instancia);
     expect(instancia.rutaSeleccionada()?.activa).toBe(false);
     expect(harness.routeNativeElement!.querySelector<HTMLSelectElement>('#ruta-mapa-selector')!.value).toBe('8');
@@ -303,21 +314,21 @@ describe('Integración de mapas con la navegación administrativa', () => {
   });
 
   it.each(['abc', '0', '999'])('informa de rutaId inválido o inexistente %s', async valor => {
-    iniciarSesion(); await abrir(`/admin/mapas/rutas?rutaId=${valor}`);
+    iniciarSesion(); await abrir(`/cooperativas/mapas/rutas?rutaId=${valor}`);
     expect(rutaMapa().rutaId()).toBeNull();
     expect(rutaMapa().avisoNavegacion()).toBeTruthy();
   });
 
   it.each(['abc', '999'])('no conserva una parada previa al recibir paradaId %s', async valor => {
-    iniciarSesion(); await abrir('/admin/mapas/rutas?rutaId=7&paradaId=101');
-    await abrir(`/admin/mapas/rutas?rutaId=7&paradaId=${valor}`);
+    iniciarSesion(); await abrir('/cooperativas/mapas/rutas?rutaId=7&paradaId=101');
+    await abrir(`/cooperativas/mapas/rutas?rutaId=7&paradaId=${valor}`);
     expect(rutaMapa().rutaId()).toBe(7);
     expect(rutaMapa().puntoSeleccionado()).toBeNull();
     expect(rutaMapa().avisoParada()).toBeTruthy();
   });
 
   it('rechaza una parada sin ruta y no consulta sus datos', async () => {
-    iniciarSesion(); await abrir('/admin/mapas/rutas?paradaId=101');
+    iniciarSesion(); await abrir('/cooperativas/mapas/rutas?paradaId=101');
     expect(rutaMapa().rutaId()).toBeNull();
     expect(texto()).toContain('una parada requiere su ruta');
   });

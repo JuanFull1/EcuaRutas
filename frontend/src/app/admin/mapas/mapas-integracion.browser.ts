@@ -31,6 +31,7 @@ class BackendPrueba implements HttpBackend {
       case `${API_URL}/lugares`: body = lugares; break;
       case `${API_URL}/rutas`: body = rutas; break;
       case `${API_URL}/rutas/7/paradas`: body = paradas; break;
+      case `${API_URL}/buses`: case `${API_URL}/plantillas`: body = []; break;
       default: return throwError(() => new HttpErrorResponse({ status: 404, url: peticion.url }));
     }
     return of(new HttpResponse({ status: 200, body, url: peticion.url })).pipe(delay(60));
@@ -39,7 +40,7 @@ class BackendPrueba implements HttpBackend {
 
 localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({
   token: 'sesion-simulada-solo-navegador-de-prueba', expiraEn: new Date(Date.now() + 3600000).toISOString(),
-  usuario: { id: 1, nombres: 'Prueba', apellidos: 'Administrativa', correo: 'prueba@example.test', rol: 'ADMIN', cooperativaId: null }
+  usuario: { id: 1, nombres: 'Prueba', apellidos: 'Cooperativa', correo: 'prueba@example.test', rol: 'COOPERATIVA', cooperativaId: 5 }
 }));
 const aviso = document.createElement('p');
 aviso.className = 'alert alert-info m-0 rounded-0';

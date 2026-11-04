@@ -28,7 +28,7 @@ const pantallas = [
   { path: 'paradas', titulo: 'Gestión de paradas', componente: ParadasLista }
 ] as const;
 
-describe('Registro de rutas administrativas', () => {
+describe('Registro de rutas operativas', () => {
   it('no contiene rutas hermanas duplicadas, incluidos los módulos diferidos existentes', () => {
     const comprobar = (configuracion: Routes): void => {
       const paths = configuracion.map(ruta => ruta.path);
@@ -41,15 +41,15 @@ describe('Registro de rutas administrativas', () => {
   });
 
   it.each(pantallas)('resuelve $path mediante carga diferida al componente existente', async pantalla => {
-    const admin = routes.find(ruta => ruta.path === 'admin')!;
-    const coincidencias = admin.children!.filter(ruta => ruta.path === pantalla.path);
+    const cooperativa = routes.find(ruta => ruta.path === 'cooperativas')!;
+    const coincidencias = cooperativa.children!.filter(ruta => ruta.path === pantalla.path);
     expect(coincidencias).toHaveLength(1);
     expect(coincidencias[0].component).toBeUndefined();
     expect(await coincidencias[0].loadComponent!()).toBe(pantalla.componente);
   });
 });
 
-describe('Integración de navegación administrativa', () => {
+describe('Integración de navegación de cooperativa', () => {
   const lugares: LugarDto[] = [
     { id: 11, nombre: 'Quito', provincia: null, canton: null, tipo: 'CIUDAD', ubicacion: null, activo: true },
     { id: 22, nombre: 'Cuenca', provincia: null, canton: null, tipo: 'TERMINAL', ubicacion: null, activo: true }
@@ -79,7 +79,7 @@ describe('Integración de navegación administrativa', () => {
     finally { localStorage.removeItem(AUTH_SESSION_KEY); TestBed.resetTestingModule(); }
   });
 
-  function iniciarSesion(rol: RolUsuario = 'ADMIN', vigente = true): void {
+  function iniciarSesion(rol: RolUsuario = 'COOPERATIVA', vigente = true): void {
     const usuario: Usuario = {
       id: 1, nombres: 'Usuario', apellidos: 'Prueba', correo: 'prueba@example.test', rol, cooperativaId: 5
     };
@@ -130,73 +130,87 @@ describe('Integración de navegación administrativa', () => {
     harness.detectChanges();
   }
 
-  it.each(pantallas)('ADMIN puede abrir directamente $path bajo un único layout', async pantalla => {
+  for (const rol of ['ADMIN', 'COOPERATIVA'] as const) {
+    it.each(pantallas)(`${rol} no abre $path desde la antigua ruta ADMIN`, async pantalla => {
+      iniciarSesion(rol);
+      await harness.navigateByUrl(`/admin/${pantalla.path}`);
+      expect(router.url).toBe('/login');
+      expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeNull();
+      http.expectNone(request => request.method === 'GET');
+    });
+  }
+
+  it.each(pantallas)('COOPERATIVA puede abrir directamente $path bajo un único layout', async pantalla => {
     iniciarSesion();
-    await harness.navigateByUrl(`/admin/${pantalla.path}`, Layout);
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Layout);
     responderCatalogos();
     expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeTruthy();
     expect(harness.routeNativeElement!.querySelector('h1')!.textContent).toContain(pantalla.titulo);
     expect(harness.routeNativeElement!.querySelectorAll('aside')).toHaveLength(1);
     expect(harness.routeNativeElement!.querySelectorAll('header.navbar')).toHaveLength(1);
-    expect(menu().querySelector(`a[href="/admin/${pantalla.path}"]`)!.classList.contains('active')).toBe(true);
+    expect(menu().querySelector(`a[href="/cooperativas/${pantalla.path}"]`)!.classList.contains('active')).toBe(true);
   });
 
   it.each(pantallas)('redirige a login si se abre $path sin una sesión', async pantalla => {
-    await harness.navigateByUrl(`/admin/${pantalla.path}`, Login);
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Login);
     expect(router.url).toBe('/login');
     expect(harness.routeNativeElement!.querySelector('aside')).toBeNull();
     http.expectNone(request => request.method === 'GET');
   });
 
-  for (const rol of ['COOPERATIVA', 'OFICINISTA', 'CLIENTE', 'BUS'] as const) {
+  for (const rol of ['ADMIN', 'OFICINISTA', 'CLIENTE', 'BUS'] as const) {
     it.each(pantallas)(`${rol} no puede entrar a $path y conserva su inicio`, async pantalla => {
       iniciarSesion(rol);
-      await harness.navigateByUrl(`/admin/${pantalla.path}`, Layout);
+      await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Layout);
       expect(router.url).toBe(auth.obtenerRutaInicio(rol));
-      expect(menu().querySelector('a[href^="/admin/"]')).toBeNull();
+      expect(menu().querySelector(`a[href="/cooperativas/${pantalla.path}"]`)).toBeNull();
       expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeNull();
-      if (rol === 'COOPERATIVA') responderInicioCooperativa();
       http.expectNone(request => request.method === 'GET');
     });
   }
 
   it.each(pantallas)('comprueba de nuevo la sesión al navegar desde inicio a $path', async pantalla => {
     iniciarSesion();
-    await harness.navigateByUrl('/admin/inicio', Layout);
-    iniciarSesion('ADMIN', false);
-    await harness.navigateByUrl(`/admin/${pantalla.path}`, Login);
+    await harness.navigateByUrl('/cooperativas/inicio', Layout);
+    responderInicioCooperativa();
+    iniciarSesion('COOPERATIVA', false);
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Login);
     expect(router.url).toBe('/login');
     http.expectNone(request => request.method === 'GET');
   });
 
   it.each(pantallas)('comprueba de nuevo el rol al navegar dentro de admin a $path', async pantalla => {
     iniciarSesion();
-    await harness.navigateByUrl('/admin/inicio', Layout);
+    await harness.navigateByUrl('/cooperativas/inicio', Layout);
+    responderInicioCooperativa();
     iniciarSesion('CLIENTE');
-    await harness.navigateByUrl(`/admin/${pantalla.path}`, Layout);
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Layout);
     expect(router.url).toBe('/cliente/inicio');
     http.expectNone(request => request.method === 'GET');
   });
 
   it('navega entre las tres pantallas y regresa al panel usando el menú existente', async () => {
     iniciarSesion();
-    await harness.navigateByUrl('/admin/inicio', Layout);
+    await harness.navigateByUrl('/cooperativas/inicio', Layout);
+    responderInicioCooperativa();
     for (const pantalla of pantallas) {
-      await pulsarEnlace(`/admin/${pantalla.path}`);
+      await pulsarEnlace(`/cooperativas/${pantalla.path}`);
       responderCatalogos();
-      expect(router.url).toBe(`/admin/${pantalla.path}`);
+      expect(router.url).toBe(`/cooperativas/${pantalla.path}`);
       expect(harness.routeNativeElement!.querySelector('h1')!.textContent).toContain(pantalla.titulo);
       const activos = menu().querySelectorAll('a.active');
       expect(activos).toHaveLength(1);
-      expect(activos[0].getAttribute('href')).toBe(`/admin/${pantalla.path}`);
+      expect(activos[0].getAttribute('href')).toBe(`/cooperativas/${pantalla.path}`);
     }
-    await pulsarEnlace('/admin/inicio');
-    expect(harness.routeNativeElement!.querySelector('h1')!.textContent).toContain('Panel principal');
+    await pulsarEnlace('/cooperativas/inicio');
+    responderInicioCooperativa();
+    expect(harness.routeNativeElement!.querySelector('h1')!.textContent).toContain('Panel de Cooperativa');
   });
 
   it('mantiene el menú móvil, cierra con el overlay y al elegir una pantalla', async () => {
     iniciarSesion();
-    const layout = await harness.navigateByUrl('/admin/inicio', Layout);
+    const layout = await harness.navigateByUrl('/cooperativas/inicio', Layout);
+    responderInicioCooperativa();
     const abrir = harness.routeNativeElement!.querySelector<HTMLButtonElement>('button[aria-label="Abrir menú"]')!;
     expect(abrir.classList.contains('d-lg-none')).toBe(true);
     abrir.click();
@@ -208,27 +222,24 @@ describe('Integración de navegación administrativa', () => {
     expect(layout.menuAbierto()).toBe(false);
     abrir.click();
     harness.detectChanges();
-    await pulsarEnlace('/admin/lugares');
+    await pulsarEnlace('/cooperativas/lugares');
     responderCatalogos();
     expect(layout.menuAbierto()).toBe(false);
     expect(harness.routeNativeElement!.querySelector('.sidebar-overlay')).toBeNull();
   });
 
-  it('añade una sola vez los enlaces e iconos y conserva las opciones previas de ADMIN', async () => {
-    iniciarSesion();
-    await harness.navigateByUrl('/admin/inicio', Layout);
-    for (const path of ['lugares', 'rutas', 'paradas']) {
-      const enlaces = menu().querySelectorAll(`a[href="/admin/${path}"]`);
-      expect(enlaces).toHaveLength(1);
-      expect(enlaces[0].querySelector('i.bi')).toBeTruthy();
-    }
-    for (const texto of ['Inicio', 'Usuarios', 'Cooperativas', 'Roles', 'Configuración']) {
-      expect(menu().textContent).toContain(texto);
+  it('ADMIN conserva sus opciones globales y no muestra los ocho modulos trasladados', async () => {
+    iniciarSesion('ADMIN');
+    const layout = await harness.navigateByUrl('/admin/inicio', Layout);
+    expect(layout.menuItems().map(item => item.texto)).toEqual(['Inicio', 'Usuarios', 'Cooperativas', 'Roles', 'Configuración']);
+    expect(menu().querySelector('a[href^="/cooperativas/"]')).toBeNull();
+    for (const path of ['inicio', 'usuarios', 'cooperativas', 'roles']) {
+      expect(menu().querySelectorAll(`a[href="/admin/${path}"]`)).toHaveLength(1);
     }
   });
 
   it.each([
-    { rol: 'COOPERATIVA', enlaces: ['/cooperativas/inicio', '/cooperativas/buses', '/viajes/hojas-ruta', '/viajes/lista'], textos: ['Plantillas', 'Rutas', 'Frecuencias'] },
+    { rol: 'COOPERATIVA', enlaces: ['/cooperativas/inicio', '/cooperativas/lugares', '/cooperativas/rutas', '/cooperativas/paradas', '/cooperativas/mapas/lugares', '/cooperativas/mapas/rutas', '/cooperativas/resoluciones-ant', '/cooperativas/frecuencias', '/cooperativas/tarifas', '/cooperativas/configuracion', '/cooperativas/buses', '/cooperativas/grupos', '/cooperativas/plantillas', '/viajes/hojas-ruta', '/viajes/lista'], textos: [] },
     { rol: 'OFICINISTA', enlaces: ['/ventas/inicio', '/ventas/disponibilidad', '/ventas/gestion'], textos: ['Pagos', 'Comprobantes', 'Validación de pagos'] },
     { rol: 'CLIENTE', enlaces: ['/cliente/inicio', '/cliente/buscar-viajes', '/cliente/boletos', '/cliente/historial', '/cliente/notificaciones'], textos: [] },
     { rol: 'BUS', enlaces: ['/personal-bus/inicio'], textos: ['Validar boletos', 'Viajes', 'Historial'] }
@@ -260,64 +271,23 @@ describe('Integración de navegación administrativa', () => {
     if (rol === 'COOPERATIVA') responderInicioCooperativa();
   });
 
-  it('integra el formulario de lugares con el layout, HttpClient y el interceptor existentes', async () => {
+  it.each(pantallas)('COOPERATIVA consulta $path sin habilitar escrituras globales', async pantalla => {
     iniciarSesion();
-    await harness.navigateByUrl('/admin/lugares', Layout);
+    await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Layout);
     responderCatalogos();
-    const listado = harness.routeDebugElement!.query(By.directive(LugaresLista)).componentInstance as LugaresLista;
-    listado.nuevo();
+    const listado = harness.routeDebugElement!.query(By.directive(pantalla.componente)).componentInstance;
+    expect(listado.puedeEscribir()).toBe(false);
+    if (pantalla.path === 'lugares') listado.nuevo();
+    else if (pantalla.path === 'rutas') listado.nueva();
+    else {
+      listado.seleccionarRuta(7);
+      http.expectOne(`${API_URL}/rutas/7/paradas`).flush([]);
+      listado.agregar();
+    }
     harness.detectChanges();
-    const formulario = harness.routeDebugElement!.query(By.directive(LugarFormulario)).componentInstance as LugarFormulario;
-    formulario.form.patchValue({ nombre: 'Terminal de prueba', tipo: 'TERMINAL' });
-    formulario.guardar();
-    const peticion = http.expectOne(`${API_URL}/lugares`);
-    expect(peticion.request.method).toBe('POST');
-    expect(peticion.request.headers.get('Authorization')).toBe('Bearer token-de-prueba-ADMIN');
-    peticion.flush({ ...lugares[0], id: 33, nombre: 'Terminal de prueba', tipo: 'TERMINAL' }, { status: 201, statusText: 'Created' });
-    responderCatalogos();
-    expect(harness.routeNativeElement!.textContent).toContain('Lugar creado correctamente');
-  });
-
-  it('integra el formulario de rutas con los lugares reales simulados y el interceptor', async () => {
-    iniciarSesion();
-    await harness.navigateByUrl('/admin/rutas', Layout);
-    responderCatalogos();
-    const listado = harness.routeDebugElement!.query(By.directive(RutasLista)).componentInstance as RutasLista;
-    listado.nueva();
-    harness.detectChanges();
-    const formulario = harness.routeDebugElement!.query(By.directive(RutaFormulario)).componentInstance as RutaFormulario;
-    formulario.form.patchValue({ nombre: 'Ruta de prueba', origenLugarId: 11, destinoLugarId: 22, tipoViaje: 'CON_PARADAS' });
-    formulario.guardar();
-    const peticion = http.expectOne(`${API_URL}/rutas`);
-    expect(peticion.request.method).toBe('POST');
-    expect(peticion.request.headers.get('Authorization')).toBe('Bearer token-de-prueba-ADMIN');
-    peticion.flush({ ...rutas[0], id: 8, nombre: 'Ruta de prueba', tipoViaje: 'CON_PARADAS' });
-    responderCatalogos();
-    expect(harness.routeNativeElement!.textContent).toContain('Ruta creada correctamente');
-  });
-
-  it('integra selección y formulario de paradas bajo el layout con ambos IDs y JWT', async () => {
-    iniciarSesion();
-    await harness.navigateByUrl('/admin/paradas', Layout);
-    responderCatalogos();
-    const listado = harness.routeDebugElement!.query(By.directive(ParadasLista)).componentInstance as ParadasLista;
-    listado.seleccionarRuta(7);
-    const consulta = http.expectOne(`${API_URL}/rutas/7/paradas`);
-    expect(consulta.request.headers.get('Authorization')).toBe('Bearer token-de-prueba-ADMIN');
-    consulta.flush([]);
-    listado.agregar();
-    harness.detectChanges();
-    const formulario = harness.routeDebugElement!.query(By.directive(ParadaFormulario)).componentInstance as ParadaFormulario;
-    formulario.form.patchValue({ lugarId: 11, orden: 0 });
-    formulario.guardar();
-    const peticion = http.expectOne(`${API_URL}/rutas/7/paradas`);
-    expect(peticion.request.method).toBe('POST');
-    expect(peticion.request.headers.get('Authorization')).toBe('Bearer token-de-prueba-ADMIN');
-    const parada = { ...peticion.request.body, id: 101, rutaId: 7 };
-    peticion.flush(parada);
-    http.expectOne(`${API_URL}/rutas/7/paradas`).flush([parada]);
-    harness.detectChanges();
-    expect(harness.routeNativeElement!.textContent).toContain('Parada agregada correctamente');
-    expect(listado.rutaId()).toBe(7);
+    expect(harness.routeDebugElement!.query(By.directive(LugarFormulario))).toBeNull();
+    expect(harness.routeDebugElement!.query(By.directive(RutaFormulario))).toBeNull();
+    expect(harness.routeDebugElement!.query(By.directive(ParadaFormulario))).toBeNull();
+    http.expectNone(request => request.method !== 'GET');
   });
 });
