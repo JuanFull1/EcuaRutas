@@ -1,0 +1,87 @@
+<section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-formulario-parada">
+  <div class="card-header bg-white border-0 pt-3">
+    <h2 id="titulo-formulario-parada" class="h5 mb-0">{{ parada() === null ? 'Agregar parada' : 'Editar parada' }}</h2>
+  </div>
+  <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate [attr.aria-busy]="guardando() || cargandoLugares()">
+    <p class="text-secondary small">Los campos marcados con * son obligatorios.</p>
+    @if (cargandoLugares()) {
+      <p class="text-secondary" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando lugares...</p>
+    } @else if (errorLugares(); as mensaje) {
+      <div class="alert alert-danger" role="alert">{{ mensaje }}
+        <button type="button" class="btn btn-sm btn-outline-danger ms-2" [disabled]="guardando()" (click)="reintentarLugares.emit()">Reintentar lugares</button>
+      </div>
+    } @else if (opcionesLugares().length === 0) {
+      <p class="alert alert-warning" role="status">No hay lugares disponibles. Para agregar una parada se necesita un lugar activo.</p>
+    }
+    <fieldset [disabled]="guardando() || !autorizado() || cargandoLugares() || !!errorLugares()">
+      <div class="row g-3">
+        <div class="col-12 col-md-8">
+          <label for="parada-lugar" class="form-label">Lugar *</label>
+          <select #lugarInput id="parada-lugar" class="form-select" formControlName="lugarId" required
+            [class.is-invalid]="invalido('lugarId') || errorCampo('lugarInexistente', 'lugarId') || errorCampo('lugarDuplicado', 'lugarId') || errorCampo('lugarInactivo', 'lugarId')"
+            [attr.aria-invalid]="invalido('lugarId') || errorCampo('lugarInexistente', 'lugarId') || errorCampo('lugarDuplicado', 'lugarId') || errorCampo('lugarInactivo', 'lugarId')"
+            aria-describedby="parada-error-lugar parada-ayuda-lugar">
+            <option [ngValue]="null">Selecciona un lugar</option>
+            @if (parada(); as actual) {
+              @if (!existeLugar(actual.lugarId)) { <option [ngValue]="actual.lugarId" disabled>Lugar #{{ actual.lugarId }} (no disponible)</option> }
+            }
+            @for (lugar of opcionesLugares(); track lugar.id) {
+              <option [ngValue]="lugar.id">{{ lugar.nombre }} · {{ lugar.tipo }} · #{{ lugar.id }}{{ lugar.activo ? '' : ' (inactivo)' }}</option>
+            }
+          </select>
+          <div id="parada-ayuda-lugar" class="form-text">Cada lugar puede aparecer una vez por ruta. Puedes conservar el lugar actual si fue desactivado.</div>
+          @if (invalido('lugarId') || errorCampo('lugarInexistente', 'lugarId') || errorCampo('lugarDuplicado', 'lugarId') || errorCampo('lugarInactivo', 'lugarId')) {
+            <div id="parada-error-lugar" class="invalid-feedback">
+              @if (invalido('lugarId') || errorCampo('lugarInexistente', 'lugarId')) { <span class="d-block">Selecciona un lugar existente.</span> }
+              @if (errorCampo('lugarDuplicado', 'lugarId')) { <span class="d-block">El lugar ya pertenece a otra parada de esta ruta.</span> }
+              @if (errorCampo('lugarInactivo', 'lugarId')) { <span class="d-block">No se puede asociar un lugar inactivo a una nueva parada.</span> }
+            </div>
+          }
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="parada-orden" class="form-label">Orden *</label>
+          <input id="parada-orden" type="number" step="1" min="0" max="2147483647" class="form-control" formControlName="orden" required
+            [class.is-invalid]="invalido('orden') || errorCampo('ordenDuplicado', 'orden')"
+            [attr.aria-invalid]="invalido('orden') || errorCampo('ordenDuplicado', 'orden')" aria-describedby="parada-error-orden">
+          @if (invalido('orden') || errorCampo('ordenDuplicado', 'orden')) {
+            <div id="parada-error-orden" class="invalid-feedback">
+              @if (invalido('orden')) { <span class="d-block">Ingresa un entero entre 0 y 2147483647.</span> }
+              @if (errorCampo('ordenDuplicado', 'orden')) { <span class="d-block">El orden ya está ocupado por otra parada de esta ruta.</span> }
+            </div>
+          }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="parada-km" class="form-label">Kilómetros acumulados</label>
+          <input id="parada-km" type="number" step="0.01" min="-99999999.99" max="99999999.99" class="form-control" formControlName="kmAcumulado"
+            [class.is-invalid]="invalido('kmAcumulado')" [attr.aria-invalid]="invalido('kmAcumulado')" aria-describedby="parada-error-km parada-ayuda-acumulados">
+          @if (invalido('kmAcumulado')) { <div id="parada-error-km" class="invalid-feedback">Ingresa un número entre -99999999.99 y 99999999.99, con un máximo de dos decimales, o deja el campo vacío.</div> }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="parada-minutos" class="form-label">Minutos acumulados</label>
+          <input id="parada-minutos" type="number" step="1" min="-2147483648" max="2147483647" class="form-control" formControlName="minutosAcumulados"
+            [class.is-invalid]="invalido('minutosAcumulados')" [attr.aria-invalid]="invalido('minutosAcumulados')" aria-describedby="parada-error-minutos parada-ayuda-acumulados">
+          @if (invalido('minutosAcumulados')) { <div id="parada-error-minutos" class="invalid-feedback">Ingresa un entero entre -2147483648 y 2147483647, o deja el campo vacío.</div> }
+        </div>
+        <div class="col-12"><p id="parada-ayuda-acumulados" class="text-secondary small mb-0">Los acumulados son opcionales. Un campo vacío se guarda sin dato; cero se conserva como valor numérico.</p></div>
+        <div class="col-12 col-sm-6"><div class="form-check">
+          <input id="parada-ascenso" type="checkbox" class="form-check-input" formControlName="permiteAscenso">
+          <label for="parada-ascenso" class="form-check-label">Permite ascenso</label>
+        </div></div>
+        <div class="col-12 col-sm-6"><div class="form-check">
+          <input id="parada-descenso" type="checkbox" class="form-check-input" formControlName="permiteDescenso">
+          <label for="parada-descenso" class="form-check-label">Permite descenso</label>
+        </div></div>
+      </div>
+    </fieldset>
+    @if (error(); as mensaje) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{ mensaje }}</div> }
+    @if (!autorizado()) { <div class="alert alert-warning mt-3" role="alert">La escritura requiere una sesión vigente con rol ADMIN.</div> }
+    <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+      <button type="button" class="btn btn-outline-secondary" [disabled]="guardando()" (click)="cancelar.emit()"><i class="bi bi-x-lg me-1" aria-hidden="true"></i>Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="guardando() || !autorizado() || cargandoLugares() || !!errorLugares()">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        @else { <i class="bi bi-check-lg me-1" aria-hidden="true"></i> }
+        {{ guardando() ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </div>
+  </form>
+</section>

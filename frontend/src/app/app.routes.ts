@@ -55,6 +55,33 @@ export const routes: Routes = [
       },
 
       {
+        path: 'lugares',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./admin/lugares/lugares-lista')
+            .then(m => m.LugaresLista)
+      },
+
+      {
+        path: 'rutas',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./admin/rutas/rutas-lista')
+            .then(m => m.RutasLista)
+      },
+
+      {
+        path: 'paradas',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./admin/paradas/paradas-lista')
+            .then(m => m.ParadasLista)
+      },
+
+      {
         path: 'usuarios',
 
         loadComponent: () =>
