@@ -132,7 +132,7 @@ export const routes: Routes = [
           import('./admin/tarifas-frecuencia/tarifas-frecuencia-lista')
             .then(m => m.TarifasFrecuenciaLista)
       },
-
+      {
         path: 'usuarios',
 
         loadComponent: () =>
