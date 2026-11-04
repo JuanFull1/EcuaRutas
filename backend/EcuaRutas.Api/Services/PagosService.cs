@@ -222,6 +222,29 @@ public async Task<List<PagoRespuestaDto>> ObtenerPagosPorVentaAsync(
             pago.ComprobanteUrl = nombreArchivo;
             pago.Estado = "EN_REVISION";
 
+            // Registrar notificación cuando se recibe el comprobante.
+            var correoCliente = await _context.Usuarios
+                .AsNoTracking()
+                .Where(u => u.Id == usuarioId)
+                .Select(u => u.Correo)
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(correoCliente) &&
+                correoCliente.Length <= 150)
+            {
+                _context.Notificaciones.Add(new Notificacione
+                {
+                    UsuarioId = usuarioId,
+                    VentaId = pago.VentaId,
+                    CorreoDestino = correoCliente,
+                    Tipo = "COMPROBANTE_RECIBIDO",
+                    Asunto = $"El comprobante de tu pago para la reserva {pago.Venta.Codigo} fue recibido y está pendiente de revisión.",
+                    Estado = "PENDIENTE",
+                    CreadoEn = DateTime.UtcNow,
+                    EnviadoEn = null
+                });
+            }
+
             await _context.SaveChangesAsync();
             await transaccion.CommitAsync();
         }
