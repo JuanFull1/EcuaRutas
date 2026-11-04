@@ -10,6 +10,7 @@ import { authGuard } from '../../guards/auth.guard';
 import { roleGuard } from '../../guards/role.guard';
 import { API_URL } from '../../services/api.config';
 import { AUTH_SESSION_KEY, AuthService } from '../../services/auth.service';
+import { CENTRO_ECUADOR, ESTILO_MAPA_OSM, ZOOM_ECUADOR } from '../../shared/maps/mapa.config';
 import { Layout } from '../../shared/layout/layout';
 import { ParadasLista } from '../paradas/paradas-lista';
 import { LugaresMapa } from './lugares/lugares-mapa';
@@ -149,7 +150,7 @@ describe('Integración de mapas con la navegación de cooperativa', () => {
     });
   }
 
-  function responder(): void {
+  function responder(vacio = false): void {
     for (let ronda = 0; ronda < 5; ronda++) {
       harness.detectChanges();
       TestBed.tick();
@@ -157,8 +158,8 @@ describe('Integración de mapas con la navegación de cooperativa', () => {
         expect(peticion.request.method).toBe('GET');
         expect(peticion.request.headers.get('Authorization')).toBe('Bearer token-de-prueba');
         const url = peticion.request.url;
-        if (url === `${API_URL}/lugares`) peticion.flush(lugares);
-        else if (url === `${API_URL}/rutas`) peticion.flush(rutas);
+        if (url === `${API_URL}/lugares`) peticion.flush(vacio ? [] : lugares);
+        else if (url === `${API_URL}/rutas`) peticion.flush(vacio ? [] : rutas);
         else if (url === `${API_URL}/rutas/7/paradas`) peticion.flush(paradas);
         else if (url === `${API_URL}/rutas/8/paradas`) peticion.flush([]);
         else if (url === `${API_URL}/buses` || url === `${API_URL}/plantillas`) peticion.flush([]);
@@ -195,6 +196,14 @@ describe('Integración de mapas con la navegación de cooperativa', () => {
       http.expectNone(request => request.method === 'GET');
     });
   }
+
+  it.each(pantallas)('mantiene Ecuador y el mapa OSM con datos vacios en $path', async pantalla => {
+    iniciarSesion(); await harness.navigateByUrl(`/cooperativas/${pantalla.path}`, Layout); responder(true);
+    const mapa = dobles.crearMapa.mock.results.at(-1)!.value;
+    expect(mapa.opciones).toEqual(expect.objectContaining({ center: CENTRO_ECUADOR, zoom: ZOOM_ECUADOR, style: ESTILO_MAPA_OSM }));
+    expect(mapa.opciones).not.toHaveProperty('maxBounds');
+    expect(mapa.fitBounds).not.toHaveBeenCalled(); expect(dobles.crearMarcador).not.toHaveBeenCalled();
+  });
 
   it.each(pantallas)('COOPERATIVA abre $path dentro del layout, con menú activo y regreso a gestión', async pantalla => {
     iniciarSesion();

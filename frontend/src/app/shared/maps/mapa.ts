@@ -5,7 +5,7 @@ import {
 import { Map, NavigationControl, getWorkerUrl, setWorkerUrl } from 'maplibre-gl';
 import type { JumpToOptions, LngLatLike, MapEventType, MapOptions } from 'maplibre-gl';
 
-import { CENTRO_ECUADOR, ESTILO_MAPA_DESARROLLO, MAPA_WORKER_URL, ZOOM_ECUADOR } from './mapa.config';
+import { CENTRO_ECUADOR, MAPA_ESTILO_BASE, MAPA_WORKER_URL, ZOOM_ECUADOR } from './mapa.config';
 
 export type EstiloMapa = NonNullable<MapOptions['style']>;
 
@@ -25,13 +25,12 @@ export class Mapa implements AfterViewInit, OnChanges, OnDestroy {
 
   readonly centro = input<LngLatLike>([...CENTRO_ECUADOR]);
   readonly zoom = input(ZOOM_ECUADOR);
-  readonly estilo = input<EstiloMapa>(ESTILO_MAPA_DESARROLLO);
+  readonly estilo = input<EstiloMapa>(inject(MAPA_ESTILO_BASE));
   readonly etiqueta = input('Mapa geográfico');
   readonly mapaListo = output<Map>();
   readonly falloMapa = output<unknown>();
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
-  readonly estiloDesarrollo = ESTILO_MAPA_DESARROLLO;
 
   private readonly alCargar = (): void => {
     if (this.destruido || !this.mapa) return;

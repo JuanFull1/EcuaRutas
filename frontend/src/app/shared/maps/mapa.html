@@ -8,11 +8,4 @@
   @if (error(); as mensaje) {
     <div class="mapa-estado alert alert-danger shadow-sm mb-0" role="alert">{{ mensaje }}</div>
   }
-  @if (estilo() === estiloDesarrollo) {
-    <footer class="mapa-creditos text-secondary small px-3 py-2">
-      Cartografía:
-      <a href="https://maplibre.org/" target="_blank" rel="noopener noreferrer">MapLibre</a>
-      · <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">Natural Earth</a>
-    </footer>
-  }
 </section>

@@ -9,6 +9,9 @@ import { fileURLToPath } from 'node:url';
 
 const frontend = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const salida = resolve(frontend, 'dist/mapas-integracion-browser');
+// Sin flag, la regresion interactiva usa teselas sinteticas locales, sin trafico a OSM.
+// --osm-live comprueba solo las dos vistas iniciales reales, sin barridos de zoom/pan.
+const osmReal = process.argv.includes('--osm-live');
 const pausa = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function compilar() {
@@ -39,8 +42,10 @@ function conectar(url) {
     const pendientes = new Map();
     const errores = [];
     let secuencia = 0;
+    let teselaSimulada;
+    const respuestasTeselas = [];
     websocket.onopen = () => resolveConexion({
-      websocket, errores,
+      websocket, errores, respuestasTeselas, simularTeselas: imagen => { teselaSimulada = imagen; },
       enviar(metodo, params = {}) {
         return new Promise((resolveMensaje, rejectMensaje) => {
           const id = ++secuencia;
@@ -53,7 +58,15 @@ function conectar(url) {
     websocket.onerror = reject;
     websocket.onmessage = evento => {
       const mensaje = JSON.parse(evento.data);
-      if (mensaje.id) {
+      if (mensaje.method === 'Fetch.requestPaused' && teselaSimulada) {
+        websocket.send(JSON.stringify({ id: ++secuencia, method: 'Fetch.fulfillRequest', params: {
+          requestId: mensaje.params.requestId, responseCode: 200,
+          responseHeaders: [{ name: 'Content-Type', value: 'image/png' }, { name: 'Access-Control-Allow-Origin', value: '*' }], body: teselaSimulada
+        } }));
+      } else if (mensaje.method === 'Network.responseReceived' && mensaje.params.response.url.startsWith('https://tile.openstreetmap.org/')) {
+        const { url, status, mimeType } = mensaje.params.response;
+        respuestasTeselas.push({ url, status, mimeType });
+      } else if (mensaje.id) {
         const pendiente = pendientes.get(mensaje.id);
         if (!pendiente) return;
         pendientes.delete(mensaje.id);
@@ -126,7 +139,7 @@ try {
       if (await evaluar(expression)) return;
       await pausa(200);
     }
-    throw new Error(`${mensaje}. Errores del navegador: ${JSON.stringify(cdp.errores)}`);
+    throw new Error(`${mensaje}. Errores del navegador: ${JSON.stringify(cdp.errores.slice(0, 3))}`);
   };
   const capturar = async nombre => {
     // Las capturas más allá del viewport pueden recortar superficies WebGL en Chrome headless.
@@ -171,6 +184,38 @@ try {
   await cdp.enviar('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
   await cdp.enviar('Page.navigate', { url: `http://127.0.0.1:${servidor.address().port}/` });
   await esperar('!!window.ecuarutasPrueba', 'No inició la aplicación de pruebas');
+  if (osmReal) {
+    for (const [nombre, url, marcadores] of [
+      ['lugares', '/cooperativas/mapas/lugares', 3], ['rutas', '/cooperativas/mapas/rutas?rutaId=7', 3]
+    ]) {
+      await navegar(url); await mapaCargado();
+      await esperar(`document.querySelectorAll('button.maplibregl-marker').length === ${marcadores}`, 'Faltan marcadores');
+      if (!await evaluar(`(() => {
+        const mapa = ${mapaReal}; const estilo = mapa.getStyle();
+        const credito = document.querySelector('.maplibregl-ctrl-attrib a[href="https://www.openstreetmap.org/copyright"]');
+        return estilo.sources['osm-raster']?.type === 'raster' && estilo.layers.some(capa => capa.id === 'osm-base' && capa.type === 'raster') &&
+          credito && credito.getBoundingClientRect().width > 0 && mapa.scrollZoom.isEnabled() && mapa.dragPan.isEnabled();
+      })()`)) throw new Error('Falta el mapa raster, atribucion visible o interactividad.');
+      if (nombre === 'rutas' && !await evaluar(`${mapaReal}.getStyle().layers.some(capa => capa.id.startsWith('ecuarutas-recorrido-') && capa.type === 'line')`)) throw new Error('Falta la linea del recorrido.');
+      await capturaMapa(`osm-${nombre}-real.png`);
+    }
+    if (!cdp.respuestasTeselas.length || cdp.respuestasTeselas.some(r => r.status !== 200 || r.mimeType !== 'image/png')) throw new Error('No se verificaron teselas PNG reales con HTTP 200.');
+    if (cdp.errores.length) throw new Error(`Errores del navegador: ${JSON.stringify(cdp.errores.slice(0, 3))}`);
+    const reporte = { resultado: 'aprobado', teselasOSMReales: true, datosHTTPySesionSimulados: true,
+      vistasInicialesSinBarridos: true, atribucionVisible: true, marcadoresYLinea: true,
+      respuestasTeselas: cdp.respuestasTeselas, erroresNavegador: cdp.errores,
+      capturas: ['osm-lugares-real.png', 'osm-rutas-real.png'] };
+    await writeFile(resolve(salida, 'resultado-osm-real.json'), JSON.stringify(reporte, null, 2));
+    console.log(JSON.stringify({ ...reporte, respuestasTeselas: reporte.respuestasTeselas.length }, null, 2));
+  } else {
+    const tesela = await evaluar(`(() => {
+      const canvas = document.createElement('canvas'); canvas.width = canvas.height = 64;
+      const contexto = canvas.getContext('2d'); contexto.fillStyle = '#e8e8e8'; contexto.fillRect(0, 0, 64, 64);
+      contexto.fillStyle = '#cccccc'; contexto.fillRect(0, 0, 32, 32); contexto.fillRect(32, 32, 32, 32);
+      return canvas.toDataURL('image/png').split(',')[1];
+    })()`);
+    cdp.simularTeselas(tesela);
+    await cdp.enviar('Fetch.enable', { patterns: [{ urlPattern: 'https://tile.openstreetmap.org/*' }] });
   await navegar('/cooperativas/inicio');
   await esperar(`document.querySelector('aside a[href="/cooperativas/mapas/lugares"]') && document.querySelector('aside a[href="/cooperativas/mapas/rutas"]')`, 'Faltan accesos operativos');
   await pulsar('aside a[href="/cooperativas/mapas/lugares"]');
@@ -227,18 +272,32 @@ try {
   await navegar('/cooperativas/mapas/rutas?rutaId=7&paradaId=101');
   await esperar(`${seleccionar('app-rutas-mapa', 'puntoSeleccionado()')}?.parada?.id === 101`, 'No actualizó la parada por parámetros');
   if (!await evaluar(`${mapaReal} === window.mapaAnterior`)) throw new Error('Se recreó el mapa al cambiar los parámetros.');
+  // Interaccion comprobada sobre teselas sinteticas, sin solicitudes al servidor publico.
+  await evaluar(`document.querySelector('.maplibregl-popup-close-button')?.click()`);
+  const zoomAnterior = await evaluar(`${mapaReal}.getZoom()`);
+  await pulsar('.maplibregl-ctrl-zoom-in');
+  await esperar(`${mapaReal}.getZoom() > ${zoomAnterior} + 0.5 && !${mapaReal}.isMoving()`, 'No funciona el control de zoom');
+  const centroAnterior = await evaluar(`${mapaReal}.getCenter().toArray()`);
+  const posicion = await evaluar(`(() => { const r = ${mapaReal}.getCanvas().getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+  await cdp.enviar('Input.dispatchMouseEvent', { type: 'mouseMoved', ...posicion });
+  await cdp.enviar('Input.dispatchMouseEvent', { type: 'mousePressed', ...posicion, button: 'left', clickCount: 1 });
+  await cdp.enviar('Input.dispatchMouseEvent', { type: 'mouseMoved', x: posicion.x + 60, y: posicion.y + 25, button: 'left', buttons: 1 });
+  await cdp.enviar('Input.dispatchMouseEvent', { type: 'mouseReleased', x: posicion.x + 60, y: posicion.y + 25, button: 'left', clickCount: 1 });
+  await esperar(`Math.abs(${mapaReal}.getCenter().lng - ${centroAnterior[0]}) > 0.000001`, 'No funciona el desplazamiento');
   await pulsar('aside a[href="/cooperativas/inicio"]');
   await esperar(`!document.querySelector('app-mapa') && window.mapaAnterior._removed === true`, 'No se liberó el mapa de rutas');
   const reporte = {
     resultado: 'aprobado', datosHTTPySesionSimulados: true, routerGuardsLayoutReales: true,
+    teselasSinteticasSinTraficoOSM: true, zoomYDesplazamiento: true,
     webglRealPorSoftware: true, navegacionDesdeMenuYLugaresRutasParadas: true,
     seleccionPorParametrosSinRecrearMapa: true, geoJSONOrdenado: true, limpiezaAlNavegar: true,
     menuMovilYTamanoCanvas: true, sinDesbordamiento: [1440, 390], erroresNavegador: cdp.errores,
     capturas: ['lugares-escritorio.png', 'lugares-movil.png', 'rutas-escritorio.png', 'rutas-movil.png']
   };
-  if (cdp.errores.length) throw new Error(`Errores inesperados: ${JSON.stringify(cdp.errores)}`);
+  if (cdp.errores.length) throw new Error(`Errores inesperados: ${JSON.stringify(cdp.errores.slice(0, 3))}`);
   await writeFile(resolve(salida, 'resultado.json'), JSON.stringify(reporte, null, 2));
   console.log(JSON.stringify(reporte, null, 2));
+  }
 } catch (causa) {
   console.error(causa);
   process.exitCode = 1;

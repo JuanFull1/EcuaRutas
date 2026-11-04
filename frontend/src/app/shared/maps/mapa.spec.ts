@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Mapa } from './mapa';
-import { CENTRO_ECUADOR, ESTILO_MAPA_DESARROLLO, MAPA_WORKER_URL, ZOOM_ECUADOR } from './mapa.config';
+import { CENTRO_ECUADOR, ESTILO_MAPA_OSM, MAPA_ESTILO_BASE, MAPA_WORKER_URL, ZOOM_ECUADOR } from './mapa.config';
 
 const dobles = vi.hoisted(() => {
   class MapaSimulado {
@@ -72,7 +72,7 @@ describe('Mapa reutilizable', () => {
       container: (fixture.nativeElement as HTMLElement).querySelector('.mapa-contenedor'),
       center: CENTRO_ECUADOR,
       zoom: ZOOM_ECUADOR,
-      style: ESTILO_MAPA_DESARROLLO,
+      style: ESTILO_MAPA_OSM,
       trackResize: true,
       attributionControl: { compact: false }
     }));
@@ -137,13 +137,29 @@ describe('Mapa reutilizable', () => {
     expect(listo).not.toHaveBeenCalled();
   });
 
-  it('muestra créditos del mapa de demostración y conserva el control nativo de atribución', () => {
+  it('conserva la atribucion nativa expandida sin creditos del antiguo mapa politico', () => {
     iniciar();
-    const enlaces = (fixture.nativeElement as HTMLElement).querySelectorAll('footer a');
-    expect(Array.from(enlaces).map(enlace => enlace.textContent)).toEqual(['MapLibre', 'Natural Earth']);
-    expect(enlaces[0].getAttribute('href')).toBe('https://maplibre.org/');
-    expect(enlaces[1].getAttribute('href')).toBe('https://www.naturalearthdata.com/');
+    expect((fixture.nativeElement as HTMLElement).querySelector('footer')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Natural Earth');
+    expect(fixture.componentInstance.estilo()).toBe(ESTILO_MAPA_OSM);
     expect(dobles.crearMapa).toHaveBeenCalledWith(expect.objectContaining({ attributionControl: { compact: false } }));
+  });
+
+  it('permite sustituir el proveedor desde DI sin modificar los consumidores', () => {
+    fixture.destroy(); TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [Mapa], providers: [{ provide: MAPA_ESTILO_BASE, useValue: '/mapas/proveedor-aprobado.json' }] });
+    fixture = TestBed.createComponent(Mapa); iniciar();
+    expect(dobles.crearMapa).toHaveBeenCalledWith(expect.objectContaining({ style: '/mapas/proveedor-aprobado.json' }));
+  });
+
+  it('un fallo de teselas no reconstruye el mapa ni bloquea controles o redimensionamiento', () => {
+    const mapa = iniciar(); emitir('load');
+    emitir('error', { error: new Error('Tile 503') });
+    fixture.componentInstance.redimensionar();
+    expect(mapa.resize).toHaveBeenCalledOnce(); expect(mapa.remove).not.toHaveBeenCalled();
+    expect(dobles.crearMapa).toHaveBeenCalledOnce(); expect(mapa.addControl).toHaveBeenCalledOnce();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.mapa-contenedor')).toBeTruthy();
+    expect(fixture.componentInstance.cargando()).toBe(false);
   });
 
   it('informa un error de inicialización sin mostrar detalles técnicos', () => {
@@ -209,7 +225,7 @@ describe('Mapa reutilizable', () => {
     expect(mapa.jumpTo).toHaveBeenCalledExactlyOnceWith({ center: [-79, -2], zoom: 8 });
   });
 
-  it('cambia el estilo sin recrear el mapa ni atribuir otras fuentes a Natural Earth', () => {
+  it('cambia el estilo sin recrear el mapa y conserva la atribución nativa del proveedor', () => {
     const mapa = iniciar();
     fixture.componentRef.setInput('estilo', '/mapas/aprobado.json');
     fixture.detectChanges();

@@ -45,26 +45,42 @@ La interacción se inicia fuera de Angular; los estados y eventos públicos vuel
 a Angular. Al destruir, se retiran los listeners propios y se invoca `remove()`
 una sola vez para liberar controles, contexto gráfico, workers y observadores.
 
-## Fuente cartográfica de desarrollo
+## Mapa base OpenStreetMap
 
-No se encontró un proveedor aprobado en el repositorio. El valor inicial es
-`https://demotiles.maplibre.org/style.json`, el mapa mundial de demostración de
-[MapLibre Demo Tiles](https://github.com/maplibre/demotiles). No requiere claves.
-Sus polígonos de países proceden de Natural Earth y sus teselas tienen niveles
-0–6: sirve para comprobar la integración, no como cartografía vial detallada.
+`mapa.config.ts` centraliza `ESTILO_MAPA_OSM`: estilo MapLibre v8 con proyección
+Mercator, fuente raster XYZ de 256 px y capa `osm-base`. Utiliza el estilo estándar
+de OpenStreetMap mediante `https://tile.openstreetmap.org/{z}/{x}/{y}.png`, entre
+los niveles 0 y 19. No requiere claves. Se conservan Ecuador como vista inicial,
+el ajuste a los datos y el desplazamiento libre fuera del país.
 
-El repositorio del ejemplo declara licencia BSD-3-Clause; deben respetarse su
-[licencia](https://github.com/maplibre/demotiles/blob/gh-pages/LICENSE) y las
-condiciones de las fuentes que se incorporen. Natural Earth declara sus datos de
-[dominio público](https://www.naturalearthdata.com/about/terms-of-use/).
-Se muestran créditos a MapLibre y Natural Earth para el estilo de demostración.
-El control nativo de atribución permanece expandido y conserva automáticamente
-las atribuciones declaradas por las fuentes de cualquier estilo configurado.
+La atribución `© OpenStreetMap contributors` enlaza a
+[OpenStreetMap copyright](https://www.openstreetmap.org/copyright). El control
+nativo de MapLibre permanece expandido, también en móvil. Se retiraron los créditos
+al antiguo mapa político de MapLibre/Natural Earth.
 
-El carácter público del servidor de demostración no equivale a una autorización
-de uso ilimitado ni a una garantía de disponibilidad en producción. Antes de
-publicar, seleccionar un proveedor aprobado o alojamiento propio y suministrar su
-estilo mediante `estilo`. No hay sustitución automática por otra fuente si falla.
+El servidor público se configura para desarrollo y uso interactivo moderado,
+según la [política de teselas OSM](https://operations.osmfoundation.org/policies/tiles/).
+No ofrece SLA ni capacidad ilimitada. No realizar precargas, descargas masivas,
+uso offline ni barridos automatizados de zoom/desplazamiento contra ese servidor.
+Se usa la caché HTTP normal del navegador, sin añadir cabeceras que la desactiven,
+proxies ni políticas que eliminen Referer. Servir la aplicación mediante HTTP(S),
+sin una Referrer-Policy que impida enviar el origen al proveedor.
+
+Antes de producción, evaluar el tráfico y seleccionar un proveedor adecuado o
+alojamiento propio. El token `MAPA_ESTILO_BASE` permite sustituir el proveedor en
+los providers de la aplicación, sin cambiar cada consumidor:
+
+```ts
+{ provide: MAPA_ESTILO_BASE, useValue: '/mapas/proveedor-aprobado.json' }
+```
+
+Ese estilo debe declarar sus fuentes, capas y atribuciones. El input `estilo`
+sigue permitiendo una sustitución por instancia. No hay fallback automático al mapa
+político anterior cuando falla una tesela. Los errores muestran un aviso sin
+reconstruir el mapa ni impedir su interacción.
+
+El mapa base no modifica geometrías ni calcula recorridos viales: las capas
+GeoJSON de rutas y los marcadores continúan superpuestos con los datos existentes.
 
 ## Worker de MapLibre 6
 
@@ -97,3 +113,23 @@ solicitudes externas. Cubren creación, configuración, cambios de inputs, error
 limpieza, redimensionamiento delegado y prevención de inicialización duplicada.
 No sustituyen una prueba visual con WebGL real ni verifican la disponibilidad de
 los servicios públicos de teselas y del CDN en el navegador de producción.
+
+La regresión de navegador de ambos mapas usa teselas PNG sintéticas interceptadas
+localmente para verificar zoom, desplazamiento, selección, tamaño y limpieza sin
+cargar el servidor público:
+
+```powershell
+node src/app/admin/mapas/mapas-integracion.browser.mjs
+```
+
+La verificación visual online es separada y limitada a las dos vistas iniciales,
+sin barridos de zoom o desplazamiento. No intercepta las teselas; registra HTTP,
+MIME, atribución y capturas para su inspección:
+
+```powershell
+node src/app/admin/mapas/mapas-integracion.browser.mjs --osm-live
+```
+
+Los datos de negocio y la sesión de esos escenarios son simulados; MapLibre y
+WebGL son reales. Las capturas/resultados quedan en `dist/mapas-integracion-browser`.
+Una prueba con mocks o teselas sintéticas no demuestra carga visual desde Internet.

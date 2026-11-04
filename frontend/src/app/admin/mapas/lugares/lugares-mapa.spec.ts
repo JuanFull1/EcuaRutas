@@ -1,3 +1,4 @@
+import { ESTILO_MAPA_OSM } from '../../../shared/maps/mapa.config';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -477,7 +478,9 @@ describe('Interfaz Mapa de lugares', () => {
 
   it('conserva créditos y atribución del componente reutilizable', () => {
     iniciar();
-    expect(fixture.nativeElement.textContent).toContain('Natural Earth');
+    expect(fixture.nativeElement.textContent).not.toContain('Natural Earth');
+    expect(dobles.crearMapa).toHaveBeenCalledWith(expect.objectContaining({ style: ESTILO_MAPA_OSM, attributionControl: { compact: false } }));
+    expect(ESTILO_MAPA_OSM.sources['osm-raster'].attribution).toContain('OpenStreetMap');
     expect(dobles.crearMapa).toHaveBeenCalledWith(expect.objectContaining({ attributionControl: { compact: false } }));
   });
 

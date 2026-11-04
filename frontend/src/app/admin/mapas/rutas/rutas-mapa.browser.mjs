@@ -166,7 +166,12 @@ try {
   await esperar(`document.querySelector('.maplibregl-popup-content')?.textContent.includes('Funciones de este lugar')`, 'No aparecen las funciones compartidas');
   await evaluar(`Array.from(document.querySelectorAll('.maplibregl-popup-content button')).find(boton => boton.textContent.includes('orden 0')).click()`);
   await esperar(`Array.from(document.querySelectorAll('.punto-opcion')).find(boton => boton.dataset.punto === 'parada:101').getAttribute('aria-pressed') === 'true'`, 'La selección no distingue la identidad de parada');
-  await evaluar(`void ${mapaReal}.setStyle('https://demotiles.maplibre.org/style.json', { diff: false })`);
+  await evaluar(`(() => {
+    const mapa = ${mapaReal}; const base = mapa.getStyle();
+    base.layers = base.layers.filter(capa => !capa.id.startsWith('ecuarutas-recorrido-'));
+    for (const id of Object.keys(base.sources)) if (id.startsWith('ecuarutas-recorrido-')) delete base.sources[id];
+    mapa.setStyle(base, { diff: false });
+  })()`);
   await esperar(lineaValida, 'No se restauró la línea tras recargar el estilo');
   if (!await evaluar(`document.querySelectorAll('button.maplibregl-marker').length === 3`)) throw new Error('Se duplicaron los marcadores al recargar el estilo.');
   await evaluar(`document.querySelector('.maplibregl-popup-close-button')?.click()`);
