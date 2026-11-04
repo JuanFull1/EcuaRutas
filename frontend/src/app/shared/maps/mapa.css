@@ -1,0 +1,31 @@
+:host {
+  display: block;
+  min-width: 0;
+  height: var(--ecuarutas-mapa-altura, 400px);
+  min-height: 240px;
+}
+
+.mapa-marco {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+.mapa-contenedor {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.mapa-estado {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.mapa-creditos { flex: 0 0 auto; }

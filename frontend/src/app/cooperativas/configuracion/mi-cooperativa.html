@@ -1,0 +1,850 @@
+<div class="container-fluid px-0">
+
+  <section
+    class="bg-white border rounded-4 p-4 mb-4"
+  >
+
+    <span
+      class="badge text-bg-primary mb-2"
+    >
+      Cooperativa
+    </span>
+
+    <h1 class="h3 fw-bold mb-1">
+      Mi cooperativa
+    </h1>
+
+    <p class="text-secondary mb-0">
+      Administra la información,
+      identidad y canales de atención
+      de tu cooperativa.
+    </p>
+
+  </section>
+
+
+  <div
+    *ngIf="error()"
+    class="alert alert-danger"
+  >
+    <i
+      class="bi bi-exclamation-circle me-2"
+    ></i>
+
+    {{ error() }}
+  </div>
+
+
+  <div
+    *ngIf="cargando()"
+    class="bg-white border
+           rounded-4 text-center py-5"
+  >
+
+    <div
+      class="spinner-border text-primary"
+    ></div>
+
+    <p
+      class="text-secondary mt-3 mb-0"
+    >
+      Cargando información...
+    </p>
+
+  </div>
+
+
+  <form
+    *ngIf="!cargando()"
+    [formGroup]="formulario"
+    (ngSubmit)="guardar()"
+  >
+
+    <div class="row g-4">
+
+      <div class="col-12 col-xl-8">
+
+        <section
+          class="bg-white border
+                 rounded-4 p-4 mb-4"
+        >
+
+          <div class="section-heading">
+
+            <div class="section-icon">
+              <i class="bi bi-building"></i>
+            </div>
+
+            <div>
+
+              <h2 class="h5 fw-bold mb-1">
+                Información general
+              </h2>
+
+              <p
+                class="text-secondary small mb-0"
+              >
+                Datos principales
+                de la cooperativa.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="row g-3 mt-1">
+
+            <div class="col-12 col-md-8">
+
+              <label
+                for="nombreCooperativa"
+                class="form-label fw-semibold"
+              >
+                Nombre
+              </label>
+
+              <input
+                id="nombreCooperativa"
+                type="text"
+                class="form-control"
+                formControlName="nombre"
+              >
+
+              <div
+                *ngIf="
+                  formulario.controls.nombre.touched &&
+                  formulario.controls.nombre.invalid
+                "
+                class="text-danger small mt-1"
+              >
+                El nombre es obligatorio.
+              </div>
+
+            </div>
+
+
+            <div class="col-12 col-md-4">
+
+              <label
+                for="rucCooperativa"
+                class="form-label fw-semibold"
+              >
+                RUC
+              </label>
+
+              <input
+                id="rucCooperativa"
+                type="text"
+                class="form-control"
+                formControlName="ruc"
+              >
+
+              <small class="text-secondary">
+                Solo el administrador
+                puede modificarlo.
+              </small>
+
+            </div>
+
+
+            <div class="col-12">
+
+              <label
+                for="descripcionCooperativa"
+                class="form-label fw-semibold"
+              >
+                Descripción
+              </label>
+
+              <textarea
+                id="descripcionCooperativa"
+                class="form-control"
+                formControlName="descripcion"
+                rows="4"
+                placeholder="Información general sobre la cooperativa..."
+              ></textarea>
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label
+                for="telefonoCooperativa"
+                class="form-label fw-semibold"
+              >
+                Teléfono
+              </label>
+
+              <input
+                id="telefonoCooperativa"
+                type="text"
+                class="form-control"
+                formControlName="telefono"
+                placeholder="Ej. 032000000"
+              >
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label
+                for="correoCooperativa"
+                class="form-label fw-semibold"
+              >
+                Correo institucional
+              </label>
+
+              <input
+                id="correoCooperativa"
+                type="email"
+                class="form-control"
+                formControlName="correo"
+                placeholder="contacto@cooperativa.ec"
+              >
+
+              <div
+                *ngIf="
+                  formulario.controls.correo.touched &&
+                  formulario.controls.correo.invalid
+                "
+                class="text-danger small mt-1"
+              >
+                Ingresa un correo válido.
+              </div>
+
+            </div>
+
+
+            <div class="col-12">
+
+              <label
+                for="direccionCooperativa"
+                class="form-label fw-semibold"
+              >
+                Dirección
+              </label>
+
+              <input
+                id="direccionCooperativa"
+                type="text"
+                class="form-control"
+                formControlName="direccion"
+                placeholder="Dirección de la oficina principal"
+              >
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <section
+          class="bg-white border
+                 rounded-4 p-4 mb-4"
+        >
+
+          <div class="section-heading">
+
+            <div class="section-icon">
+              <i class="bi bi-image"></i>
+            </div>
+
+            <div>
+
+              <h2 class="h5 fw-bold mb-1">
+                Logo e identidad
+              </h2>
+
+              <p
+                class="text-secondary small mb-0"
+              >
+                Personaliza el logo y
+                colores de la cooperativa.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="row g-4 mt-1">
+
+            <div class="col-12">
+
+              <label
+                for="archivoLogo"
+                class="form-label fw-semibold"
+              >
+                Logo de la cooperativa
+              </label>
+
+
+              <div class="logo-upload">
+
+                <div
+                  class="logo-upload-preview"
+                >
+
+                  <img
+                    *ngIf="logoVista()"
+                    [src]="logoVista()"
+                    alt="Logo de la cooperativa"
+                  >
+
+                  <i
+                    *ngIf="!logoVista()"
+                    class="bi bi-image"
+                  ></i>
+
+                </div>
+
+
+                <div class="flex-grow-1">
+
+                  <input
+                    id="archivoLogo"
+                    type="file"
+                    class="form-control"
+                    accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                    (change)="seleccionarLogo($event)"
+                  >
+
+                  <small
+                    class="text-secondary d-block mt-2"
+                  >
+                    Formatos permitidos:
+                    PNG, JPG, JPEG y WEBP.
+                    Tamaño máximo: 2 MB.
+                  </small>
+
+
+                  <div
+                    *ngIf="archivoLogo()"
+                    class="mt-2"
+                  >
+
+                    <small
+                      class="text-primary d-block"
+                    >
+                      Archivo seleccionado:
+                      {{ nombreArchivoLogo() }}
+                    </small>
+
+                    <button
+                      type="button"
+                      class="btn
+                             btn-sm
+                             btn-outline-secondary
+                             mt-2"
+                      (click)="quitarSeleccionLogo()"
+                    >
+                      Quitar selección
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label
+                for="colorPrimario"
+                class="form-label fw-semibold"
+              >
+                Color primario
+              </label>
+
+              <div class="input-group">
+
+                <input
+                  type="color"
+                  class="form-control
+                         form-control-color"
+                  [value]="colorPrimarioVista()"
+                  (input)="
+                    formulario.controls.colorPrimario
+                      .setValue(
+                        $any($event.target).value
+                      )
+                  "
+                >
+
+                <input
+                  id="colorPrimario"
+                  type="text"
+                  class="form-control"
+                  formControlName="colorPrimario"
+                  placeholder="#0D6EFD"
+                >
+
+              </div>
+
+              <div
+                *ngIf="
+                  formulario.controls
+                    .colorPrimario
+                    .touched &&
+                  formulario.controls
+                    .colorPrimario
+                    .invalid
+                "
+                class="text-danger small mt-1"
+              >
+                Usa el formato #RRGGBB.
+              </div>
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label
+                for="colorSecundario"
+                class="form-label fw-semibold"
+              >
+                Color secundario
+              </label>
+
+              <div class="input-group">
+
+                <input
+                  type="color"
+                  class="form-control
+                         form-control-color"
+                  [value]="colorSecundarioVista()"
+                  (input)="
+                    formulario.controls.colorSecundario
+                      .setValue(
+                        $any($event.target).value
+                      )
+                  "
+                >
+
+                <input
+                  id="colorSecundario"
+                  type="text"
+                  class="form-control"
+                  formControlName="colorSecundario"
+                  placeholder="#212529"
+                >
+
+              </div>
+
+              <div
+                *ngIf="
+                  formulario.controls
+                    .colorSecundario
+                    .touched &&
+                  formulario.controls
+                    .colorSecundario
+                    .invalid
+                "
+                class="text-danger small mt-1"
+              >
+                Usa el formato #RRGGBB.
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <section
+          class="bg-white border
+                 rounded-4 p-4 mb-4"
+        >
+
+          <div class="section-heading">
+
+            <div class="section-icon">
+              <i class="bi bi-share"></i>
+            </div>
+
+            <div>
+
+              <h2 class="h5 fw-bold mb-1">
+                Redes sociales
+              </h2>
+
+              <p
+                class="text-secondary small mb-0"
+              >
+                Canales oficiales
+                de la cooperativa.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="row g-3 mt-1">
+
+            <div class="col-12 col-md-6">
+
+              <label
+                for="facebook"
+                class="form-label fw-semibold"
+              >
+                <i class="bi bi-facebook me-1"></i>
+                Facebook
+              </label>
+
+              <input
+                id="facebook"
+                type="text"
+                class="form-control"
+                formControlName="facebook"
+                placeholder="https://facebook.com/..."
+              >
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label
+                for="instagram"
+                class="form-label fw-semibold"
+              >
+                <i class="bi bi-instagram me-1"></i>
+                Instagram
+              </label>
+
+              <input
+                id="instagram"
+                type="text"
+                class="form-control"
+                formControlName="instagram"
+                placeholder="https://instagram.com/..."
+              >
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label
+                for="whatsapp"
+                class="form-label fw-semibold"
+              >
+                <i class="bi bi-whatsapp me-1"></i>
+                WhatsApp
+              </label>
+
+              <input
+                id="whatsapp"
+                type="text"
+                class="form-control"
+                formControlName="whatsapp"
+                placeholder="https://wa.me/593..."
+              >
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label
+                for="sitioWeb"
+                class="form-label fw-semibold"
+              >
+                <i class="bi bi-globe me-1"></i>
+                Sitio web
+              </label>
+
+              <input
+                id="sitioWeb"
+                type="text"
+                class="form-control"
+                formControlName="sitioWeb"
+                placeholder="https://www.cooperativa.ec"
+              >
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <section
+          class="bg-white border
+                 rounded-4 p-4"
+        >
+
+          <div class="section-heading">
+
+            <div class="section-icon">
+              <i class="bi bi-headset"></i>
+            </div>
+
+            <div>
+
+              <h2 class="h5 fw-bold mb-1">
+                Atención y soporte
+              </h2>
+
+              <p
+                class="text-secondary small mb-0"
+              >
+                Información de atención
+                para los usuarios.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="mt-3">
+
+            <label
+              for="informacionSoporte"
+              class="form-label fw-semibold"
+            >
+              Información de soporte
+            </label>
+
+            <textarea
+              id="informacionSoporte"
+              class="form-control"
+              formControlName="informacionSoporte"
+              rows="4"
+              placeholder="Horarios, teléfonos y medios de atención..."
+            ></textarea>
+
+          </div>
+
+        </section>
+
+      </div>
+
+
+      <div class="col-12 col-xl-4">
+
+        <div class="preview-sticky">
+
+          <section
+            class="bg-white border
+                   rounded-4 overflow-hidden"
+          >
+
+            <div
+              class="preview-header"
+              [style.background]="
+                colorPrimarioVista()
+              "
+            ></div>
+
+
+            <div class="p-4">
+
+              <div
+                class="logo-preview mb-3"
+              >
+
+                <img
+                  *ngIf="logoVista()"
+                  [src]="logoVista()"
+                  alt="Logo de la cooperativa"
+                >
+
+                <i
+                  *ngIf="!logoVista()"
+                  class="bi bi-bus-front"
+                ></i>
+
+              </div>
+
+
+              <h3 class="h5 fw-bold mb-2">
+                {{
+                  formulario.controls
+                    .nombre.value ||
+                  'Mi cooperativa'
+                }}
+              </h3>
+
+
+              <p class="text-secondary small">
+                {{
+                  formulario.controls
+                    .descripcion.value ||
+                  'Vista previa de la identidad de la cooperativa.'
+                }}
+              </p>
+
+
+              <hr>
+
+
+              <div class="color-row">
+
+                <span
+                  class="color-circle"
+                  [style.background]="
+                    colorPrimarioVista()
+                  "
+                ></span>
+
+                <div>
+
+                  <small class="text-secondary">
+                    Color primario
+                  </small>
+
+                  <div class="fw-semibold">
+                    {{ colorPrimarioVista() }}
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div class="color-row mt-3">
+
+                <span
+                  class="color-circle"
+                  [style.background]="
+                    colorSecundarioVista()
+                  "
+                ></span>
+
+                <div>
+
+                  <small class="text-secondary">
+                    Color secundario
+                  </small>
+
+                  <div class="fw-semibold">
+                    {{ colorSecundarioVista() }}
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <div class="d-grid gap-2 mt-3">
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="guardando()"
+            >
+
+              <span
+                *ngIf="guardando()"
+                class="spinner-border
+                       spinner-border-sm
+                       me-2"
+              ></span>
+
+              <i
+                *ngIf="!guardando()"
+                class="bi bi-floppy me-2"
+              ></i>
+
+              {{
+                guardando()
+                  ? 'Guardando...'
+                  : 'Guardar cambios'
+              }}
+
+            </button>
+
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              [disabled]="guardando()"
+              (click)="restablecer()"
+            >
+              <i
+                class="bi
+                       bi-arrow-counterclockwise
+                       me-2"
+              ></i>
+
+              Descartar cambios
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </form>
+
+</div>
+
+
+<div
+  *ngIf="mostrarResultado()"
+  class="resultado-backdrop"
+>
+
+  <div class="resultado-card">
+
+    <div
+      class="resultado-icon"
+      [ngClass]="
+        resultadoExito()
+          ? 'resultado-exito'
+          : 'resultado-error'
+      "
+    >
+
+      <i
+        class="bi"
+        [ngClass]="
+          resultadoExito()
+            ? 'bi-check-lg'
+            : 'bi-exclamation-lg'
+        "
+      ></i>
+
+    </div>
+
+
+    <h2 class="h5 fw-bold mt-3">
+      {{ resultadoTitulo() }}
+    </h2>
+
+
+    <p class="text-secondary mb-4">
+      {{ resultadoMensaje() }}
+    </p>
+
+
+    <button
+      type="button"
+      class="btn btn-primary px-4"
+      (click)="cerrarResultado()"
+    >
+      Aceptar
+    </button>
+
+  </div>
+
+</div>

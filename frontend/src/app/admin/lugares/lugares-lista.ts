@@ -1,6 +1,7 @@
 import { Component, DestroyRef, ElementRef, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { mensajeErrorLugar } from './lugar-error';
@@ -11,7 +12,7 @@ import { LugarService } from './lugar.service';
 @Component({
   selector: 'app-lugares-lista',
   standalone: true,
-  imports: [LugarFormulario],
+  imports: [LugarFormulario, RouterLink],
   templateUrl: './lugares-lista.html',
   styleUrl: './lugares-lista.css'
 })

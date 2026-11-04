@@ -30,6 +30,10 @@ El proyecto se encuentra organizado inicialmente en los siguientes componentes:
 
 La estructura podrá ampliarse conforme se desarrollen los distintos módulos del sistema.
 
+## Documentación
+
+- [Módulo de flota](docs/flota.md): endpoints, permisos, aislamiento por cooperativa y pantallas.
+
 ## Ejecución local
 
 ### Backend

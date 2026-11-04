@@ -55,6 +55,13 @@ export const routes: Routes = [
       },
 
       {
+        path: 'cooperativas',
+        loadComponent: () =>
+          import('./admin/cooperativas/cooperativas-admin')
+            .then(m => m.CooperativasAdmin)
+      },
+
+      {
         path: 'lugares',
         canActivate: [authGuard, roleGuard],
         data: { roles: ['ADMIN'] },
@@ -79,6 +86,24 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./admin/paradas/paradas-lista')
             .then(m => m.ParadasLista)
+      },
+
+      {
+        path: 'mapas/lugares',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./admin/mapas/lugares/lugares-mapa')
+            .then(m => m.LugaresMapa)
+      },
+
+      {
+        path: 'mapas/rutas',
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./admin/mapas/rutas/rutas-mapa')
+            .then(m => m.RutasMapa)
       },
 
       {
@@ -108,7 +133,6 @@ export const routes: Routes = [
             .then(m => m.TarifasFrecuenciaLista)
       },
 
-      {
         path: 'usuarios',
 
         loadComponent: () =>
@@ -170,7 +194,31 @@ export const routes: Routes = [
       },
 
       {
+        path: 'configuracion',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/configuracion/mi-cooperativa'
+          )
+            .then(
+              m => m.MiCooperativa
+            )
+      },
+
+      {
         path: 'buses/nuevo',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/buses/bus-formulario'
+          )
+            .then(
+              m => m.BusFormulario
+            )
+      },
+
+      {
+        path: 'buses/:id/editar',
 
         loadComponent: () =>
           import(
@@ -190,6 +238,30 @@ export const routes: Routes = [
           )
             .then(
               m => m.BusesLista
+            )
+      },
+
+      {
+        path: 'grupos',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/grupos/grupos-lista'
+          )
+            .then(
+              m => m.GruposLista
+            )
+      },
+
+      {
+        path: 'plantillas',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/plantillas/plantillas-lista'
+          )
+            .then(
+              m => m.PlantillasLista
             )
       },
 

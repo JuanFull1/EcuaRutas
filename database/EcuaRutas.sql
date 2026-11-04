@@ -670,7 +670,14 @@ CREATE TABLE notificaciones (
     tipo VARCHAR(50) NOT NULL,
     asunto VARCHAR(200) NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
-        CHECK (estado IN ('PENDIENTE', 'ENVIADA', 'ERROR')),
+
+CHECK (estado IN (
+    'PENDIENTE',
+    'PROCESANDO',
+    'ENVIADO',
+    'ERROR'
+))
+
     creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     enviado_en TIMESTAMPTZ
 );
