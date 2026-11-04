@@ -18,8 +18,12 @@ export const routes: Routes = [
     path: 'login',
 
     loadComponent: () =>
-      import('./auth/login/login')
-        .then(m => m.Login)
+      import(
+        './auth/login/login'
+      )
+        .then(
+          m => m.Login
+        )
   },
 
   {
@@ -51,16 +55,28 @@ export const routes: Routes = [
       },
 
       {
-  path: 'usuarios',
+        path: 'usuarios',
 
-  loadComponent: () =>
-    import(
-      './admin/usuarios/usuarios-admin'
-    )
-      .then(
-        m => m.UsuariosAdmin
-      )
-},
+        loadComponent: () =>
+          import(
+            './admin/usuarios/usuarios-admin'
+          )
+            .then(
+              m => m.UsuariosAdmin
+            )
+      },
+
+      {
+        path: 'roles',
+
+        loadComponent: () =>
+          import(
+            './admin/roles/roles-admin'
+          )
+            .then(
+              m => m.RolesAdmin
+            )
+      },
 
       {
         path: '',
@@ -103,8 +119,12 @@ export const routes: Routes = [
         path: 'buses/nuevo',
 
         loadComponent: () =>
-          import('./cooperativas/buses/bus-formulario')
-            .then(m => m.BusFormulario)
+          import(
+            './cooperativas/buses/bus-formulario'
+          )
+            .then(
+              m => m.BusFormulario
+            )
       },
 
       {
@@ -142,20 +162,21 @@ export const routes: Routes = [
       roles: ['OFICINISTA']
     },
 
-   children: [
+    children: [
 
-  {
-    path: '',
-    loadChildren: () =>
-      import(
-        './ventas/ventas.routes'
-      )
-        .then(
-          m => m.VENTAS_ROUTES
-        )
-  }
+      {
+        path: '',
 
-]
+        loadChildren: () =>
+          import(
+            './ventas/ventas.routes'
+          )
+            .then(
+              m => m.VENTAS_ROUTES
+            )
+      }
+
+    ]
   },
 
   {
@@ -242,7 +263,5 @@ export const routes: Routes = [
     path: '**',
     redirectTo: 'login'
   }
-
-  
 
 ];
