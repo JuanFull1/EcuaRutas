@@ -1,0 +1,80 @@
+<section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-formulario-frecuencia">
+  <div class="card-header bg-white border-0 pt-3"><h2 id="titulo-formulario-frecuencia" class="h5 mb-0">{{ frecuencia() ? 'Editar frecuencia' : 'Nueva frecuencia' }}</h2></div>
+  <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate [attr.aria-busy]="guardando() || cargandoCatalogos()">
+    <p class="text-secondary small">Los campos marcados con * son obligatorios.</p>
+    @if (cargandoCatalogos()) { <p role="status">Cargando catálogos...</p> }
+    @if (erroresCatalogos().length) {
+      <div class="alert alert-warning" role="alert">
+        @for (mensaje of erroresCatalogos(); track $index) { <p class="mb-1">{{ mensaje }}</p> }
+        <p>Reintenta los catálogos antes de registrar o cambiar cooperativa, ruta, resolución u horario.</p>
+        <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="guardando() || cargandoCatalogos()" (click)="reintentarCatalogos.emit()">Reintentar catálogos</button>
+      </div>
+    }
+    <fieldset [disabled]="guardando() || !autorizado() || cargandoCatalogos() || (erroresCatalogos().length > 0 && !frecuencia())">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label for="frecuencia-cooperativa" class="form-label">Cooperativa *</label>
+          <select id="frecuencia-cooperativa" class="form-select" formControlName="cooperativaId" required [class.is-invalid]="invalido('cooperativaId')" [attr.aria-invalid]="invalido('cooperativaId')" aria-describedby="frecuencia-error-referencias">
+            <option [ngValue]="null">Selecciona una cooperativa</option>
+            @if (frecuencia(); as actual) { @if (!existeCooperativa(actual.cooperativaId)) { <option [ngValue]="actual.cooperativaId">Cooperativa #{{ actual.cooperativaId }} (fuera del catálogo disponible)</option> } }
+            @for (cooperativa of cooperativas(); track cooperativa.id) { <option [ngValue]="cooperativa.id">{{ cooperativa.nombre }} · #{{ cooperativa.id }}</option> }
+          </select>
+          @if (invalido('cooperativaId')) { <div class="invalid-feedback">Selecciona una cooperativa válida.</div> }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="frecuencia-ruta" class="form-label">Ruta *</label>
+          <select id="frecuencia-ruta" class="form-select" formControlName="rutaId" required [class.is-invalid]="invalido('rutaId')" [attr.aria-invalid]="invalido('rutaId')" aria-describedby="frecuencia-error-referencias">
+            <option [ngValue]="null">Selecciona una ruta</option>
+            @if (frecuencia(); as actual) { @if (!existeRuta(actual.rutaId)) { <option [ngValue]="actual.rutaId">Ruta #{{ actual.rutaId }} (fuera del catálogo disponible)</option> } }
+            @for (ruta of rutasDisponibles(); track ruta.id) { <option [ngValue]="ruta.id">{{ ruta.nombre }} · #{{ ruta.id }}{{ ruta.activa ? '' : ' (inactiva)' }}</option> }
+          </select>
+          @if (invalido('rutaId')) { <div class="invalid-feedback">Selecciona una ruta válida.</div> }
+        </div>
+        <div class="col-12 col-md-6">
+          <label for="frecuencia-resolucion" class="form-label">Resolución ANT *</label>
+          <select id="frecuencia-resolucion" class="form-select" formControlName="resolucionAntId" required [class.is-invalid]="invalido('resolucionAntId')" [attr.aria-invalid]="invalido('resolucionAntId')" aria-describedby="frecuencia-ayuda-resolucion frecuencia-error-referencias">
+            <option [ngValue]="null">Selecciona una resolución ANT</option>
+            @if (frecuencia(); as actual) {
+              @if (!existeResolucion(actual.resolucionAntId) && form.controls.cooperativaId.value === actual.cooperativaId) { <option [ngValue]="actual.resolucionAntId">Resolución #{{ actual.resolucionAntId }} (fuera del catálogo disponible)</option> }
+            }
+            @for (resolucion of resolucionesDisponibles(); track resolucion.id) { <option [ngValue]="resolucion.id">{{ resolucion.numeroResolucion }} · #{{ resolucion.id }}{{ resolucion.activa ? '' : ' (inactiva)' }}</option> }
+          </select>
+          <div id="frecuencia-ayuda-resolucion" class="form-text">
+            @if (form.controls.cooperativaId.value === null) { Selecciona primero una cooperativa. }
+            @else if (!cargandoCatalogos() && resolucionesDisponibles().length === 0 && form.controls.resolucionAntId.value === null) { No hay resoluciones disponibles para esta cooperativa. }
+            @else { Las resoluciones corresponden a la cooperativa seleccionada. }
+          </div>
+          @if (invalido('resolucionAntId')) { <div class="invalid-feedback">Selecciona una resolución válida.</div> }
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="frecuencia-codigo" class="form-label">Código</label>
+          <input #codigoInput id="frecuencia-codigo" class="form-control" formControlName="codigo" maxlength="50" [class.is-invalid]="invalido('codigo')" [attr.aria-invalid]="invalido('codigo')" aria-describedby="frecuencia-error-codigo">
+          @if (invalido('codigo')) { <div id="frecuencia-error-codigo" class="invalid-feedback">El código puede tener hasta 50 caracteres.</div> }
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="frecuencia-hora" class="form-label">Hora de salida *</label>
+          <input id="frecuencia-hora" type="time" step="60" class="form-control" formControlName="horaSalida" required [class.is-invalid]="invalido('horaSalida')" [attr.aria-invalid]="invalido('horaSalida')" aria-describedby="frecuencia-error-hora">
+          @if (invalido('horaSalida')) { <div id="frecuencia-error-hora" class="invalid-feedback">Ingresa una hora válida. Se permite 00:00.</div> }
+        </div>
+      </div>
+      @if (form.touched && (form.hasError('resolucionAjena') || form.hasError('cooperativaNoDisponible') || form.hasError('rutaNoDisponible') || form.hasError('resolucionNoDisponible') || form.hasError('referenciasInactivas'))) {
+        <div id="frecuencia-error-referencias" class="alert alert-danger mt-3" role="alert">
+          @if (form.hasError('resolucionAjena')) { La resolución ANT debe pertenecer a la cooperativa seleccionada. }
+          @else if (form.hasError('referenciasInactivas')) { Registrar o cambiar la estructura de una frecuencia activa requiere referencias activas. }
+          @else { Revisa la cooperativa, la ruta y la resolución ANT seleccionadas; deben estar disponibles en sus catálogos. }
+        </div>
+      }
+      @if (frecuencia(); as actual) {
+        <p class="text-secondary mt-3 mb-0">Estado actual: {{ actual.activa ? 'Activa' : 'Inactiva' }}. La edición conserva este estado.</p>
+        @if (actual.horaSalida.slice(5) !== ':00') { <p class="form-text">El horario actual es {{ actual.horaSalida }}. Sus segundos se conservan si no cambias la hora.</p> }
+      }
+    </fieldset>
+    @if (error(); as mensaje) { <div class="alert alert-danger mt-3" role="alert">{{ mensaje }}</div> }
+    <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+      <button type="button" class="btn btn-outline-secondary" [disabled]="guardando()" (click)="cancelar.emit()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="guardando() || !autorizado() || cargandoCatalogos() || (erroresCatalogos().length > 0 && !frecuencia())">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }{{ guardando() ? 'Guardando...' : 'Guardar frecuencia' }}
+      </button>
+    </div>
+  </form>
+</section>
