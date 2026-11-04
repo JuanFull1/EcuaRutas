@@ -18,6 +18,9 @@ builder.Services.AddScoped<IBusService, BusService>();
 builder.Services.AddScoped<IPlantillaService, PlantillaService>();
 
 builder.Services.AddScoped<IHojaRutaService, HojaRutaService>();
+builder.Services.AddScoped<IResolucionAntService, ResolucionAntService>();
+builder.Services.AddScoped<IFrecuenciaService, FrecuenciaService>();
+builder.Services.AddScoped<ITarifaFrecuenciaService, TarifaFrecuenciaService>();
 
 builder.Services.AddDbContext<EcuaRutasDbContext>(options =>
     options.UseNpgsql(
