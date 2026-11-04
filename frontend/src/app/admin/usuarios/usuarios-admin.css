@@ -1,0 +1,117 @@
+.table th {
+  white-space: nowrap;
+
+  color: #536273;
+
+  font-size: 0.82rem;
+  font-weight: 700;
+
+  text-transform: uppercase;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+
+  z-index: 2000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 1rem;
+
+  background:
+    rgba(12, 24, 39, 0.58);
+}
+
+.modal-card {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 2rem);
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 24px 70px
+    rgba(0, 0, 0, 0.22);
+}
+
+.modal-card-small {
+  width: min(500px, 100%);
+}
+
+.modal-header-custom,
+.modal-footer-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 1rem;
+
+  padding: 1.25rem;
+
+  background: #ffffff;
+}
+
+.modal-header-custom {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-footer-custom {
+  justify-content: flex-end;
+
+  border-top: 1px solid #e9ecef;
+}
+
+.modal-body-custom {
+  padding: 1.25rem;
+
+  overflow-y: auto;
+}
+
+.btn-group .btn {
+  min-width: 38px;
+}
+
+@media (max-width: 767.98px) {
+
+  .modal-backdrop-custom {
+    align-items: flex-end;
+
+    padding: 0;
+  }
+
+  .modal-card {
+    width: 100%;
+    max-height: 92vh;
+
+    border-radius:
+      18px 18px 0 0;
+  }
+
+  .modal-header-custom,
+  .modal-body-custom,
+  .modal-footer-custom {
+    padding: 1rem;
+  }
+
+}
+
+@media (max-width: 575.98px) {
+
+  .table {
+    min-width: 850px;
+  }
+
+}

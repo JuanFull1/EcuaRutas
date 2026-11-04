@@ -1,0 +1,743 @@
+<div class="container-fluid px-0">
+
+  <section
+    class="bg-white border rounded-4 p-4 mb-4"
+  >
+
+    <div
+      class="d-flex flex-column flex-lg-row
+             justify-content-between
+             align-items-lg-center gap-3"
+    >
+
+      <div>
+
+        <span
+          class="badge text-bg-primary mb-2"
+        >
+          Administración
+        </span>
+
+        <h1 class="h3 fw-bold mb-1">
+          Gestión de usuarios
+        </h1>
+
+        <p class="text-secondary mb-0">
+          Administra usuarios, roles,
+          estados y contraseñas del sistema.
+        </p>
+
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="abrirCrear()"
+      >
+        <i class="bi bi-person-plus me-2"></i>
+        Nuevo usuario
+      </button>
+
+    </div>
+
+  </section>
+
+  <div
+    *ngIf="mensaje"
+    class="alert alert-success"
+  >
+    <i class="bi bi-check-circle me-2"></i>
+    {{ mensaje }}
+  </div>
+
+  <div
+    *ngIf="error"
+    class="alert alert-danger"
+  >
+    <i
+      class="bi bi-exclamation-circle me-2"
+    ></i>
+    {{ error }}
+  </div>
+
+  <section
+    class="bg-white border rounded-4 p-3 p-md-4 mb-4"
+  >
+
+    <form
+      [formGroup]="filtros"
+      (ngSubmit)="buscar()"
+      class="row g-3"
+    >
+
+      <div class="col-12 col-lg-5">
+
+        <label class="form-label">
+          Buscar
+        </label>
+
+        <input
+          type="text"
+          class="form-control"
+          formControlName="busqueda"
+          placeholder="Nombre, correo o cédula"
+        >
+
+      </div>
+
+      <div class="col-12 col-sm-6 col-lg-3">
+
+        <label class="form-label">
+          Rol
+        </label>
+
+        <select
+          class="form-select"
+          formControlName="rolId"
+        >
+
+          <option value="">
+            Todos
+          </option>
+
+          <option
+            *ngFor="let rol of roles"
+            [value]="rol.id"
+          >
+            {{ rol.nombre }}
+          </option>
+
+        </select>
+
+      </div>
+
+      <div class="col-12 col-sm-6 col-lg-2">
+
+        <label class="form-label">
+          Estado
+        </label>
+
+        <select
+          class="form-select"
+          formControlName="estado"
+        >
+
+          <option value="">
+            Todos
+          </option>
+
+          <option value="activo">
+            Activos
+          </option>
+
+          <option value="inactivo">
+            Inactivos
+          </option>
+
+        </select>
+
+      </div>
+
+      <div
+        class="col-12 col-lg-2
+               d-flex align-items-end gap-2"
+      >
+
+        <button
+          type="submit"
+          class="btn btn-primary flex-fill"
+        >
+          <i class="bi bi-search"></i>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="limpiarFiltros()"
+        >
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+
+      </div>
+
+    </form>
+
+  </section>
+
+  <section
+    class="bg-white border rounded-4 overflow-hidden"
+  >
+
+    <div
+      class="p-3 border-bottom
+             d-flex justify-content-between
+             align-items-center"
+    >
+      <strong>
+        Usuarios registrados
+      </strong>
+
+      <span class="badge text-bg-secondary">
+        {{ usuarios.length }}
+      </span>
+    </div>
+
+    <div
+      *ngIf="cargando"
+      class="text-center py-5"
+    >
+      <div
+        class="spinner-border text-primary"
+      ></div>
+
+      <div class="text-secondary mt-2">
+        Cargando usuarios...
+      </div>
+    </div>
+
+    <div
+      *ngIf="!cargando"
+      class="table-responsive"
+    >
+
+      <table
+        class="table table-hover
+               align-middle mb-0"
+      >
+
+        <thead class="table-light">
+
+          <tr>
+            <th>Usuario</th>
+            <th>Contacto</th>
+            <th>Rol</th>
+            <th>Cooperativa</th>
+            <th>Estado</th>
+            <th class="text-end">
+              Acciones
+            </th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr
+            *ngFor="let usuario of usuarios"
+          >
+
+            <td>
+
+              <strong class="d-block">
+                {{ usuario.nombres }}
+                {{ usuario.apellidos }}
+              </strong>
+
+              <small class="text-secondary">
+                {{
+                  usuario.cedula
+                    || 'Sin cédula'
+                }}
+              </small>
+
+            </td>
+
+            <td>
+
+              <div>
+                {{ usuario.correo }}
+              </div>
+
+              <small class="text-secondary">
+                {{
+                  usuario.telefono
+                    || 'Sin teléfono'
+                }}
+              </small>
+
+            </td>
+
+            <td>
+              <span
+                class="badge text-bg-light border"
+              >
+                {{ usuario.rolNombre }}
+              </span>
+            </td>
+
+            <td>
+              {{
+                usuario.cooperativaNombre
+                  || 'No aplica'
+              }}
+            </td>
+
+            <td>
+
+              <span
+                class="badge"
+                [ngClass]="
+                  usuario.activo
+                    ? 'text-bg-success'
+                    : 'text-bg-secondary'
+                "
+              >
+                {{
+                  usuario.activo
+                    ? 'Activo'
+                    : 'Inactivo'
+                }}
+              </span>
+
+            </td>
+
+            <td class="text-end">
+
+              <div
+                class="btn-group btn-group-sm"
+              >
+
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  title="Editar"
+                  (click)="abrirEditar(usuario)"
+                >
+                  <i class="bi bi-pencil"></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-outline-warning"
+                  title="Restablecer contraseña"
+                  (click)="
+                    abrirRestablecerPassword(
+                      usuario
+                    )
+                  "
+                >
+                  <i class="bi bi-key"></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn"
+                  [ngClass]="
+                    usuario.activo
+                      ? 'btn-outline-danger'
+                      : 'btn-outline-success'
+                  "
+                  [title]="
+                    usuario.activo
+                      ? 'Desactivar'
+                      : 'Activar'
+                  "
+                  (click)="cambiarEstado(usuario)"
+                >
+
+                  <i
+                    class="bi"
+                    [ngClass]="
+                      usuario.activo
+                        ? 'bi-person-x'
+                        : 'bi-person-check'
+                    "
+                  ></i>
+
+                </button>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+          <tr
+            *ngIf="usuarios.length === 0"
+          >
+            <td
+              colspan="6"
+              class="text-center
+                     text-secondary py-5"
+            >
+              No se encontraron usuarios.
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+</div>
+
+<!-- FORMULARIO CREAR / EDITAR -->
+
+<div
+  *ngIf="mostrarFormulario"
+  class="modal-backdrop-custom"
+>
+
+  <div class="modal-card">
+
+    <div class="modal-header-custom">
+
+      <div>
+        <h2 class="h5 fw-bold mb-1">
+          {{
+            usuarioEditandoId === null
+              ? 'Nuevo usuario'
+              : 'Editar usuario'
+          }}
+        </h2>
+
+        <small class="text-secondary">
+          Completa la información requerida.
+        </small>
+      </div>
+
+      <button
+        type="button"
+        class="btn-close"
+        (click)="cerrarFormulario()"
+      ></button>
+
+    </div>
+
+    <form
+      [formGroup]="formulario"
+      (ngSubmit)="guardar()"
+    >
+
+      <div class="modal-body-custom">
+
+        <div class="row g-3">
+
+          <div class="col-12 col-md-6">
+
+            <label class="form-label">
+              Nombres *
+            </label>
+
+            <input
+              type="text"
+              class="form-control"
+              formControlName="nombres"
+            >
+
+          </div>
+
+          <div class="col-12 col-md-6">
+
+            <label class="form-label">
+              Apellidos *
+            </label>
+
+            <input
+              type="text"
+              class="form-control"
+              formControlName="apellidos"
+            >
+
+          </div>
+
+          <div class="col-12 col-md-6">
+
+            <label class="form-label">
+              Cédula
+            </label>
+
+            <input
+              type="text"
+              class="form-control"
+              formControlName="cedula"
+            >
+
+          </div>
+
+          <div class="col-12 col-md-6">
+
+            <label class="form-label">
+              Teléfono
+            </label>
+
+            <input
+              type="text"
+              class="form-control"
+              formControlName="telefono"
+            >
+
+          </div>
+
+          <div class="col-12">
+
+            <label class="form-label">
+              Correo electrónico *
+            </label>
+
+            <input
+              type="email"
+              class="form-control"
+              formControlName="correo"
+            >
+
+          </div>
+
+          <div
+            *ngIf="usuarioEditandoId === null"
+            class="col-12"
+          >
+
+            <label class="form-label">
+              Contraseña *
+            </label>
+
+            <input
+              type="password"
+              class="form-control"
+              formControlName="password"
+              autocomplete="new-password"
+            >
+
+            <small class="text-secondary">
+              Mínimo 8 caracteres.
+            </small>
+
+          </div>
+
+          <div class="col-12 col-md-6">
+
+            <label class="form-label">
+              Rol *
+            </label>
+
+            <select
+              class="form-select"
+              formControlName="rolId"
+              (change)="alCambiarRol()"
+            >
+
+              <option value="">
+                Selecciona un rol
+              </option>
+
+              <option
+                *ngFor="let rol of roles"
+                [value]="rol.id"
+              >
+                {{ rol.nombre }}
+              </option>
+
+            </select>
+
+          </div>
+
+          <div
+            *ngIf="requiereCooperativa()"
+            class="col-12 col-md-6"
+          >
+
+            <label class="form-label">
+              Cooperativa *
+            </label>
+
+            <select
+              class="form-select"
+              formControlName="cooperativaId"
+            >
+
+              <option value="">
+                Selecciona una cooperativa
+              </option>
+
+              <option
+                *ngFor="
+                  let cooperativa
+                  of cooperativas
+                "
+                [value]="cooperativa.id"
+              >
+                {{ cooperativa.nombre }}
+              </option>
+
+            </select>
+
+            <small
+              *ngIf="
+                cooperativas.length === 0
+              "
+              class="text-warning"
+            >
+              No existen cooperativas
+              activas registradas.
+            </small>
+
+          </div>
+
+          <div
+            *ngIf="usuarioEditandoId === null"
+            class="col-12"
+          >
+
+            <div class="form-check">
+
+              <input
+                id="usuarioActivo"
+                type="checkbox"
+                class="form-check-input"
+                formControlName="activo"
+              >
+
+              <label
+                for="usuarioActivo"
+                class="form-check-label"
+              >
+                Crear usuario activo
+              </label>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="modal-footer-custom">
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="cerrarFormulario()"
+          [disabled]="guardando"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="guardando"
+        >
+
+          <span
+            *ngIf="guardando"
+            class="spinner-border
+                   spinner-border-sm me-2"
+          ></span>
+
+          {{
+            usuarioEditandoId === null
+              ? 'Crear usuario'
+              : 'Guardar cambios'
+          }}
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+<!-- RESTABLECER CONTRASEÑA -->
+
+<div
+  *ngIf="mostrarPassword"
+  class="modal-backdrop-custom"
+>
+
+  <div class="modal-card modal-card-small">
+
+    <div class="modal-header-custom">
+
+      <div>
+
+        <h2 class="h5 fw-bold mb-1">
+          Restablecer contraseña
+        </h2>
+
+        <small class="text-secondary">
+          {{ usuarioPassword?.nombres }}
+          {{ usuarioPassword?.apellidos }}
+        </small>
+
+      </div>
+
+      <button
+        type="button"
+        class="btn-close"
+        (click)="cerrarPassword()"
+      ></button>
+
+    </div>
+
+    <form
+      [formGroup]="formularioPassword"
+      (ngSubmit)="guardarPassword()"
+    >
+
+      <div class="modal-body-custom">
+
+        <div class="mb-3">
+
+          <label class="form-label">
+            Nueva contraseña
+          </label>
+
+          <input
+            type="password"
+            class="form-control"
+            formControlName="nuevaPassword"
+            autocomplete="new-password"
+          >
+
+        </div>
+
+        <div>
+
+          <label class="form-label">
+            Confirmar contraseña
+          </label>
+
+          <input
+            type="password"
+            class="form-control"
+            formControlName="confirmarPassword"
+            autocomplete="new-password"
+          >
+
+        </div>
+
+      </div>
+
+      <div class="modal-footer-custom">
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="cerrarPassword()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-warning"
+          [disabled]="guardando"
+        >
+          Restablecer
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
