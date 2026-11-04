@@ -86,3 +86,13 @@ Reglas adicionales:
 | Editar bus | `/cooperativas/buses/:id/editar` | Modifica los datos y el estado de un bus |
 | Grupos | `/cooperativas/grupos` | Lista los grupos de buses |
 | Plantillas | `/cooperativas/plantillas` | Lista las plantillas de asientos |
+
+## Pruebas realizadas
+
+Las pruebas se hicieron con curl contra la API local, usando un usuario con rol `COOPERATIVA` (cooperativa 1) y uno con rol `ADMIN`.
+
+| Alcance | PR | Resultado |
+|---------|----|-----------|
+| Autorización por rol en los controladores de flota (sin token 401, rol sin permiso 403, rol permitido 200) | #24 | Correcto |
+| Aislamiento de buses: listar, consultar, crear, editar y dar de baja un bus de otra cooperativa responde 403; sobre la propia, 200; un bus inexistente, 404; ADMIN sin restricción | #26 | 10 de 10 casos correctos |
+| Aislamiento de grupos y plantillas: consultar, crear, modificar, asignar a un bus y consultar los asientos de un bus, sobre datos propios, ajenos y plantillas generales; ADMIN sin restricción | #33 | 29 de 29 casos correctos |
