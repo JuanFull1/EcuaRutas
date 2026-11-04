@@ -248,25 +248,27 @@
                       <i class="bi bi-bus-front
                                 text-primary me-2"></i>
 
-                      <strong>Viaje:</strong>
-                      #{{ boleto.viajeId }}
+                      <strong>Ruta:</strong>
+                      {{ boleto.rutaNombre }}
                     </p>
 
                     <p class="mb-2">
                       <i class="bi bi-person
                                 text-primary me-2"></i>
 
-                      <strong>Pasajero ID:</strong>
-                      {{ boleto.pasajeroId }}
+                      <strong>Pasajero:</strong>
+                      {{ boleto.pasajero }}
                     </p>
 
                     <p class="mb-2">
                       <i class="bi bi-grid-3x3-gap
                                 text-primary me-2"></i>
 
-                      <strong>Asiento ID:</strong>
-                      {{ boleto.asientoBusId }}
+                      <strong>Asiento:</strong>
+                      {{ boleto.numeroAsiento }}
                     </p>
+
+                    <p class="mb-2"><strong>Tramo:</strong> {{ boleto.origen }} → {{ boleto.destino }}</p>
 
                     <p class="mb-2">
                       <i class="bi bi-receipt
@@ -286,28 +288,19 @@
                       ${{ boleto.precioFinal | number:'1.2-2' }}
                     </span>
 
-                    @if (boleto.archivoUrl) {
-
-                      <a
-                        class="btn btn-outline-primary btn-sm"
-                        [href]="boleto.archivoUrl"
-                        target="_blank"
-                        rel="noopener noreferrer">
-
-                        <i class="bi bi-eye me-1"></i>
-                        Ver archivo
-
-                      </a>
-
-                    } @else {
-
-                      <span class="text-secondary small">
-                        Archivo no disponible
-                      </span>
-
-                    }
+                    <button type="button" class="btn btn-outline-primary btn-sm ocultar-impresion"
+                      [disabled]="!qrPorBoleto[boleto.boletoId]" (click)="imprimir(boleto.boletoId)">
+                      <i class="bi bi-printer me-1" aria-hidden="true"></i>Imprimir / guardar PDF
+                    </button>
 
                   </div>
+
+                  @if (qrPorBoleto[boleto.boletoId]; as qr) {
+                    <div class="boleto-qr border-top mt-3 pt-3">
+                      <img [src]="qr" [alt]="'Código QR del boleto ' + boleto.codigoBoleto" width="180" height="180">
+                      <small>Presenta este código al abordar.</small>
+                    </div>
+                  }
 
                 </div>
 

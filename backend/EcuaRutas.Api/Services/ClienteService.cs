@@ -1,7 +1,7 @@
 
 using EcuaRutas.Api.DTOs.Cliente;
-using EcuaRutas.Api.DTOs.Ventas;
 using EcuaRutas.Api.Data;
+using EcuaRutas.Api.DTOs.Ventas;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcuaRutas.Api.Services;
@@ -179,6 +179,7 @@ public class ClienteService
                     b.VentaAsiento.Venta.Codigo,
 
                 CodigoBoleto = b.CodigoBoleto,
+                QrToken = b.QrToken,
 
                 EstadoBoleto = b.Estado,
 
@@ -188,12 +189,22 @@ public class ClienteService
 
                 ViajeId = b.VentaAsiento.ViajeId,
 
+                RutaNombre = b.VentaAsiento.Viaje.Frecuencia.Ruta.Nombre,
+
+                Origen = b.VentaAsiento.OrigenRutaParada.Lugar.Nombre,
+
+                Destino = b.VentaAsiento.DestinoRutaParada.Lugar.Nombre,
+
                 SalidaProgramada =
                     b.VentaAsiento.Viaje.SalidaProgramada,
 
                 PasajeroId = b.VentaAsiento.PasajeroId,
 
+                Pasajero = b.VentaAsiento.Pasajero.Nombres + " " + b.VentaAsiento.Pasajero.Apellidos,
+
                 AsientoBusId = b.VentaAsiento.AsientoBusId,
+
+                NumeroAsiento = b.VentaAsiento.AsientoBus.Numero,
 
                 PrecioFinal = b.VentaAsiento.PrecioFinal
             })
