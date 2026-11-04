@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -41,7 +42,7 @@ describe('ParadasLista', () => {
     rolActual = 'ADMIN';
     TestBed.configureTestingModule({
       imports: [ParadasLista],
-      providers: [provideHttpClient(), provideHttpClientTesting(), {
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), {
         provide: AuthService, useValue: { tieneRol: (rol: RolUsuario) => rolActual === rol }
       }]
     });

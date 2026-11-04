@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -98,7 +99,7 @@ describe('Gestión de lugares y contrato HTTP', () => {
     autorizado = true;
     TestBed.configureTestingModule({
       imports: [LugaresLista],
-      providers: [provideHttpClient(), provideHttpClientTesting(), {
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), {
         provide: AuthService,
         useValue: { tieneRol: (rol: string) => autorizado && rol === 'ADMIN' }
       }]

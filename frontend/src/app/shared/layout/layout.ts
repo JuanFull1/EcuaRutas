@@ -124,6 +124,16 @@ export class Layout {
               ruta: '/admin/paradas'
             },
             {
+              texto: 'Mapa de lugares',
+              icono: 'bi-map',
+              ruta: '/admin/mapas/lugares'
+            },
+            {
+              texto: 'Mapa de rutas y paradas',
+              icono: 'bi-signpost-split',
+              ruta: '/admin/mapas/rutas'
+            },
+            {
               texto: 'Roles',
               icono: 'bi-person-gear',
               ruta: '/admin/roles'
