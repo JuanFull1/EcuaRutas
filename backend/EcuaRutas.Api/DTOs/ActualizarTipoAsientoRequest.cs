@@ -8,6 +8,6 @@ public class ActualizarTipoAsientoRequest
     [StringLength(80, ErrorMessage = "El nombre admite máximo 80 caracteres.")]
     public string Nombre { get; set; } = string.Empty;
 
-    [Range(0, 100, ErrorMessage = "El recargo debe estar entre 0 y 100 %.")]
+    [Range(typeof(decimal), "0", "100", ErrorMessage = "El recargo debe estar entre 0 y 100 %.")]
     public decimal RecargoPorcentaje { get; set; }
 }
