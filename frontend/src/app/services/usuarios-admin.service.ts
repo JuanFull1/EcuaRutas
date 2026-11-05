@@ -1,6 +1,17 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import {
+  HttpClient,
+  HttpParams
+} from '@angular/common/http';
+
+import {
+  inject,
+  Injectable
+} from '@angular/core';
+
+import {
+  Observable,
+  of
+} from 'rxjs';
 
 import {
   ActualizarAdminUsuario,
@@ -11,7 +22,13 @@ import {
   RestablecerPassword
 } from '../models/admin-usuario.model';
 
-import { API_URL } from './api.config';
+import {
+  API_URL
+} from './api.config';
+
+import {
+  AuthService
+} from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +37,9 @@ export class UsuariosAdminService {
 
   private readonly http =
     inject(HttpClient);
+
+  private readonly authService =
+    inject(AuthService);
 
   private readonly url =
     `${API_URL}/usuarios`;
@@ -59,7 +79,9 @@ export class UsuariosAdminService {
 
     return this.http.get<AdminUsuario[]>(
       this.url,
-      { params }
+      {
+        params
+      }
     );
   }
 
@@ -106,7 +128,9 @@ export class UsuariosAdminService {
       activo: boolean;
     }>(
       `${this.url}/${id}/estado`,
-      { activo }
+      {
+        activo
+      }
     );
   }
 
@@ -136,6 +160,46 @@ export class UsuariosAdminService {
   listarCooperativas():
     Observable<CooperativaResumen[]> {
 
+    const usuario =
+      this.authService.usuarioActual();
+
+    /*
+     * Cuando la sesión corresponde a una COOPERATIVA,
+     * no se consulta el catálogo administrativo de
+     * todas las cooperativas.
+     *
+     * La cooperativa actual ya viene asociada al
+     * usuario autenticado mediante el JWT.
+     */
+    if (
+      usuario?.rol === 'COOPERATIVA'
+    ) {
+
+      const cooperativaId =
+        usuario.cooperativaId;
+
+      if (
+        cooperativaId === null ||
+        cooperativaId === undefined
+      ) {
+
+        return of([]);
+      }
+
+      return of([
+        {
+          id: cooperativaId,
+          nombre: 'Mi cooperativa'
+        }
+      ]);
+    }
+
+    /*
+     * ADMIN conserva el comportamiento original
+     * porque sí necesita consultar el catálogo
+     * completo de cooperativas para administrar
+     * usuarios.
+     */
     return this.http.get<
       CooperativaResumen[]
     >(

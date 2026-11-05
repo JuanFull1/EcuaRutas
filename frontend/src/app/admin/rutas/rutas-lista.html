@@ -1,6 +1,6 @@
 <div class="container-fluid px-0">
   <section class="bg-white border rounded-4 p-4 mb-4">
-    <span class="badge text-bg-primary mb-3">Administrador</span>
+    <span class="badge text-bg-primary mb-3">Cooperativa</span>
     <h1 class="h3 fw-bold">Gestión de rutas</h1>
     <p class="text-secondary mb-0">Administra las rutas de EcuaRutas, sus lugares de origen y destino y su tipo de viaje.</p>
     @if (puedeEscribir()) {
@@ -90,7 +90,7 @@
                 <td><span class="badge" [class.text-bg-success]="ruta.activa" [class.text-bg-secondary]="!ruta.activa">{{ ruta.activa ? 'Activa' : 'Inactiva' }}</span></td>
                 @if (puedeEscribir()) {
                   <td><div class="d-flex flex-wrap gap-2 acciones">
-                    <a class="btn btn-sm btn-outline-secondary" routerLink="/admin/mapas/rutas" [queryParams]="{ rutaId: ruta.id }"
+                    <a class="btn btn-sm btn-outline-secondary" routerLink="/cooperativas/mapas/rutas" [queryParams]="{ rutaId: ruta.id }"
                       [attr.aria-label]="'Ver en mapa ' + ruta.nombre"><i class="bi bi-map me-1" aria-hidden="true"></i>Ver en mapa</a>
                     <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || formularioVisible()"
                       [attr.aria-label]="'Editar ' + ruta.nombre" (click)="editar(ruta)"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar</button>

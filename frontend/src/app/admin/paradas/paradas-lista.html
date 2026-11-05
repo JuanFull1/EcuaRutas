@@ -1,11 +1,11 @@
 <div class="container-fluid px-0">
   <section class="bg-white border rounded-4 p-4 mb-4">
-    <span class="badge text-bg-primary mb-3">Administrador</span>
+    <span class="badge text-bg-primary mb-3">Cooperativa</span>
     <h1 class="h3 fw-bold">Gestión de paradas</h1>
     <p class="text-secondary mb-0">Administra los lugares, el orden y los permisos de ascenso y descenso de las paradas de cada ruta.</p>
     <div class="d-flex flex-wrap gap-2 mt-3">
       @if (rutaSeleccionada()) {
-        <a class="btn btn-outline-secondary" routerLink="/admin/mapas/rutas" [queryParams]="{ rutaId: rutaId() }">
+        <a class="btn btn-outline-secondary" routerLink="/cooperativas/mapas/rutas" [queryParams]="{ rutaId: rutaId() }">
           <i class="bi bi-map me-1" aria-hidden="true"></i>Ver ruta en mapa
         </a>
       }
@@ -116,7 +116,7 @@
                 <td><span class="badge" [class.text-bg-success]="parada.permiteDescenso" [class.text-bg-secondary]="!parada.permiteDescenso">{{ parada.permiteDescenso ? 'Permitido' : 'No permitido' }}</span></td>
                 @if (puedeEscribir()) {
                   <td><div class="d-flex flex-wrap gap-2 acciones">
-                    <a class="btn btn-sm btn-outline-secondary" routerLink="/admin/mapas/rutas" [queryParams]="{ rutaId: rutaId(), paradaId: parada.id }"
+                    <a class="btn btn-sm btn-outline-secondary" routerLink="/cooperativas/mapas/rutas" [queryParams]="{ rutaId: rutaId(), paradaId: parada.id }"
                       [attr.aria-label]="'Ver en mapa parada ' + parada.orden + ' de ' + nombreLugar(parada.lugarId)"><i class="bi bi-map me-1" aria-hidden="true"></i>Ver en mapa</a>
                     <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || formularioVisible()"
                       [attr.aria-label]="'Editar parada ' + parada.orden + ' de ' + nombreLugar(parada.lugarId)" (click)="editar(parada)"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar</button>

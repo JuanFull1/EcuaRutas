@@ -1,10 +1,10 @@
 <div class="container-fluid px-0">
   <section class="bg-white border rounded-4 p-4 mb-4">
-    <span class="badge text-bg-primary mb-3">Administrador</span><h1 class="h3 fw-bold">Gestión de tarifas</h1>
+    <span class="badge text-bg-primary mb-3">Cooperativa</span><h1 class="h3 fw-bold">Gestión de tarifas</h1>
     <p class="text-secondary mb-0">Administra los precios de los recorridos entre paradas para cada frecuencia de transporte.</p>
     @if (puedeGestionar()) { <button type="button" class="btn btn-primary mt-3" [disabled]="!puedeCrear()" (click)="nueva()"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva tarifa</button> }
   </section>
-  @if (!puedeGestionar()) { <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol ADMIN para consultar y gestionar tarifas.</div> }
+  @if (!puedeGestionar()) { <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol COOPERATIVA para consultar y gestionar tarifas.</div> }
   @else {
     @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
     <section class="card border-0 shadow-sm mb-4"><div class="card-body">
@@ -87,3 +87,5 @@
     @if (puedeGestionar()) { <button type="button" class="btn btn-danger" [disabled]="desactivando()" (click)="confirmarBaja()">@if (desactivando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }{{ desactivando() ? 'Desactivando...' : 'Desactivar' }}</button> }
   </div>
 </dialog>
+
+

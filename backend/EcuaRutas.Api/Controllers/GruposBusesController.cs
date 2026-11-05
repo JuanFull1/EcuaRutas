@@ -7,7 +7,7 @@ namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/grupos-buses")]
-[Authorize(Roles = "ADMIN,COOPERATIVA,OFICINISTA")]
+[Authorize(Roles = "COOPERATIVA,OFICINISTA")]
 public class GruposBusesController : ControllerBase
 {
     private readonly IGrupoBusService _servicio;
@@ -70,7 +70,7 @@ public class GruposBusesController : ControllerBase
         return Ok(grupo);
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPost]
     public async Task<ActionResult<GrupoBusDto>> Crear(
         CrearGrupoBusRequest request, CancellationToken ct)
@@ -97,7 +97,7 @@ public class GruposBusesController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("{id:long}")]
     public async Task<ActionResult<GrupoBusDto>> Actualizar(
         long id, ActualizarGrupoBusRequest request, CancellationToken ct)
@@ -127,7 +127,7 @@ public class GruposBusesController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> Desactivar(long id, CancellationToken ct)
     {

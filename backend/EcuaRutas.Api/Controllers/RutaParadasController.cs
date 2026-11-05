@@ -12,102 +12,210 @@ public class RutaParadasController : ControllerBase
 {
     private readonly IRutaParadaService _servicio;
 
-    public RutaParadasController(IRutaParadaService servicio)
+    public RutaParadasController(
+        IRutaParadaService servicio)
     {
         _servicio = servicio;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<RutaParadaDto>>> Listar(long rutaId, CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<RutaParadaDto>>> Listar(
+        long rutaId,
+        CancellationToken ct)
     {
         try
         {
-            return Ok(await _servicio.ListarAsync(rutaId, ct));
+            return Ok(
+                await _servicio.ListarAsync(
+                    rutaId,
+                    ct
+                )
+            );
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<RutaParadaDto>> Obtener(long rutaId, long id, CancellationToken ct)
+    public async Task<ActionResult<RutaParadaDto>> Obtener(
+        long rutaId,
+        long id,
+        CancellationToken ct)
     {
         try
         {
-            var parada = await _servicio.ObtenerAsync(rutaId, id, ct);
-            return parada is null ? NotFound() : Ok(parada);
+            var parada =
+                await _servicio.ObtenerAsync(
+                    rutaId,
+                    id,
+                    ct
+                );
+
+            return parada is null
+                ? NotFound()
+                : Ok(parada);
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPost]
     public async Task<ActionResult<RutaParadaDto>> Crear(
-        long rutaId, [FromBody] CrearRutaParadaDto request, CancellationToken ct)
+        long rutaId,
+        [FromBody] CrearRutaParadaDto request,
+        CancellationToken ct)
     {
         try
         {
-            var parada = await _servicio.CrearAsync(rutaId, request, ct);
-            return CreatedAtAction(nameof(Obtener), new { rutaId, id = parada.Id }, parada);
+            var parada =
+                await _servicio.CrearAsync(
+                    rutaId,
+                    request,
+                    ct
+                );
+
+            return CreatedAtAction(
+                nameof(Obtener),
+                new
+                {
+                    rutaId,
+                    id = parada.Id
+                },
+                parada
+            );
         }
         catch (ValidationException ex)
         {
-            return BadRequest(new { mensaje = ex.Message });
+            return BadRequest(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("{id:long}")]
     public async Task<ActionResult<RutaParadaDto>> Actualizar(
-        long rutaId, long id, [FromBody] ActualizarRutaParadaDto request, CancellationToken ct)
+        long rutaId,
+        long id,
+        [FromBody] ActualizarRutaParadaDto request,
+        CancellationToken ct)
     {
         try
         {
-            var parada = await _servicio.ActualizarAsync(rutaId, id, request, ct);
-            return parada is null ? NotFound() : Ok(parada);
+            var parada =
+                await _servicio.ActualizarAsync(
+                    rutaId,
+                    id,
+                    request,
+                    ct
+                );
+
+            return parada is null
+                ? NotFound()
+                : Ok(parada);
         }
         catch (ValidationException ex)
         {
-            return BadRequest(new { mensaje = ex.Message });
+            return BadRequest(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpDelete("{id:long}")]
-    public async Task<IActionResult> Eliminar(long rutaId, long id, CancellationToken ct)
+    public async Task<IActionResult> Eliminar(
+        long rutaId,
+        long id,
+        CancellationToken ct)
     {
         try
         {
-            var resultado = await _servicio.EliminarAsync(rutaId, id, ct);
-            return resultado ? NoContent() : NotFound();
+            var resultado =
+                await _servicio.EliminarAsync(
+                    rutaId,
+                    id,
+                    ct
+                );
+
+            return resultado
+                ? NoContent()
+                : NotFound();
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 }

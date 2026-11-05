@@ -7,7 +7,7 @@ namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/plantillas")]
-[Authorize(Roles = "ADMIN,COOPERATIVA,OFICINISTA")]
+[Authorize(Roles = "COOPERATIVA,OFICINISTA")]
 public class PlantillasController : ControllerBase
 {
     private readonly IPlantillaService _servicio;
@@ -86,7 +86,7 @@ public class PlantillasController : ControllerBase
         return Ok(plantilla);
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPost]
     public async Task<ActionResult<PlantillaBusDto>> Crear(
         CrearPlantillaBusRequest request, CancellationToken ct)
@@ -153,7 +153,7 @@ public class PlantillasController : ControllerBase
         return asientos is null ? NotFound() : Ok(asientos);
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("{id:long}/asientos")]
     public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> DefinirDisposicion(
         long id, List<CrearAsientoPlantillaRequest> asientos, CancellationToken ct)
@@ -187,7 +187,7 @@ public class PlantillasController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("/api/buses/{busId:long}/plantilla/{plantillaId:long}")]
     public async Task<IActionResult> AsignarABus(long busId, long plantillaId, CancellationToken ct)
     {
