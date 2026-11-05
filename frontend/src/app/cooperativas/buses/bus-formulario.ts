@@ -220,7 +220,7 @@ export class BusFormulario implements OnInit {
       case 404:
         return base + 'La plantilla ya no existe.';
       case 409:
-        return base + 'La plantilla no tiene asientos definidos; ábrela en Plantillas y diseña los asientos.';
+        return base + (e.error?.mensaje ?? 'La plantilla no se puede asignar a este bus.');
       default:
         return base + 'Inténtalo de nuevo.';
     }
