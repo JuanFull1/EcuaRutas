@@ -96,7 +96,7 @@ export class TarifasFrecuenciaLista implements OnInit {
   readonly paginaActual = computed(() => Math.max(1, Math.min(this.pagina(), this.totalPaginas())));
   readonly filasPagina = computed(() => this.filtradas().slice((this.paginaActual() - 1) * this.tamanoPagina, this.paginaActual() * this.tamanoPagina));
 
-  puedeGestionar(): boolean { return this.auth.tieneRol('ADMIN'); }
+  puedeGestionar(): boolean { return this.auth.tieneRol('COOPERATIVA'); }
   ngOnInit(): void { this.cargarFrecuencias(); this.cargarNombres(); }
   etiquetaFrecuencia(f: FrecuenciaDto): string {
     return `${this.cooperativasPorId().get(f.cooperativaId) ?? `Cooperativa #${f.cooperativaId}`} · ${this.rutasPorId().get(f.rutaId) ?? `Ruta #${f.rutaId}`} · ${f.codigo || `Frecuencia #${f.id}`} · ${f.horaSalida}${f.activa ? '' : ' (inactiva)'}`;
@@ -225,3 +225,4 @@ export class TarifasFrecuenciaLista implements OnInit {
     });
   }
 }
+

@@ -1,6 +1,6 @@
 <div class="container-fluid px-0">
   <section class="bg-white border rounded-4 p-4 mb-4">
-    <span class="badge text-bg-primary mb-3">Administrador</span>
+    <span class="badge text-bg-primary mb-3">Cooperativa</span>
     <h1 class="h3 fw-bold">Gestión de lugares</h1>
     <p class="text-secondary mb-0">Administración de ciudades, terminales y puntos geográficos utilizados en las rutas.</p>
     @if (puedeEscribir()) {
@@ -79,7 +79,7 @@
                 <td><span class="badge" [class.text-bg-success]="lugar.activo" [class.text-bg-secondary]="!lugar.activo">{{ lugar.activo ? 'Activo' : 'Inactivo' }}</span></td>
                 @if (puedeEscribir()) {
                   <td><div class="d-flex flex-wrap gap-2 acciones">
-                    <a class="btn btn-sm btn-outline-secondary" routerLink="/admin/mapas/lugares" [queryParams]="{ lugarId: lugar.id }"
+                    <a class="btn btn-sm btn-outline-secondary" routerLink="/cooperativas/mapas/lugares" [queryParams]="{ lugarId: lugar.id }"
                       [attr.aria-label]="'Ver en mapa ' + lugar.nombre"><i class="bi bi-map me-1" aria-hidden="true"></i>Ver en mapa</a>
                     <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || formularioVisible()"
                       [attr.aria-label]="'Editar ' + lugar.nombre" (click)="editar(lugar)">Editar</button>

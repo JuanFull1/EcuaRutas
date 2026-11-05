@@ -18,82 +18,166 @@ public class RutasController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<RutaDto>>> Listar(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<RutaDto>>> Listar(
+        CancellationToken ct)
     {
-        return Ok(await _servicio.ListarAsync(ct));
+        return Ok(
+            await _servicio.ListarAsync(ct)
+        );
     }
 
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<RutaDto>> Obtener(long id, CancellationToken ct)
+    public async Task<ActionResult<RutaDto>> Obtener(
+        long id,
+        CancellationToken ct)
     {
-        var ruta = await _servicio.ObtenerAsync(id, ct);
-        return ruta is null ? NotFound() : Ok(ruta);
+        var ruta =
+            await _servicio.ObtenerAsync(
+                id,
+                ct
+            );
+
+        return ruta is null
+            ? NotFound()
+            : Ok(ruta);
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPost]
     public async Task<ActionResult<RutaDto>> Crear(
-        [FromBody] CrearRutaDto request, CancellationToken ct)
+        [FromBody] CrearRutaDto request,
+        CancellationToken ct)
     {
         try
         {
-            var ruta = await _servicio.CrearAsync(request, ct);
-            return CreatedAtAction(nameof(Obtener), new { id = ruta.Id }, ruta);
+            var ruta =
+                await _servicio.CrearAsync(
+                    request,
+                    ct
+                );
+
+            return CreatedAtAction(
+                nameof(Obtener),
+                new
+                {
+                    id = ruta.Id
+                },
+                ruta
+            );
         }
         catch (ValidationException ex)
         {
-            return BadRequest(new { mensaje = ex.Message });
+            return BadRequest(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("{id:long}")]
     public async Task<ActionResult<RutaDto>> Actualizar(
-        long id, [FromBody] ActualizarRutaDto request, CancellationToken ct)
+        long id,
+        [FromBody] ActualizarRutaDto request,
+        CancellationToken ct)
     {
         try
         {
-            var ruta = await _servicio.ActualizarAsync(id, request, ct);
-            return ruta is null ? NotFound() : Ok(ruta);
+            var ruta =
+                await _servicio.ActualizarAsync(
+                    id,
+                    request,
+                    ct
+                );
+
+            return ruta is null
+                ? NotFound()
+                : Ok(ruta);
         }
         catch (ValidationException ex)
         {
-            return BadRequest(new { mensaje = ex.Message });
+            return BadRequest(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpDelete("{id:long}")]
-    public async Task<IActionResult> DarDeBaja(long id, CancellationToken ct)
+    public async Task<IActionResult> DarDeBaja(
+        long id,
+        CancellationToken ct)
     {
         try
         {
-            var resultado = await _servicio.DarDeBajaAsync(id, ct);
-            return resultado ? NoContent() : NotFound();
+            var resultado =
+                await _servicio.DarDeBajaAsync(
+                    id,
+                    ct
+                );
+
+            return resultado
+                ? NoContent()
+                : NotFound();
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 }

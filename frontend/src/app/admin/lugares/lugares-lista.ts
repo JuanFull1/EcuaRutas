@@ -46,7 +46,7 @@ export class LugaresLista implements OnInit {
 
   // Reutiliza la comprobación de rol y vigencia de sesión del proyecto.
   puedeEscribir(): boolean {
-    return this.auth.tieneRol('ADMIN');
+    return this.auth.tieneRol('COOPERATIVA');
   }
 
   ngOnInit(): void {

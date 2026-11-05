@@ -7,7 +7,7 @@ namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/plantillas")]
-[Authorize(Roles = "ADMIN,COOPERATIVA,OFICINISTA")]
+[Authorize(Roles = "COOPERATIVA,OFICINISTA")]
 public class PlantillasController : ControllerBase
 {
     private readonly IPlantillaService _servicio;
@@ -86,7 +86,7 @@ public class PlantillasController : ControllerBase
         return Ok(plantilla);
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPost]
     public async Task<ActionResult<PlantillaBusDto>> Crear(
         CrearPlantillaBusRequest request, CancellationToken ct)
@@ -107,6 +107,28 @@ public class PlantillasController : ControllerBase
         {
             return NotFound(new { mensaje = ex.Message });
         }
+    }
+
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> Desactivar(long id, CancellationToken ct)
+    {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var desactivada = await _servicio.DesactivarAsync(id, ct);
+        return desactivada ? NoContent() : NotFound();
     }
 
     [HttpGet("{id:long}/asientos")]
@@ -131,7 +153,7 @@ public class PlantillasController : ControllerBase
         return asientos is null ? NotFound() : Ok(asientos);
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("{id:long}/asientos")]
     public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> DefinirDisposicion(
         long id, List<CrearAsientoPlantillaRequest> asientos, CancellationToken ct)
@@ -165,7 +187,7 @@ public class PlantillasController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("/api/buses/{busId:long}/plantilla/{plantillaId:long}")]
     public async Task<IActionResult> AsignarABus(long busId, long plantillaId, CancellationToken ct)
     {

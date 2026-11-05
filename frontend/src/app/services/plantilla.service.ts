@@ -62,6 +62,10 @@ export class PlantillaService {
     );
   }
 
+  desactivar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`);
+  }
+
   asignarABus(busId: number, plantillaId: number): Observable<void> {
     return this.http.put<void>(
       `${API_URL}/buses/${busId}/plantilla/${plantillaId}`,

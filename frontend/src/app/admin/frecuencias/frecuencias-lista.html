@@ -1,11 +1,11 @@
 <div class="container-fluid px-0">
   <section class="bg-white border rounded-4 p-4 mb-4">
-    <span class="badge text-bg-primary mb-3">Administrador</span>
+    <span class="badge text-bg-primary mb-3">Cooperativa</span>
     <h1 class="h3 fw-bold">Gestión de frecuencias</h1>
     <p class="text-secondary mb-0">Administra los horarios de salida y las frecuencias de transporte de las cooperativas.</p>
     @if (puedeGestionar()) { <button type="button" class="btn btn-primary mt-3" [disabled]="ocupado() || panelAbierto()" (click)="nueva()"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva frecuencia</button> }
   </section>
-  @if (!puedeGestionar()) { <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol ADMIN para consultar y gestionar frecuencias.</div> }
+  @if (!puedeGestionar()) { <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol COOPERATIVA para consultar y gestionar frecuencias.</div> }
   @else {
     @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
     @if (error(); as mensaje) {

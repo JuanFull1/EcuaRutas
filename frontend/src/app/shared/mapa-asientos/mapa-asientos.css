@@ -319,3 +319,62 @@
   border-color: #d97706;
   color: #78350f;
 }
+
+/* Miniatura */
+.compacto .pestanas,
+.compacto .leyenda,
+.compacto .asiento-numero,
+.compacto .asiento-precio,
+.compacto .bus-etiqueta,
+.compacto .bus-puerta,
+.compacto .bus-faro,
+.compacto .bus-etiqueta-fondo,
+.compacto .asiento::before,
+.compacto .asiento::after {
+  display: none;
+}
+
+.compacto .bus {
+  --celda: 0.95rem;
+  border-width: 3px;
+  border-radius: 2.6rem 2.6rem 0.8rem 0.8rem;
+  padding: 0 0.5rem 0.25rem;
+  min-width: 0;
+  box-shadow: none;
+}
+
+.compacto .bus-contenedor {
+  padding: 0 0.35rem;
+}
+
+.compacto .bus-frente {
+  height: 1.9rem;
+  margin: 0 -0.5rem 0.45rem;
+  border-bottom-width: 2px;
+}
+
+.compacto .parabrisas {
+  top: 0.4rem;
+  height: 0.8rem;
+}
+
+.compacto .bus-cuadricula {
+  gap: 0.15rem;
+}
+
+.compacto .asiento {
+  border-radius: 0.25rem;
+  border-width: 1px;
+  box-shadow: none;
+}
+
+.compacto .bus-fondo {
+  min-height: 0.7rem;
+  margin: 0.3rem -0.5rem 0;
+  border-top-width: 2px;
+}
+
+.compacto .rueda {
+  width: 0.35rem;
+  height: 1.4rem;
+}

@@ -18,82 +18,163 @@ public class LugaresController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<LugarDto>>> Listar(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<LugarDto>>> Listar(
+        CancellationToken ct)
     {
-        return Ok(await _servicio.ListarAsync(ct));
+        return Ok(
+            await _servicio.ListarAsync(ct)
+        );
     }
 
     [HttpGet("{id:long}")]
-    public async Task<ActionResult<LugarDto>> Obtener(long id, CancellationToken ct)
+    public async Task<ActionResult<LugarDto>> Obtener(
+        long id,
+        CancellationToken ct)
     {
-        var lugar = await _servicio.ObtenerAsync(id, ct);
-        return lugar is null ? NotFound() : Ok(lugar);
+        var lugar =
+            await _servicio.ObtenerAsync(id, ct);
+
+        return lugar is null
+            ? NotFound()
+            : Ok(lugar);
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPost]
     public async Task<ActionResult<LugarDto>> Crear(
-        [FromBody] CrearLugarDto request, CancellationToken ct)
+        [FromBody] CrearLugarDto request,
+        CancellationToken ct)
     {
         try
         {
-            var lugar = await _servicio.CrearAsync(request, ct);
-            return CreatedAtAction(nameof(Obtener), new { id = lugar.Id }, lugar);
+            var lugar =
+                await _servicio.CrearAsync(
+                    request,
+                    ct
+                );
+
+            return CreatedAtAction(
+                nameof(Obtener),
+                new
+                {
+                    id = lugar.Id
+                },
+                lugar
+            );
         }
         catch (ValidationException ex)
         {
-            return BadRequest(new { mensaje = ex.Message });
+            return BadRequest(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("{id:long}")]
     public async Task<ActionResult<LugarDto>> Actualizar(
-        long id, [FromBody] ActualizarLugarDto request, CancellationToken ct)
+        long id,
+        [FromBody] ActualizarLugarDto request,
+        CancellationToken ct)
     {
         try
         {
-            var lugar = await _servicio.ActualizarAsync(id, request, ct);
-            return lugar is null ? NotFound() : Ok(lugar);
+            var lugar =
+                await _servicio.ActualizarAsync(
+                    id,
+                    request,
+                    ct
+                );
+
+            return lugar is null
+                ? NotFound()
+                : Ok(lugar);
         }
         catch (ValidationException ex)
         {
-            return BadRequest(new { mensaje = ex.Message });
+            return BadRequest(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpDelete("{id:long}")]
-    public async Task<IActionResult> DarDeBaja(long id, CancellationToken ct)
+    public async Task<IActionResult> DarDeBaja(
+        long id,
+        CancellationToken ct)
     {
         try
         {
-            var resultado = await _servicio.DarDeBajaAsync(id, ct);
-            return resultado ? NoContent() : NotFound();
+            var resultado =
+                await _servicio.DarDeBajaAsync(
+                    id,
+                    ct
+                );
+
+            return resultado
+                ? NoContent()
+                : NotFound();
         }
         catch (RecursoNoEncontradoException ex)
         {
-            return NotFound(new { mensaje = ex.Message });
+            return NotFound(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
         catch (ConflictoException ex)
         {
-            return Conflict(new { mensaje = ex.Message });
+            return Conflict(
+                new
+                {
+                    mensaje = ex.Message
+                }
+            );
         }
     }
 }

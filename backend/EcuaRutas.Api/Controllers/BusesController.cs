@@ -7,7 +7,7 @@ namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/buses")]
-[Authorize(Roles = "ADMIN,COOPERATIVA,OFICINISTA")]
+[Authorize(Roles = "COOPERATIVA,OFICINISTA")]
 public class BusesController : ControllerBase
 {
     private readonly IBusService _servicio;
@@ -46,7 +46,7 @@ public class BusesController : ControllerBase
         return Ok(bus);
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPost]
     public async Task<ActionResult<BusDto>> Crear(CrearBusRequest request, CancellationToken ct)
     {
@@ -69,7 +69,7 @@ public class BusesController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpPut("{id:long}")]
     public async Task<ActionResult<BusDto>> Actualizar(long id, ActualizarBusRequest request, CancellationToken ct)
     {
@@ -99,7 +99,7 @@ public class BusesController : ControllerBase
         }
     }
     
-    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [Authorize(Roles = "COOPERATIVA")]
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> DarDeBaja(long id, CancellationToken ct)
     {
