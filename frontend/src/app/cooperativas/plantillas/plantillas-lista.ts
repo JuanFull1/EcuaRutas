@@ -8,6 +8,7 @@ import { PlantillaBus } from '../../models/plantilla-bus.model';
 import { TipoAsiento } from '../../models/tipo-asiento.model';
 import { AuthService } from '../../services/auth.service';
 import { PlantillaService } from '../../services/plantilla.service';
+import { mensajeError } from '../../shared/http-error';
 import {
   AsientoMapa,
   MapaAsientos
@@ -35,6 +36,7 @@ export class PlantillasLista implements OnInit {
   readonly vistas = signal<Record<number, VistaPlantilla>>({});
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
+  readonly errorAccion = signal<string | null>(null);
 
   ngOnInit(): void {
     this.cargar();
@@ -42,6 +44,26 @@ export class PlantillasLista implements OnInit {
 
   vistaDe(id: number): VistaPlantilla | undefined {
     return this.vistas()[id];
+  }
+
+  eliminar(plantilla: PlantillaBus): void {
+    const aviso =
+      `¿Eliminar la plantilla "${plantilla.nombre}"? ` +
+      'Los buses que ya la usan conservan sus asientos.';
+
+    if (!confirm(aviso)) {
+      return;
+    }
+
+    this.errorAccion.set(null);
+
+    this.plantillaService.desactivar(plantilla.id).subscribe({
+      next: () => this.cargar(),
+      error: (e: unknown) =>
+        this.errorAccion.set(
+          mensajeError(e, 'No se pudo eliminar la plantilla. Inténtalo de nuevo.')
+        )
+    });
   }
 
   cargar(): void {

@@ -25,6 +25,10 @@
     </div>
   }
 
+  @if (errorAccion(); as mensaje) {
+    <div class="alert alert-danger" role="alert">{{ mensaje }}</div>
+  }
+
   @if (cargando()) {
     <p class="text-secondary">
       <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
@@ -86,12 +90,21 @@
           </div>
 
           @if (plantilla.cooperativaId !== null) {
-            <a
-              [routerLink]="['/cooperativas/plantillas', plantilla.id, 'disposicion']"
-              class="btn btn-sm btn-outline-dark mt-3"
-            >
-              <i class="bi bi-grid-3x3-gap"></i> Editar diseño
-            </a>
+            <div class="tarjeta-acciones">
+              <a
+                [routerLink]="['/cooperativas/plantillas', plantilla.id, 'disposicion']"
+                class="btn btn-sm btn-outline-dark"
+              >
+                <i class="bi bi-grid-3x3-gap"></i> Editar diseño
+              </a>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                (click)="eliminar(plantilla)"
+              >
+                <i class="bi bi-trash"></i> Eliminar
+              </button>
+            </div>
           }
         </div>
 
