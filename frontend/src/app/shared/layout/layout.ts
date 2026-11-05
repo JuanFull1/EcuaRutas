@@ -19,11 +19,13 @@ import {
   AuthService
 } from '../../services/auth.service';
 
+
 interface MenuItem {
   texto: string;
   icono: string;
   ruta?: string;
 }
+
 
 @Component({
   selector: 'app-layout',
@@ -42,11 +44,14 @@ export class Layout {
   private readonly authService =
     inject(AuthService);
 
+
   readonly menuAbierto =
     signal(false);
 
+
   readonly usuario =
     this.authService.usuarioActual;
+
 
   readonly subtituloPanel =
     computed(() => {
@@ -59,21 +64,26 @@ export class Layout {
 
           return 'Administración';
 
+
         case 'COOPERATIVA':
 
           return 'Gestión de Cooperativa';
+
 
         case 'OFICINISTA':
 
           return 'Punto de Venta';
 
+
         case 'CLIENTE':
 
           return 'Portal del Cliente';
 
+
         case 'BUS':
 
           return 'Operación de Bus';
+
 
         default:
 
@@ -83,12 +93,19 @@ export class Layout {
 
     });
 
+
   readonly menuItems =
     computed<MenuItem[]>(() => {
 
       switch (
         this.usuario()?.rol
       ) {
+
+        /*
+         * =====================================================
+         * ADMIN
+         * =====================================================
+         */
 
         case 'ADMIN':
 
@@ -120,6 +137,13 @@ export class Layout {
 
           ];
 
+
+        /*
+         * =====================================================
+         * COOPERATIVA
+         * =====================================================
+         */
+
         case 'COOPERATIVA':
 
           return [
@@ -127,31 +151,36 @@ export class Layout {
             {
               texto: 'Inicio',
               icono: 'bi-grid',
-              ruta: '/cooperativas/inicio'
+              ruta:
+                '/cooperativas/inicio'
             },
 
             {
               texto: 'Mi cooperativa',
               icono: 'bi-building-gear',
-              ruta: '/cooperativas/configuracion'
+              ruta:
+                '/cooperativas/configuracion'
             },
 
             {
               texto: 'Buses',
               icono: 'bi-bus-front',
-              ruta: '/cooperativas/buses'
+              ruta:
+                '/cooperativas/buses'
             },
 
             {
               texto: 'Grupos',
               icono: 'bi-collection',
-              ruta: '/cooperativas/grupos'
+              ruta:
+                '/cooperativas/grupos'
             },
 
             {
               texto: 'Plantillas',
               icono: 'bi-grid-3x3-gap',
-              ruta: '/cooperativas/plantillas'
+              ruta:
+                '/cooperativas/plantillas'
             },
             {
               texto: 'Tipos de asiento',
@@ -162,64 +191,84 @@ export class Layout {
             {
               texto: 'Lugares',
               icono: 'bi-geo-alt',
-              ruta: '/cooperativas/lugares'
+              ruta:
+                '/cooperativas/lugares'
             },
 
             {
               texto: 'Rutas',
               icono: 'bi-signpost-2',
-              ruta: '/cooperativas/rutas'
+              ruta:
+                '/cooperativas/rutas'
             },
 
             {
               texto: 'Paradas',
               icono: 'bi-pin-map',
-              ruta: '/cooperativas/paradas'
+              ruta:
+                '/cooperativas/paradas'
             },
 
             {
               texto: 'Mapa de lugares',
               icono: 'bi-map',
-              ruta: '/cooperativas/mapas/lugares'
+              ruta:
+                '/cooperativas/mapas/lugares'
             },
 
             {
-              texto: 'Mapa de rutas y paradas',
-              icono: 'bi-signpost-split',
-              ruta: '/cooperativas/mapas/rutas'
+              texto:
+                'Mapa de rutas y paradas',
+              icono:
+                'bi-signpost-split',
+              ruta:
+                '/cooperativas/mapas/rutas'
             },
 
             {
               texto: 'Resoluciones ANT',
-              icono: 'bi-file-earmark-text',
-              ruta: '/cooperativas/resoluciones-ant'
+              icono:
+                'bi-file-earmark-text',
+              ruta:
+                '/cooperativas/resoluciones-ant'
             },
 
             {
               texto: 'Frecuencias',
               icono: 'bi-clock',
-              ruta: '/cooperativas/frecuencias'
+              ruta:
+                '/cooperativas/frecuencias'
             },
 
             {
               texto: 'Tarifas',
               icono: 'bi-cash-coin',
-              ruta: '/cooperativas/tarifas'
+              ruta:
+                '/cooperativas/tarifas'
             },
 
             {
               texto: 'Hojas de Ruta',
               icono: 'bi-calendar-check',
-              ruta: '/viajes/hojas-ruta'
+              ruta:
+                '/viajes/hojas-ruta'
             },
 
             {
               texto: 'Viajes',
               icono: 'bi-bus-front-fill',
-              ruta: '/viajes/lista'
+              ruta:
+                '/viajes/lista'
             }
 
           ];
+
+
+        /*
+         * =====================================================
+         * OFICINISTA
+         * =====================================================
+         */
 
         case 'OFICINISTA':
 
@@ -228,37 +277,33 @@ export class Layout {
             {
               texto: 'Inicio',
               icono: 'bi-grid',
-              ruta: '/ventas/inicio'
+              ruta:
+                '/ventas/inicio'
             },
 
             {
               texto: 'Disponibilidad',
               icono: 'bi-search',
-              ruta: '/ventas/disponibilidad'
+              ruta:
+                '/ventas/disponibilidad'
             },
 
             {
               texto: 'Venta de boletos',
-              icono: 'bi-ticket-perforated',
-              ruta: '/ventas/gestion'
-            },
-
-            {
-              texto: 'Pagos',
-              icono: 'bi-credit-card'
-            },
-
-            {
-              texto: 'Comprobantes',
-              icono: 'bi-receipt'
-            },
-
-            {
-              texto: 'Validación de pagos',
-              icono: 'bi-check-circle'
+              icono:
+                'bi-ticket-perforated',
+              ruta:
+                '/ventas/gestion'
             }
 
           ];
+
+
+        /*
+         * =====================================================
+         * CLIENTE
+         * =====================================================
+         */
 
         case 'CLIENTE':
 
@@ -267,34 +312,48 @@ export class Layout {
             {
               texto: 'Inicio',
               icono: 'bi-house',
-              ruta: '/cliente/inicio'
+              ruta:
+                '/cliente/inicio'
             },
 
             {
               texto: 'Buscar viajes',
               icono: 'bi-search',
-              ruta: '/cliente/buscar-viajes'
+              ruta:
+                '/cliente/buscar-viajes'
             },
 
             {
               texto: 'Mis boletos',
-              icono: 'bi-ticket-perforated',
-              ruta: '/cliente/boletos'
+              icono:
+                'bi-ticket-perforated',
+              ruta:
+                '/cliente/boletos'
             },
 
             {
               texto: 'Mis viajes',
-              icono: 'bi-clock-history',
-              ruta: '/cliente/historial'
+              icono:
+                'bi-clock-history',
+              ruta:
+                '/cliente/historial'
             },
 
             {
               texto: 'Notificaciones',
               icono: 'bi-bell',
-              ruta: '/cliente/notificaciones'
+              ruta:
+                '/cliente/notificaciones'
             }
 
           ];
+
+
+        /*
+         * =====================================================
+         * BUS
+         * =====================================================
+         */
 
         case 'BUS':
 
@@ -303,12 +362,15 @@ export class Layout {
             {
               texto: 'Inicio',
               icono: 'bi-grid',
-              ruta: '/personal-bus/inicio'
+              ruta:
+                '/personal-bus/inicio'
             },
 
             {
-              texto: 'Validar boletos',
-              icono: 'bi-qr-code-scan'
+              texto:
+                'Validar boletos',
+              icono:
+                'bi-qr-code-scan'
             },
 
             {
@@ -318,10 +380,12 @@ export class Layout {
 
             {
               texto: 'Historial',
-              icono: 'bi-clock-history'
+              icono:
+                'bi-clock-history'
             }
 
           ];
+
 
         default:
 
@@ -331,6 +395,7 @@ export class Layout {
 
     });
 
+
   toggleMenu(): void {
 
     this.menuAbierto.update(
@@ -339,6 +404,7 @@ export class Layout {
 
   }
 
+
   cerrarMenu(): void {
 
     this.menuAbierto.set(
@@ -346,6 +412,7 @@ export class Layout {
     );
 
   }
+
 
   cerrarSesion(): void {
 

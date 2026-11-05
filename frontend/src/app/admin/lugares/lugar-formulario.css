@@ -1,2 +1,38 @@
-:host { display: block; min-width: 0; }
-fieldset { min-width: 0; }
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+fieldset {
+  min-width: 0;
+}
+
+.selector-ubicacion {
+  min-width: 0;
+}
+
+.selector-ubicacion app-mapa {
+  display: block;
+  --ecuarutas-mapa-altura: 430px;
+}
+
+:host ::ng-deep .ecuarutas-marcador-editable {
+  font-size: 35px;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  filter: drop-shadow(
+    0 3px 3px rgba(0, 0, 0, 0.4)
+  );
+}
+
+:host ::ng-deep .ecuarutas-marcador-editable:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 575.98px) {
+  .selector-ubicacion app-mapa {
+    --ecuarutas-mapa-altura: 340px;
+  }
+}

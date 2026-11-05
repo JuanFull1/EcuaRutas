@@ -1,66 +1,121 @@
-
 :host {
   display: block;
 }
 
-/* Tarjetas iguales al panel principal */
-.card {
-  border-radius: 14px;
-}
-
-.card-body {
-  padding: 22px;
-}
-
-/* Formularios */
-.form-control,
-.form-select {
-  min-height: 44px;
-  border-radius: 8px;
-  border-color: #dce3eb;
-}
-
-.form-control:focus,
-.form-select:focus {
-  border-color: #1769aa;
-  box-shadow: 0 0 0 0.2rem rgba(23, 105, 170, 0.12);
-}
-
-/* Botones */
-.btn {
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-/* Tarjetas de viajes */
 .viaje-card {
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .viaje-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(21, 47, 77, 0.09) !important;
 }
 
 .reserva-dialog {
-  width: min(560px, calc(100vw - 32px));
-  max-height: min(85vh, 720px);
-  color: #152f4d;
+  width: min(1100px, calc(100vw - 2rem));
+  max-width: 1100px;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  background: #fff;
 }
 
 .reserva-dialog::backdrop {
-  background: rgba(15, 35, 58, .55);
+  background: rgb(15 23 42 / 0.62);
+  backdrop-filter: blur(2px);
 }
 
-/* Responsivo */
-@media (max-width: 767.98px) {
-  .card-body {
-    padding: 18px;
+.reserva-contenido {
+  padding: 1.5rem;
+}
+
+.mapa-asientos-panel {
+  min-height: 100%;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #f8fafc;
+}
+
+.mapa-asientos-scroll {
+  width: 100%;
+  overflow-x: auto;
+  padding:
+    0.75rem
+    0.25rem
+    1rem;
+}
+
+.reserva-panel {
+  height: 100%;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.asiento-seleccionado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+
+  padding: 1rem;
+
+  border: 2px solid #2563eb;
+  border-radius: 1rem;
+
+  background: #eff6ff;
+}
+
+.numero-asiento {
+  margin-top: 0.15rem;
+
+  color: #0f172a;
+
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.precio-asiento {
+  color: #1d4ed8;
+
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+@media (max-width: 991.98px) {
+
+  .reserva-dialog {
+    width: min(
+      760px,
+      calc(100vw - 1rem)
+    );
   }
 
-  .viaje-card h3 {
-    font-size: 1.4rem;
+  .reserva-contenido {
+    padding: 1rem;
   }
+
+}
+
+@media (max-width: 575.98px) {
+
+  .reserva-dialog {
+    width: calc(100vw - 0.5rem);
+    max-height: calc(100vh - 0.5rem);
+
+    border-radius: 0.75rem !important;
+  }
+
+  .reserva-contenido {
+    padding: 0.85rem;
+  }
+
+  .mapa-asientos-panel,
+  .reserva-panel {
+    padding: 0.75rem;
+  }
+
 }

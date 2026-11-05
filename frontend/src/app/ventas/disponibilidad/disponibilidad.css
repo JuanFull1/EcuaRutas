@@ -1,417 +1,244 @@
-.disponibilidad-container {
-  max-width: 1100px;
+:host {
+  display: block;
+}
+
+.pagina-disponibilidad {
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 35px;
+  padding: 2rem 1.25rem;
 }
 
-.encabezado {
-  margin-bottom: 30px;
+.encabezado-pagina {
+  margin-bottom: 1.5rem;
 }
 
-.encabezado h1 {
-  margin-bottom: 8px;
-  font-size: 32px;
-  font-weight: 500;
+.encabezado-pagina h1 {
+  margin: 0 0 .35rem;
+  font-size: 2rem;
+  font-weight: 700;
 }
 
-.encabezado p {
+.encabezado-pagina p {
   margin: 0;
+  color: #667085;
 }
 
-.formulario {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
-  gap: 18px;
-  align-items: end;
-  padding: 25px;
-  margin-bottom: 25px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: white;
-}
-
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.campo label {
-  font-weight: 600;
-}
-
-.campo select,
-.campo input {
-  width: 100%;
-  height: 42px;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: white;
-}
-
-.formulario button {
-  height: 42px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.formulario button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.mensaje {
-  padding: 12px 15px;
-  margin-bottom: 20px;
-  border-radius: 6px;
-  background: #f1f1f1;
-}
-
-.error {
-  padding: 12px 15px;
-  margin-bottom: 20px;
-  border-radius: 6px;
-  background: #f8d7da;
-}
-
-.resultados {
-  margin-top: 30px;
-}
-
-.resultados h2 {
-  margin-bottom: 20px;
-  font-size: 24px;
-}
-
-.asientos-panel {
-  margin-top: 30px;
-}
-
-.asientos-panel h2 {
-  margin-bottom: 8px;
-  font-size: 24px;
-}
-
-.asientos-lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 12px;
-}
-
-.asiento-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: white;
-}
-
-.asiento-card button {
-  margin-top: 6px;
-  padding: 8px 10px;
-  border: 1px solid #1677c8;
-  border-radius: 6px;
-  color: #075b9d;
-  background: white;
-  cursor: pointer;
-}
-
-.asiento-card button.seleccionado {
-  color: white;
-  background: #1677c8;
-}
-
-.asiento-card button:disabled,
-.reserva-formulario button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.reserva-formulario {
-  display: grid;
-  gap: 16px;
-  max-width: 520px;
-  margin-top: 18px;
-  padding: 18px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: white;
-}
-
-.pasajero-encontrado {
-  margin: 0;
-  color: #166534;
-}
-
-.reserva-formulario .campo input {
-  height: 42px;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.reserva-formulario small {
-  color: #526274;
-}
-
-.reserva-formulario button {
-  min-height: 42px;
-  border: 0;
-  border-radius: 6px;
-  color: white;
-  background: #1677c8;
-  cursor: pointer;
-}
-
-.reserva-confirmacion {
-  margin-top: 22px;
-  padding: 18px;
-  border: 1px solid #a8d5b5;
-  border-radius: 8px;
-  background: #effaf2;
-}
-
-.reserva-confirmacion h2 {
-  margin-bottom: 12px;
-  font-size: 22px;
-}
-
-.reserva-confirmacion p {
-  margin: 6px 0;
-}
-
-.modal-fondo {
-  position: fixed;
-  z-index: 1200;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24px;
-  background: rgb(15 23 42 / 58%);
-  overscroll-behavior: contain;
-}
-
-.modal-contenido {
-  display: flex;
-  flex-direction: column;
-  width: min(940px, 100%);
-  max-height: min(850px, calc(100vh - 48px));
-  overflow: hidden;
-  border: 1px solid #d6dee8;
-  border-radius: 14px;
+.panel-busqueda {
+  padding: 1.35rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
   background: #fff;
-  box-shadow: 0 24px 70px rgb(15 23 42 / 28%);
-}
-
-.modal-reserva {
-  width: min(560px, 100%);
-}
-
-.modal-encabezado {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.modal-encabezado h2 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.modal-encabezado p {
-  margin: 6px 0 0;
-  color: #526274;
-}
-
-.modal-cerrar {
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 50%;
-  background: #f1f5f9;
-  color: #263748;
-  font-size: 26px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.modal-cuerpo {
-  overflow-y: auto;
-  padding: 22px 24px 24px;
-  overscroll-behavior: contain;
-}
-
-.modal-cuerpo .asientos-lista {
-  margin-bottom: 18px;
-}
-
-.modal-cuerpo .reserva-formulario {
-  max-width: none;
-  margin: 0;
-}
-
-.modal-cuerpo .asiento-seleccionado {
-  margin-top: 0;
-}
-
-.aviso-efectivo {
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #fff7ed;
-  color: #9a3412;
-}
-
-.acciones-venta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.acciones-venta button,
-.acciones-venta .boton-gestion {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 42px;
-  padding: 8px 16px;
-  border: 0;
-  border-radius: 8px;
-  background: #1476c6;
-  color: #fff;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.acciones-venta .boton-secundario {
-  border: 1px solid #b42318;
-  background: #fff;
-  color: #263748;
-}
-
-.acciones-venta button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.asiento-seleccionado {
-  margin-top: 18px;
-  padding: 12px 15px;
-  border-radius: 6px;
-  background: #e7f2fb;
 }
 
 .viaje-card {
   display: grid;
-  grid-template-columns: 130px 1fr 180px;
-  gap: 25px;
+  grid-template-columns:
+    120px minmax(0, 1fr) 180px;
+  gap: 1.5rem;
   align-items: center;
-  padding: 22px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: white;
+
+  margin-bottom: 1rem;
+  padding: 1.4rem;
+
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+
+  background: #fff;
 }
 
-.viaje-hora {
+.hora strong {
+  display: block;
+  font-size: 1.7rem;
+  color: #152238;
+}
+
+.hora span {
+  display: block;
+  margin-top: .35rem;
+  color: #667085;
+  font-size: .85rem;
+}
+
+.datos-viaje h3 {
+  margin: 0 0 .35rem;
+  font-size: 1.45rem;
+}
+
+.datos-viaje p {
+  margin: .25rem 0;
+  color: #475467;
+}
+
+.precio-viaje {
+  text-align: right;
+}
+
+.precio-viaje small {
+  display: block;
+  color: #667085;
+}
+
+.precio-viaje strong {
+  display: block;
+  font-size: 1.7rem;
+  color: #152238;
+}
+
+.dialogo-asientos {
+  width: min(
+    1180px,
+    calc(100vw - 2rem)
+  );
+
+  max-width: 1180px;
+
+  max-height:
+    calc(100vh - 2rem);
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 16px;
+
+  overflow: auto;
+}
+
+.dialogo-asientos::backdrop {
+  background:
+    rgba(15, 23, 42, .62);
+
+  backdrop-filter:
+    blur(2px);
+}
+
+.dialogo-contenido {
+  padding: 1.5rem;
+}
+
+.dialogo-header {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 1rem;
+
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+
+  border-bottom:
+    1px solid #e5e7eb;
 }
 
-.viaje-hora strong {
-  font-size: 26px;
+.dialogo-header h2 {
+  margin: 0 0 .25rem;
 }
 
-.viaje-hora span {
-  font-size: 13px;
+.dialogo-header p,
+.dialogo-header small {
+  margin: 0;
+  color: #667085;
 }
 
-.viaje-info h3 {
-  margin: 0 0 8px;
+.contenido-venta {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.35fr)
+    minmax(330px, .65fr);
+
+  gap: 1.5rem;
 }
 
-.viaje-info p {
-  margin: 5px 0;
+.mapa-panel,
+.venta-panel {
+  padding: 1.25rem;
+
+  border: 1px solid #e1e6ed;
+
+  border-radius: 14px;
+
+  background: #fff;
 }
 
-.viaje-precio {
+.mapa-panel {
+  background: #f8fafc;
+}
+
+.mapa-panel h3,
+.venta-panel h3 {
+  margin:
+    0 0 .25rem;
+}
+
+.mapa-panel p {
+  margin: 0;
+  color: #667085;
+}
+
+.mapa-scroll {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.asiento-elegido {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 1rem;
+
+  border:
+    2px solid #0d6efd;
+
+  border-radius: 12px;
+
+  background: #eef5ff;
 }
 
-.viaje-precio span {
-  font-size: 13px;
+.asiento-elegido small {
+  display: block;
+  color: #667085;
 }
 
-.viaje-precio strong {
-  font-size: 24px;
+.asiento-elegido strong {
+  display: block;
+  margin-top: .2rem;
+  font-size: 1.35rem;
 }
 
-.viaje-precio button {
-  padding: 9px 15px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.acciones-venta {
+  display: grid;
+  gap: .65rem;
+
+  margin-top: 1.25rem;
 }
 
-@media (max-width: 900px) {
+.cargando {
+  padding: 4rem 1rem;
+  text-align: center;
+}
 
-  .formulario {
-    grid-template-columns: 1fr 1fr;
-  }
+.cargando p {
+  margin-top: 1rem;
+  color: #667085;
+}
+
+@media (
+  max-width: 900px
+) {
 
   .viaje-card {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
   }
 
-  .viaje-precio {
-    align-items: flex-start;
+  .precio-viaje {
+    text-align: left;
   }
 
-}
-
-@media (max-width: 600px) {
-
-  .disponibilidad-container {
-    padding: 20px;
-  }
-
-  .formulario {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-fondo {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .modal-contenido {
-    width: 100%;
-    max-height: 92vh;
-    border-radius: 16px 16px 0 0;
-  }
-
-  .modal-encabezado,
-  .modal-cuerpo {
-    padding-right: 18px;
-    padding-left: 18px;
-  }
-
-  .acciones-venta {
-    flex-direction: column;
+  .contenido-venta {
+    grid-template-columns:
+      1fr;
   }
 
 }
