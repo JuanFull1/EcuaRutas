@@ -109,6 +109,28 @@ public class PlantillasController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> Desactivar(long id, CancellationToken ct)
+    {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var desactivada = await _servicio.DesactivarAsync(id, ct);
+        return desactivada ? NoContent() : NotFound();
+    }
+
     [HttpGet("{id:long}/asientos")]
     public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> ObtenerDisposicion(
         long id, CancellationToken ct)

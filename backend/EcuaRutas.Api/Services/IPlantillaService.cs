@@ -27,6 +27,10 @@ public interface IPlantillaService
         IReadOnlyList<CrearAsientoPlantillaRequest> asientos,
         CancellationToken ct = default);
 
+    // Desactiva la plantilla (no se borra: los buses pueden referenciarla).
+    // Devuelve false si no existe.
+    Task<bool> DesactivarAsync(long id, CancellationToken ct = default);
+
     // Copia los asientos de la plantilla al bus. Devuelve false si el bus o la plantilla no existen.
     Task<bool> AsignarABusAsync(
         long busId, long plantillaId, CancellationToken ct = default);
