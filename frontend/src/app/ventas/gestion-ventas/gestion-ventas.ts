@@ -1,19 +1,46 @@
-import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { API_URL } from '../../services/api.config';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject
+} from '@angular/core';
 
-interface VentaAsiento {
+import {
+  CommonModule,
+  DatePipe,
+  DecimalPipe
+} from '@angular/common';
+
+import {
+  FormsModule
+} from '@angular/forms';
+
+import {
+  HttpClient,
+  HttpParams
+} from '@angular/common/http';
+
+import {
+  firstValueFrom
+} from 'rxjs';
+
+import {
+  API_URL
+} from '../../services/api.config';
+
+import * as QRCode from 'qrcode';
+
+
+interface VentaListadoAsiento {
   documento: string;
   pasajero: string;
   numeroAsiento: string;
   precioFinal: number;
-  codigoBoleto: string | null;
-  estadoBoleto: string | null;
+  codigoBoleto?: string | null;
+  estadoBoleto?: string | null;
 }
 
-interface Venta {
+interface VentaListado {
   ventaId: number;
   codigo: string;
   estado: string;
@@ -21,178 +48,696 @@ interface Venta {
   total: number;
   creadoEn: string;
   expiraEn: string | null;
-  estadoPago: string | null;
-  metodoPago: string | null;
+
+  estadoPago?: string | null;
+  metodoPago?: string | null;
+
   salidaProgramada: string;
   rutaNombre: string;
   origen: string;
   destino: string;
-  asientos: VentaAsiento[];
+
+  asientos: VentaListadoAsiento[];
 }
 
-interface ResultadoVentas {
-  items: Venta[];
+interface VentasPaginadas {
+  items: VentaListado[];
   total: number;
   pagina: number;
   tamanoPagina: number;
 }
 
+interface BoletoOficina {
+  boletoId: number;
+  ventaId: number;
+  codigoVenta: string;
+  codigoBoleto: string;
+  qrToken: string;
+  estadoBoleto: string;
+  generadoEn: string;
+  viajeId: number;
+  rutaNombre: string;
+  origen: string;
+  destino: string;
+  salidaProgramada: string;
+  pasajero: string;
+  documento: string;
+  asientoBusId: number;
+  numeroAsiento: string;
+  precioFinal: number;
+}
+
+
 @Component({
   selector: 'app-gestion-ventas',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
-  templateUrl: './gestion-ventas.html',
-  styleUrl: './gestion-ventas.css'
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePipe,
+    DecimalPipe
+  ],
+  templateUrl:
+    './gestion-ventas.html',
+
+  styleUrl:
+    './gestion-ventas.css'
 })
-export class GestionVentas implements OnInit {
-  private readonly http = inject(HttpClient);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly apiUrl = `${API_URL}/Ventas`;
+export class GestionVentas
+  implements OnInit {
+
+  private readonly http =
+    inject(HttpClient);
+
+  private readonly cdr =
+    inject(ChangeDetectorRef);
+
+  ventas: VentaListado[] = [];
+
+  total = 0;
+
+  pagina = 1;
+
+  tamanoPagina = 20;
 
   busqueda = '';
+
   estado = '';
+
   desde = '';
+
   hasta = '';
-  pagina = 1;
-  readonly tamanoPagina = 20;
-  total = 0;
-  ventas: Venta[] = [];
+
   cargando = false;
-  ventaProcesando: number | null = null;
-  error = '';
+
+  procesandoId:
+    number | null = null;
+
   mensaje = '';
 
+  error = '';
+
+
   ngOnInit(): void {
+
     this.buscar();
   }
 
-  buscar(): void {
-    this.error = '';
-    this.cargando = true;
-    let params = new HttpParams()
-      .set('pagina', this.pagina)
-      .set('tamanoPagina', this.tamanoPagina);
-    if (this.busqueda.trim()) params = params.set('busqueda', this.busqueda.trim());
-    if (this.estado) params = params.set('estado', this.estado);
-    if (this.desde) params = params.set('desde', this.desde);
-    if (this.hasta) params = params.set('hasta', this.hasta);
 
-    this.http.get<ResultadoVentas>(this.apiUrl, { params }).subscribe({
-      next: resultado => {
-        this.ventas = resultado.items;
-        this.total = resultado.total;
+  buscar(
+    pagina = 1
+  ): void {
+
+    this.cargando = true;
+
+    this.error = '';
+    this.mensaje = '';
+
+    this.pagina = pagina;
+
+    let params =
+      new HttpParams()
+        .set(
+          'pagina',
+          pagina.toString()
+        )
+        .set(
+          'tamanoPagina',
+          this.tamanoPagina.toString()
+        );
+
+    if (this.busqueda.trim()) {
+
+      params =
+        params.set(
+          'busqueda',
+          this.busqueda.trim()
+        );
+    }
+
+    if (this.estado) {
+
+      params =
+        params.set(
+          'estado',
+          this.estado
+        );
+    }
+
+    if (this.desde) {
+
+      params =
+        params.set(
+          'desde',
+          this.desde
+        );
+    }
+
+    if (this.hasta) {
+
+      params =
+        params.set(
+          'hasta',
+          this.hasta
+        );
+    }
+
+    this.http.get<
+      VentasPaginadas
+    >(
+      `${API_URL}/Ventas`,
+      {
+        params
+      }
+    ).subscribe({
+
+      next: respuesta => {
+
+        this.ventas =
+          respuesta.items;
+
+        this.total =
+          respuesta.total;
+
+        this.pagina =
+          respuesta.pagina;
+
         this.cargando = false;
-        this.cdr.detectChanges();
+
+        this.cdr.markForCheck();
       },
+
       error: error => {
-        this.ventas = [];
+
+        this.error =
+          error?.error?.mensaje ??
+          'No se pudieron cargar las ventas.';
+
         this.cargando = false;
-        this.error = error?.error?.mensaje ?? 'No se pudieron cargar las reservas y ventas.';
-        this.cdr.detectChanges();
+
+        this.cdr.markForCheck();
       }
     });
   }
 
-  limpiarFiltros(): void {
+
+  limpiar(): void {
+
     this.busqueda = '';
     this.estado = '';
     this.desde = '';
     this.hasta = '';
-    this.pagina = 1;
-    this.mensaje = '';
-    this.buscar();
+
+    this.buscar(1);
   }
 
-  cambiarPagina(pagina: number): void {
-    if (pagina < 1 || pagina > this.totalPaginas) return;
-    this.pagina = pagina;
-    this.buscar();
-  }
 
   get totalPaginas(): number {
-    return Math.max(1, Math.ceil(this.total / this.tamanoPagina));
+
+    return Math.max(
+      1,
+      Math.ceil(
+        this.total /
+        this.tamanoPagina
+      )
+    );
   }
 
-  confirmar(venta: Venta): void {
-    if (venta.estado !== 'RESERVADA') return;
-    this.accion(venta, 'confirmar');
-  }
 
-  cancelar(venta: Venta): void {
-    if (venta.estado !== 'RESERVADA') return;
-    this.accion(venta, 'cancelar');
-  }
+  confirmarEfectivo(
+    venta: VentaListado
+  ): void {
 
-  tieneBoletos(venta: Venta): boolean {
-    return venta.asientos.some(asiento => !!asiento.codigoBoleto);
-  }
-
-  imprimirBoletos(venta: Venta): void {
-    const boletos = venta.asientos.filter(asiento => !!asiento.codigoBoleto);
-    if (boletos.length === 0) return;
-
-    const ventana = window.open('', '_blank', 'width=900,height=700');
-    if (!ventana) {
-      this.error = 'El navegador bloqueó la ventana de impresión. Permita las ventanas emergentes para este sitio e inténtelo de nuevo.';
+    if (
+      this.procesandoId !== null
+    ) {
       return;
     }
 
-    const escapar = (valor: string): string => valor
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
-    const fecha = escapar(new Date(venta.salidaProgramada).toLocaleString('es-EC'));
-    const ruta = escapar(venta.rutaNombre);
-    const tramo = escapar(`${venta.origen} → ${venta.destino}`);
-    const moneda = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
-    const tarjetas = boletos.map(asiento => `
-      <article class="boleto">
-        <header><span>ECUARUTAS · BOLETO DE VIAJE</span><strong>${ruta}</strong></header>
-        <p class="tramo">${tramo}</p>
-        <div class="datos">
-          <div><small>Pasajero</small><strong>${escapar(asiento.pasajero)}</strong></div>
-          <div><small>Documento</small><strong>${escapar(asiento.documento)}</strong></div>
-          <div><small>Salida</small><strong>${fecha}</strong></div>
-          <div><small>Asiento</small><strong>${escapar(asiento.numeroAsiento)}</strong></div>
-          <div><small>Precio</small><strong>${moneda.format(asiento.precioFinal)}</strong></div>
-        </div>
-        <div class="codigo"><small>Código del boleto</small><strong>${escapar(asiento.codigoBoleto!)}</strong></div>
-        <footer>Presente este boleto al abordar.</footer>
-      </article>`).join('');
+    this.procesandoId =
+      venta.ventaId;
 
-    ventana.addEventListener('load', () => {
-      window.setTimeout(() => {
-        ventana.focus();
-        ventana.print();
-      }, 300);
-    }, { once: true });
-    ventana.document.open();
-    ventana.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Boletos ${escapar(venta.codigo)}</title><style>
-      *{box-sizing:border-box}body{margin:0;padding:28px;background:#eef2f7;color:#152b43;font:16px/1.45 Arial,sans-serif}.acciones{max-width:760px;margin:0 auto 18px;text-align:right}.acciones button{padding:10px 18px;border:0;border-radius:6px;background:#1677c8;color:white;font-size:15px;cursor:pointer}.boleto{max-width:760px;margin:0 auto 22px;padding:28px;border:1px solid #cbd5e1;border-top:6px solid #1677c8;border-radius:10px;background:white;box-shadow:0 4px 16px #0f172a12;break-inside:avoid}.boleto header{display:grid;gap:8px;padding-bottom:16px;border-bottom:1px solid #dbe3ec}.boleto header span{color:#1677c8;font-size:12px;font-weight:700;letter-spacing:.08em}.boleto header strong{font-size:23px}.tramo{margin:16px 0 20px;font-size:17px}.datos{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}.datos div,.codigo{display:grid;gap:4px}.datos small,.codigo small{color:#64748b}.datos strong{font-size:16px}.codigo{margin-top:22px;padding:14px;border:1px dashed #94a3b8;border-radius:6px}.codigo strong{overflow-wrap:anywhere;font-size:17px;letter-spacing:.04em}.boleto footer{padding-top:14px;color:#475569;font-size:13px}.boleto+.boleto{break-before:page}@media(max-width:600px){body{padding:12px}.boleto{padding:18px}.datos{grid-template-columns:1fr}}@media print{body{padding:0;background:white}.acciones{display:none}.boleto{max-width:none;margin:0 0 10mm;box-shadow:none}.boleto:last-child{margin-bottom:0}}
-    </style></head><body><div class="acciones"><button id="imprimir">Imprimir boletos</button></div>${tarjetas}</body></html>`);
-    ventana.document.close();
-    ventana.document.getElementById('imprimir')?.addEventListener('click', () => ventana.print());
-  }
-
-  private accion(venta: Venta, accion: 'confirmar' | 'cancelar'): void {
     this.error = '';
     this.mensaje = '';
-    this.ventaProcesando = venta.ventaId;
-    this.http.post<any>(`${this.apiUrl}/${venta.ventaId}/${accion}`, {}).subscribe({
-      next: respuesta => {
-        this.ventaProcesando = null;
-        this.mensaje = accion === 'confirmar'
-          ? `Venta ${venta.codigo} pagada; boletos emitidos${respuesta?.codigosBoletos?.length ? ': ' + respuesta.codigosBoletos.join(', ') : '.'}`
-          : `Reserva ${venta.codigo} cancelada.`;
-        this.buscar();
+
+    this.http.post(
+      `${API_URL}/Ventas/` +
+      `${venta.ventaId}/confirmar`,
+      {}
+    ).subscribe({
+
+      next: async () => {
+
+        this.mensaje =
+          'Pago en efectivo aprobado y boletos emitidos.';
+
+        this.procesandoId = null;
+
+        await this.imprimir(
+          venta.ventaId
+        );
+
+        this.buscar(
+          this.pagina
+        );
       },
+
       error: error => {
-        this.ventaProcesando = null;
-        this.error = error?.error?.mensaje ?? `No se pudo ${accion === 'confirmar' ? 'confirmar' : 'cancelar'} la reserva.`;
-        this.cdr.detectChanges();
+
+        this.error =
+          error?.error?.mensaje ??
+          'No se pudo confirmar la venta.';
+
+        this.procesandoId = null;
+
+        this.cdr.markForCheck();
       }
     });
+  }
+
+
+  cancelar(
+    venta: VentaListado
+  ): void {
+
+    if (
+      this.procesandoId !== null
+    ) {
+      return;
+    }
+
+    this.procesandoId =
+      venta.ventaId;
+
+    this.error = '';
+    this.mensaje = '';
+
+    this.http.post(
+      `${API_URL}/Ventas/` +
+      `${venta.ventaId}/cancelar`,
+      {}
+    ).subscribe({
+
+      next: () => {
+
+        this.mensaje =
+          'Reserva cancelada correctamente.';
+
+        this.procesandoId = null;
+
+        this.buscar(
+          this.pagina
+        );
+      },
+
+      error: error => {
+
+        this.error =
+          error?.error?.mensaje ??
+          'No se pudo cancelar la reserva.';
+
+        this.procesandoId = null;
+
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+
+  async imprimir(
+    ventaId: number
+  ): Promise<void> {
+
+    try {
+
+      const boletos =
+        await firstValueFrom(
+          this.http.get<
+            BoletoOficina[]
+          >(
+            `${API_URL}/boletos-oficina/venta/` +
+            ventaId
+          )
+        );
+
+      if (
+        boletos.length === 0
+      ) {
+
+        this.error =
+          'La venta todavía no tiene boletos emitidos.';
+
+        this.cdr.markForCheck();
+
+        return;
+      }
+
+      const bloques:
+        string[] = [];
+
+      for (
+        const boleto
+        of boletos
+      ) {
+
+        const qr =
+          await QRCode.toDataURL(
+            boleto.qrToken,
+            {
+              width: 230,
+              margin: 1
+            }
+          );
+
+        bloques.push(`
+          <article class="boleto">
+
+            <div class="marca">
+              ECUARUTAS · BOLETO DE VIAJE
+            </div>
+
+            <h1>
+              ${this.escapar(
+                boleto.rutaNombre
+              )}
+            </h1>
+
+            <div class="tramo">
+              ${this.escapar(
+                boleto.origen
+              )}
+              →
+              ${this.escapar(
+                boleto.destino
+              )}
+            </div>
+
+            <div class="datos">
+
+              <div>
+                <small>Pasajero</small>
+                <strong>
+                  ${this.escapar(
+                    boleto.pasajero
+                  )}
+                </strong>
+              </div>
+
+              <div>
+                <small>Documento</small>
+                <strong>
+                  ${this.escapar(
+                    boleto.documento
+                  )}
+                </strong>
+              </div>
+
+              <div>
+                <small>Salida</small>
+                <strong>
+                  ${new Date(
+                    boleto.salidaProgramada
+                  ).toLocaleString(
+                    'es-EC'
+                  )}
+                </strong>
+              </div>
+
+              <div>
+                <small>Asiento</small>
+                <strong>
+                  ${this.escapar(
+                    boleto.numeroAsiento
+                  )}
+                </strong>
+              </div>
+
+              <div>
+                <small>Precio</small>
+                <strong>
+                  $${boleto.precioFinal
+                    .toFixed(2)}
+                </strong>
+              </div>
+
+            </div>
+
+            <div class="codigo">
+
+              <small>
+                Código del boleto
+              </small>
+
+              <strong>
+                ${this.escapar(
+                  boleto.codigoBoleto
+                )}
+              </strong>
+
+            </div>
+
+            <div class="qr">
+
+              <img
+                src="${qr}"
+                alt="QR del boleto"
+              >
+
+              <p>
+                Presenta este código
+                al abordar.
+              </p>
+
+            </div>
+
+          </article>
+        `);
+      }
+
+      const ventana =
+        window.open(
+          '',
+          '_blank',
+          'width=760,height=900'
+        );
+
+      if (!ventana) {
+
+        this.error =
+          'El navegador bloqueó la ventana de impresión.';
+
+        return;
+      }
+
+      ventana.document.write(`
+        <!doctype html>
+
+        <html lang="es">
+
+        <head>
+
+          <meta charset="utf-8">
+
+          <title>
+            Boletos EcuaRutas
+          </title>
+
+          <style>
+
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              margin: 0;
+              padding: 22px;
+              font-family:
+                Arial,
+                sans-serif;
+              background: #f5f7fb;
+              color: #14213d;
+            }
+
+            .acciones {
+              max-width: 760px;
+              margin:
+                0 auto 18px;
+              text-align: right;
+            }
+
+            button {
+              padding:
+                10px 18px;
+              border: 0;
+              border-radius: 6px;
+              background: #0d6efd;
+              color: #fff;
+              font-weight: 700;
+              cursor: pointer;
+            }
+
+            .boleto {
+              max-width: 760px;
+              margin:
+                0 auto 24px;
+              padding: 28px;
+
+              border-top:
+                5px solid #0d6efd;
+
+              border-radius: 8px;
+
+              background: #fff;
+
+              box-shadow:
+                0 4px 20px
+                rgba(0,0,0,.08);
+            }
+
+            .marca {
+              color: #0d6efd;
+              font-size: 12px;
+              font-weight: 800;
+              letter-spacing: .8px;
+            }
+
+            h1 {
+              margin:
+                10px 0 15px;
+            }
+
+            .tramo {
+              padding-bottom: 18px;
+
+              border-bottom:
+                1px solid #dce1e8;
+            }
+
+            .datos {
+              display: grid;
+
+              grid-template-columns:
+                1fr 1fr;
+
+              gap: 20px;
+
+              padding:
+                20px 0;
+            }
+
+            small {
+              display: block;
+              margin-bottom: 4px;
+              color: #667085;
+            }
+
+            strong {
+              display: block;
+            }
+
+            .codigo {
+              padding: 14px;
+
+              border:
+                1px dashed #8ba7cf;
+
+              border-radius: 6px;
+            }
+
+            .qr {
+              text-align: center;
+
+              padding-top: 18px;
+            }
+
+            .qr img {
+              width: 205px;
+              height: 205px;
+            }
+
+            .qr p {
+              margin-top: 8px;
+              font-size: 13px;
+            }
+
+            @media print {
+
+              body {
+                padding: 0;
+                background: white;
+              }
+
+              .acciones {
+                display: none;
+              }
+
+              .boleto {
+                box-shadow: none;
+                break-after: page;
+              }
+
+            }
+
+          </style>
+
+        </head>
+
+        <body>
+
+          <div class="acciones">
+
+            <button
+              onclick="window.print()"
+            >
+              Imprimir boletos
+            </button>
+
+          </div>
+
+          ${bloques.join('')}
+
+        </body>
+
+        </html>
+      `);
+
+      ventana.document.close();
+
+    } catch (error: any) {
+
+      this.error =
+        error?.error?.mensaje ??
+        'No se pudieron consultar los boletos de la venta.';
+
+      this.cdr.markForCheck();
+    }
+  }
+
+
+  private escapar(
+    valor: string
+  ): string {
+
+    return valor
+      .replaceAll(
+        '&',
+        '&amp;'
+      )
+      .replaceAll(
+        '<',
+        '&lt;'
+      )
+      .replaceAll(
+        '>',
+        '&gt;'
+      )
+      .replaceAll(
+        '"',
+        '&quot;'
+      )
+      .replaceAll(
+        "'",
+        '&#039;'
+      );
   }
 }
