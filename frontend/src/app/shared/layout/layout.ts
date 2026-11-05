@@ -153,6 +153,11 @@ export class Layout {
               icono: 'bi-grid-3x3-gap',
               ruta: '/cooperativas/plantillas'
             },
+            {
+              texto: 'Tipos de asiento',
+              icono: 'bi-tags',
+              ruta: '/cooperativas/tipos-asiento'
+            },
 
             {
               texto: 'Lugares',
