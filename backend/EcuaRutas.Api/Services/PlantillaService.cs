@@ -66,6 +66,19 @@ public class PlantillaService : IPlantillaService
         return MapearPlantilla(plantilla);
     }
 
+    public async Task<bool> DesactivarAsync(long id, CancellationToken ct = default)
+    {
+        var plantilla = await _db.PlantillasBus.FirstOrDefaultAsync(p => p.Id == id, ct);
+
+        if (plantilla is null)
+            return false;
+
+        plantilla.Activa = false;
+        await _db.SaveChangesAsync(ct);
+
+        return true;
+    }
+
     public async Task<IReadOnlyList<PlantillaAsientoDto>?> ObtenerDisposicionAsync(long plantillaId, CancellationToken ct = default)
     {
         var existe = await _db.PlantillasBus.AnyAsync(p => p.Id == plantillaId, ct);

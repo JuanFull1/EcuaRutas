@@ -49,6 +49,8 @@ export class MapaAsientos {
   readonly seleccionado = input<PosicionAsiento | null>(null);
   /** Con varios pisos: una pestaña por piso o todos a la vez. */
   readonly vistaPisos = input<'pestanas' | 'juntos'>('pestanas');
+  /** Miniatura sin números, precios ni leyenda (para tarjetas y listados). */
+  readonly compacto = input(false);
 
   readonly celdaClick = output<PosicionAsiento>();
   readonly mover = output<MoverAsientoEvento>();

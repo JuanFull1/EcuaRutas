@@ -1,4 +1,4 @@
-<div class="mapa">
+<div class="mapa" [class.compacto]="compacto()">
 
   @if (pisos() > 1 && vistaPisos() === 'pestanas') {
     <div class="pestanas" role="tablist">
