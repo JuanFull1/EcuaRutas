@@ -16,7 +16,7 @@ import { AsientoMapa, MapaAsientos } from '../../shared/mapa-asientos/mapa-asien
   standalone: true,
   imports: [RouterLink, MapaAsientos],
   templateUrl: './bus-asientos.html',
-  styleUrl: './bus-asientos.css'
+  styleUrls: ['../../shared/formulario/formulario.css', './bus-asientos.css']
 })
 export class BusAsientos implements OnInit {
 
