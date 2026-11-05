@@ -113,26 +113,23 @@
                 <div class="ff-fila-acciones">
                   <a
                     [routerLink]="['/cooperativas/buses', bus.id, 'asientos']"
-                    class="btn btn-outline-secondary ff-icono-btn"
-                    title="Ver asientos" aria-label="Ver asientos"
+                    class="btn btn-sm btn-outline-success"
                   >
-                    <i class="bi bi-grid-3x3-gap"></i>
+                    <i class="bi bi-grid-3x3-gap"></i> Ver asientos
                   </a>
                   <a
                     [routerLink]="['/cooperativas/buses', bus.id, 'editar']"
-                    class="btn btn-outline-primary ff-icono-btn"
-                    title="Editar" aria-label="Editar"
+                    class="btn btn-sm btn-outline-primary"
                   >
-                    <i class="bi bi-pencil"></i>
+                    <i class="bi bi-pencil"></i> Editar
                   </a>
                   @if (bus.estado !== 'INACTIVO') {
                     <button
                       type="button"
-                      class="btn btn-outline-danger ff-icono-btn"
-                      title="Dar de baja" aria-label="Dar de baja"
+                      class="btn btn-sm btn-outline-danger"
                       (click)="darDeBaja(bus)"
                     >
-                      <i class="bi bi-trash"></i>
+                      <i class="bi bi-trash"></i> Dar de baja
                     </button>
                   }
                 </div>

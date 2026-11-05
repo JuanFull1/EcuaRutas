@@ -389,7 +389,13 @@
 
 .ff-fila-acciones {
   display: inline-flex;
-  gap: 0.35rem;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+}
+
+.ff-fila-acciones .btn {
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 .ff-icono-btn {
