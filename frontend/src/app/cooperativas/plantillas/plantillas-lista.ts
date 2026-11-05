@@ -25,7 +25,7 @@ interface VistaPlantilla {
   standalone: true,
   imports: [RouterLink, MapaAsientos],
   templateUrl: './plantillas-lista.html',
-  styleUrl: './plantillas-lista.css'
+  styleUrls: ['../../shared/formulario/formulario.css', './plantillas-lista.css']
 })
 export class PlantillasLista implements OnInit {
 

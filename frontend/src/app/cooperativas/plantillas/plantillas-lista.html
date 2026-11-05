@@ -1,13 +1,16 @@
-<div class="plantillas">
+<div class="plantillas ff-pagina ff-ancha">
 
-  <header class="cabecera">
-    <div>
-      <h1 class="titulo">Plantillas de asientos</h1>
-      <p class="subtitulo">
-        Cada plantilla define cómo se distribuyen los asientos de un tipo de bus.
-      </p>
+  <header class="ff-cabecera ff-suelta">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-grid-3x3-gap"></i></span>
+      <div>
+        <h1 class="ff-titulo">Plantillas de asientos</h1>
+        <p class="ff-subtitulo">
+          Cada plantilla define cómo se distribuyen los asientos de un tipo de bus.
+        </p>
+      </div>
     </div>
-    <a routerLink="/cooperativas/plantillas/nueva" class="btn btn-dark">
+    <a routerLink="/cooperativas/plantillas/nueva" class="ff-nuevo">
       <i class="bi bi-plus-lg"></i> Nueva plantilla
     </a>
   </header>
@@ -38,8 +41,8 @@
     <div class="vacio">
       <h2>Aún no hay plantillas</h2>
       <p>Crea la primera para definir los asientos de tus buses.</p>
-      <a routerLink="/cooperativas/plantillas/nueva" class="btn btn-dark">
-        Crear plantilla
+      <a routerLink="/cooperativas/plantillas/nueva" class="ff-nuevo">
+        <i class="bi bi-plus-lg"></i> Crear plantilla
       </a>
     </div>
   }
@@ -93,7 +96,7 @@
             <div class="tarjeta-acciones">
               <a
                 [routerLink]="['/cooperativas/plantillas', plantilla.id, 'disposicion']"
-                class="btn btn-sm btn-outline-dark"
+                class="btn btn-sm btn-outline-primary"
               >
                 <i class="bi bi-grid-3x3-gap"></i> Editar diseño
               </a>
