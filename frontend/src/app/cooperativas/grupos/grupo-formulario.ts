@@ -15,7 +15,7 @@ import { GrupoBusService } from '../../services/grupo-bus.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './grupo-formulario.html',
-  styleUrl: './grupo-formulario.css'
+  styleUrls: ['../../shared/formulario/formulario.css', './grupo-formulario.css']
 })
 export class GrupoFormulario implements OnInit {
 

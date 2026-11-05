@@ -1,67 +1,89 @@
-<div class="container-fluid py-3">
-  <div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">{{ esEdicion() ? 'Editar grupo' : 'Nuevo grupo' }}</h5>
-      <a routerLink="/cooperativas/grupos" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> Volver
-      </a>
+<div class="ff-pagina">
+
+  <header class="ff-cabecera">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-collection"></i></span>
+      <div>
+        <h1 class="ff-titulo">{{ esEdicion() ? 'Editar grupo' : 'Nuevo grupo' }}</h1>
+        <p class="ff-subtitulo">
+          Agrupa buses por servicio, por ejemplo Ejecutivo o Express.
+        </p>
+      </div>
     </div>
 
+    <a routerLink="/cooperativas/grupos" class="ff-volver">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+  </header>
+
+  <div class="ff-cuerpo">
+
     @if (cargandoGrupo()) {
-      <div class="card-body text-secondary">
+      <div class="ff-estado">
         <span class="spinner-border spinner-border-sm me-2"></span>
         Cargando grupo...
       </div>
     }
 
     @if (errorCargar(); as mensaje) {
-      <div class="alert alert-danger m-3">{{ mensaje }}</div>
+      <div class="alert alert-danger">{{ mensaje }}</div>
     }
 
-    <form class="card-body" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
-      <div class="row g-3">
+    <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
 
-        <div class="col-md-6">
-          <label class="form-label" for="nombre">Nombre *</label>
-          <input id="nombre" class="form-control" formControlName="nombre"
-                 [class.is-invalid]="invalido('nombre')" />
-          @if (invalido('nombre')) {
-            <div class="invalid-feedback">Obligatorio, máximo 100 caracteres.</div>
-          }
-        </div>
+      <section class="ff-seccion">
+        <h2 class="ff-seccion-titulo"><i class="bi bi-tag"></i> Datos del grupo</h2>
+        <p class="ff-seccion-ayuda">El nombre aparece al elegir el grupo de un bus.</p>
 
-        <div class="col-md-6">
-          <label class="form-label" for="descripcion">Descripción</label>
-          <input id="descripcion" class="form-control" formControlName="descripcion"
-                 [class.is-invalid]="invalido('descripcion')" />
-          @if (invalido('descripcion')) {
-            <div class="invalid-feedback">Máximo 500 caracteres.</div>
-          }
-        </div>
-
-        @if (esEdicion()) {
-          <div class="col-12">
-            <div class="form-check">
-              <input id="activo" type="checkbox" class="form-check-input"
-                     formControlName="activo" />
-              <label class="form-check-label" for="activo">Grupo activo</label>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="nombre">Nombre *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-bookmark"></i></span>
+              <input id="nombre" class="form-control" formControlName="nombre"
+                     placeholder="Ej. Ejecutivo" [class.is-invalid]="invalido('nombre')" />
             </div>
+            @if (invalido('nombre')) {
+              <div class="text-danger small mt-1">Obligatorio, máximo 100 caracteres.</div>
+            }
           </div>
-        }
 
-      </div>
+          <div class="col-md-6">
+            <label class="form-label" for="descripcion">Descripción</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-text-paragraph"></i></span>
+              <input id="descripcion" class="form-control" formControlName="descripcion"
+                     placeholder="Opcional" [class.is-invalid]="invalido('descripcion')" />
+            </div>
+            @if (invalido('descripcion')) {
+              <div class="text-danger small mt-1">Máximo 500 caracteres.</div>
+            }
+          </div>
+
+          @if (esEdicion()) {
+            <div class="col-md-6">
+              <span class="form-label d-block">Estado</span>
+              <div class="ff-interruptor">
+                <input id="activo" type="checkbox" class="form-check-input" role="switch"
+                       formControlName="activo" />
+                <label for="activo">Grupo activo</label>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
 
       @if (errorGuardar()) {
         <div class="alert alert-danger mt-3 mb-0">{{ errorGuardar() }}</div>
       }
 
-      <div class="d-flex justify-content-end gap-2 mt-4">
+      <div class="ff-acciones">
         <a routerLink="/cooperativas/grupos" class="btn btn-outline-secondary">Cancelar</a>
         <button type="submit" class="btn btn-primary" [disabled]="guardando()">
           @if (guardando()) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
-          {{ esEdicion() ? 'Guardar cambios' : 'Guardar' }}
+          {{ esEdicion() ? 'Guardar cambios' : 'Guardar grupo' }}
         </button>
       </div>
     </form>
