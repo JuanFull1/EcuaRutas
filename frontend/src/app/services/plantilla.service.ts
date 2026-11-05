@@ -3,7 +3,11 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_URL } from './api.config';
-import { TipoAsiento } from '../models/tipo-asiento.model';
+import {
+  ActualizarTipoAsientoRequest,
+  CrearTipoAsientoRequest,
+  TipoAsiento
+} from '../models/tipo-asiento.model';
 import {
   CrearPlantillaBusRequest,
   PlantillaBus
@@ -30,6 +34,22 @@ export class PlantillaService {
       `${API_URL}/tipos-asiento`,
       { params: this.paramsCooperativa(cooperativaId) }
     );
+  }
+
+  obtenerTipoAsiento(id: number): Observable<TipoAsiento> {
+    return this.http.get<TipoAsiento>(`${API_URL}/tipos-asiento/${id}`);
+  }
+
+  crearTipoAsiento(request: CrearTipoAsientoRequest): Observable<TipoAsiento> {
+    return this.http.post<TipoAsiento>(`${API_URL}/tipos-asiento`, request);
+  }
+
+  actualizarTipoAsiento(id: number, request: ActualizarTipoAsientoRequest): Observable<TipoAsiento> {
+    return this.http.put<TipoAsiento>(`${API_URL}/tipos-asiento/${id}`, request);
+  }
+
+  desactivarTipoAsiento(id: number): Observable<void> {
+    return this.http.delete<void>(`${API_URL}/tipos-asiento/${id}`);
   }
 
   listar(cooperativaId?: number): Observable<PlantillaBus[]> {
