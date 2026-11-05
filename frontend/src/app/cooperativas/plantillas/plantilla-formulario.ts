@@ -24,7 +24,7 @@ const MAX_ASIENTOS = 80;
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, MapaAsientos],
   templateUrl: './plantilla-formulario.html',
-  styleUrl: './plantilla-formulario.css'
+  styleUrls: ['../../shared/formulario/formulario.css', './plantilla-formulario.css']
 })
 export class PlantillaFormulario implements OnInit {
 
