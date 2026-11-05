@@ -145,6 +145,15 @@ public class PlantillaService : IPlantillaService
         var anteriores = await _db.AsientosBus
             .Where(a => a.BusId == busId)
             .ToListAsync(ct);
+
+        // Los asientos que ya tienen ventas o reservas no se pueden reemplazar.
+        var idsAnteriores = anteriores.Select(a => a.Id).ToList();
+        var conVentas = idsAnteriores.Count > 0
+            && await _db.VentaAsientos.AnyAsync(v => idsAnteriores.Contains(v.AsientoBusId), ct);
+
+        if (conVentas)
+            throw new ConflictoException(
+                "El bus ya tiene asientos con ventas o reservas; no se puede cambiar su plantilla.");
         _db.AsientosBus.RemoveRange(anteriores);
 
         var copias = plantillaAsientos.Select(a => new AsientosBu
