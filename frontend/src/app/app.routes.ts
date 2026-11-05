@@ -164,6 +164,18 @@ export const routes: Routes = [
       },
 
       {
+        path: 'buses/:id/asientos',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/buses/bus-asientos'
+          )
+            .then(
+              m => m.BusAsientos
+            )
+      },
+
+      {
         path: 'buses',
 
         loadComponent: () =>

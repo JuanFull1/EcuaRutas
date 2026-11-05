@@ -8,6 +8,7 @@ import {
   CrearPlantillaBusRequest,
   PlantillaBus
 } from '../models/plantilla-bus.model';
+import { AsientoBus } from '../models/asiento-bus.model';
 import {
   CrearAsientoPlantillaRequest,
   PlantillaAsiento
@@ -71,6 +72,10 @@ export class PlantillaService {
       `${API_URL}/buses/${busId}/plantilla/${plantillaId}`,
       null
     );
+  }
+
+  listarAsientosDeBus(busId: number): Observable<AsientoBus[]> {
+    return this.http.get<AsientoBus[]>(`${API_URL}/buses/${busId}/asientos`);
   }
 
   private paramsCooperativa(cooperativaId?: number): HttpParams {

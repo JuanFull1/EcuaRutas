@@ -1,24 +1,17 @@
-<div class="container-fluid px-0">
+<div class="ff-pagina ff-ancha">
 
-  <section class="bg-white border rounded-4 p-4 mb-4">
-
-    <span class="badge text-bg-primary mb-3">
-      Flota
-    </span>
-
-    <h1 class="h3 fw-bold">
-      Grupos de buses
-    </h1>
-
-    <p class="text-secondary mb-0">
-      Consulta y administra los grupos en los que se organizan los buses de la cooperativa.
-    </p>
-
-    <a routerLink="/cooperativas/grupos/nuevo" class="btn btn-primary mt-3">
+  <header class="ff-cabecera ff-suelta">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-collection"></i></span>
+      <div>
+        <h1 class="ff-titulo">Grupos de buses</h1>
+        <p class="ff-subtitulo">Organiza los buses de la cooperativa por tipo de servicio.</p>
+      </div>
+    </div>
+    <a routerLink="/cooperativas/grupos/nuevo" class="ff-nuevo">
       <i class="bi bi-plus-lg"></i> Nuevo grupo
     </a>
-
-  </section>
+  </header>
 
   @if (error(); as mensaje) {
     <div
@@ -41,13 +34,13 @@
     <div class="alert alert-danger" role="alert">{{ mensaje }}</div>
   }
 
-  <div class="card border-0 shadow-sm">
+  <div class="ff-cuerpo ff-suelto">
 
     <div class="table-responsive">
 
-      <table class="table table-hover align-middle mb-0">
+      <table class="table align-middle ff-tabla">
 
-        <thead class="table-light">
+        <thead>
           <tr>
             <th>Nombre</th>
             <th>Descripción</th>
@@ -82,27 +75,29 @@
               <td>
                 <span
                   class="badge"
-                  [class]="'badge ' + (grupo.activo ? 'text-bg-success' : 'text-bg-secondary')"
+                  [class]="'badge rounded-pill ' + (grupo.activo ? 'text-bg-success' : 'text-bg-secondary')"
                 >
                   {{ grupo.activo ? 'ACTIVO' : 'INACTIVO' }}
                 </span>
               </td>
               <td class="text-end">
-                <a
-                  [routerLink]="['/cooperativas/grupos', grupo.id, 'editar']"
-                  class="btn btn-sm btn-outline-primary"
-                >
-                  <i class="bi bi-pencil"></i> Editar
-                </a>
-                @if (grupo.activo) {
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-danger ms-1"
-                    (click)="desactivar(grupo)"
+                <div class="ff-fila-acciones">
+                  <a
+                    [routerLink]="['/cooperativas/grupos', grupo.id, 'editar']"
+                    class="btn btn-sm btn-outline-primary"
                   >
-                    <i class="bi bi-slash-circle"></i> Desactivar
-                  </button>
-                }
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                  @if (grupo.activo) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="desactivar(grupo)"
+                    >
+                      <i class="bi bi-slash-circle"></i> Desactivar
+                    </button>
+                  }
+                </div>
               </td>
             </tr>
           }

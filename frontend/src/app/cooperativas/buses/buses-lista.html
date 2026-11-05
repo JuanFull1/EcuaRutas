@@ -1,24 +1,17 @@
-<div class="container-fluid px-0">
+<div class="ff-pagina ff-ancha">
 
-  <section class="bg-white border rounded-4 p-4 mb-4">
-
-    <span class="badge text-bg-primary mb-3">
-      Flota
-    </span>
-
-    <h1 class="h3 fw-bold">
-      Buses
-    </h1>
-
-    <p class="text-secondary mb-0">
-      Consulta y administra los buses de la cooperativa.
-    </p>
-
-    <a routerLink="/cooperativas/buses/nuevo" class="btn btn-primary mt-3">
+  <header class="ff-cabecera ff-suelta">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-bus-front"></i></span>
+      <div>
+        <h1 class="ff-titulo">Buses</h1>
+        <p class="ff-subtitulo">Consulta y administra los buses de la cooperativa.</p>
+      </div>
+    </div>
+    <a routerLink="/cooperativas/buses/nuevo" class="ff-nuevo">
       <i class="bi bi-plus-lg"></i> Nuevo bus
     </a>
-
-  </section>
+  </header>
 
   @if (error(); as mensaje) {
     <div
@@ -41,9 +34,9 @@
     <div class="alert alert-danger" role="alert">{{ mensaje }}</div>
   }
 
-  <div class="card border-0 shadow-sm">
+  <div class="ff-cuerpo ff-suelto">
 
-    <div class="card-header bg-white border-0 pt-3 d-flex flex-wrap align-items-center gap-2">
+    <div class="ff-filtros">
 
       <label for="filtro-estado" class="form-label mb-0 text-secondary">
         Estado
@@ -65,9 +58,9 @@
 
     <div class="table-responsive">
 
-      <table class="table table-hover align-middle mb-0">
+      <table class="table align-middle ff-tabla">
 
-        <thead class="table-light">
+        <thead>
           <tr>
             <th>N.º interno</th>
             <th>Placa</th>
@@ -106,32 +99,40 @@
           @for (bus of buses(); track bus.id) {
             <tr>
               <td class="fw-semibold">{{ bus.numeroInterno }}</td>
-              <td>{{ bus.placa }}</td>
+              <td><span class="ff-placa-mini">{{ bus.placa }}</span></td>
               <td>{{ bus.modelo ?? '-' }}</td>
               <td class="text-center">{{ bus.anio ?? '-' }}</td>
               <td class="text-center">{{ bus.pisos }}</td>
               <td class="text-center">{{ bus.capacidad }}</td>
               <td>
-                <span class="badge" [class]="'badge ' + claseEstado(bus.estado)">
+                <span class="badge rounded-pill" [class]="'badge rounded-pill ' + claseEstado(bus.estado)">
                   {{ bus.estado }}
                 </span>
               </td>
               <td class="text-end">
-                <a
-                  [routerLink]="['/cooperativas/buses', bus.id, 'editar']"
-                  class="btn btn-sm btn-outline-primary"
-                >
-                  <i class="bi bi-pencil"></i> Editar
-                </a>
-                @if (bus.estado !== 'INACTIVO') {
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-danger ms-1"
-                    (click)="darDeBaja(bus)"
+                <div class="ff-fila-acciones">
+                  <a
+                    [routerLink]="['/cooperativas/buses', bus.id, 'asientos']"
+                    class="btn btn-sm btn-outline-success"
                   >
-                    <i class="bi bi-trash"></i> Dar de baja
-                  </button>
-                }
+                    <i class="bi bi-grid-3x3-gap"></i> Ver asientos
+                  </a>
+                  <a
+                    [routerLink]="['/cooperativas/buses', bus.id, 'editar']"
+                    class="btn btn-sm btn-outline-primary"
+                  >
+                    <i class="bi bi-pencil"></i> Editar
+                  </a>
+                  @if (bus.estado !== 'INACTIVO') {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="darDeBaja(bus)"
+                    >
+                      <i class="bi bi-trash"></i> Dar de baja
+                    </button>
+                  }
+                </div>
               </td>
             </tr>
           }

@@ -1,0 +1,474 @@
+/* Estilo comun de los formularios de flota (bus, grupo). */
+:host {
+  display: block;
+  font-family: 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
+  --f-asfalto: #1e293b;
+  --f-asfalto-2: #0f172a;
+  --f-linea: #d8dee8;
+  --f-fondo: #f4f6fa;
+  --f-azul: #2563eb;
+  --f-ambar: #f59e0b;
+  --f-texto-suave: #64748b;
+}
+
+.ff-pagina {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 1rem 0 5rem;
+}
+
+/* Cabecera oscura, como el tablero de un bus */
+.ff-cabecera {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.4rem 1.6rem;
+  border-radius: 1rem 1rem 0 0;
+  background: linear-gradient(135deg, var(--f-asfalto-2), var(--f-asfalto));
+  color: #fff;
+  overflow: hidden;
+}
+
+.ff-cabecera::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--f-ambar) 0 22px, transparent 22px 40px);
+}
+
+.ff-icono {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.8rem;
+  background: rgb(255 255 255 / 0.12);
+  font-size: 1.5rem;
+}
+
+.ff-titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ff-subtitulo {
+  margin: 0.15rem 0 0;
+  color: #cbd5e1;
+  font-size: 0.92rem;
+}
+
+.ff-volver {
+  color: #e2e8f0;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  background: transparent;
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.9rem;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.ff-volver:hover {
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+
+.ff-cuerpo {
+  background: #fff;
+  border: 1px solid var(--f-linea);
+  border-top: 0;
+  border-radius: 0 0 1rem 1rem;
+  padding: 1.5rem 1.6rem 1.6rem;
+  box-shadow: 0 6px 22px rgb(15 23 42 / 0.06);
+}
+
+/* Secciones */
+.ff-seccion {
+  padding: 1.1rem 0 1.4rem;
+  border-bottom: 1px dashed var(--f-linea);
+}
+
+.ff-seccion:last-of-type {
+  border-bottom: 0;
+}
+
+.ff-seccion-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--f-asfalto);
+}
+
+.ff-seccion-titulo i {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.5rem;
+  background: #e8efff;
+  color: var(--f-azul);
+  font-size: 1rem;
+}
+
+.ff-seccion-ayuda {
+  margin: 0 0 1rem 2.5rem;
+  color: var(--f-texto-suave);
+  font-size: 0.88rem;
+}
+
+/* Campos */
+.form-label {
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  border-color: var(--f-linea);
+  background-color: var(--f-fondo);
+}
+
+.input-group-text {
+  color: var(--f-texto-suave);
+  border-radius: 0.6rem 0 0 0.6rem;
+}
+
+.form-control,
+.form-select {
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.8rem;
+}
+
+.input-group > .form-control {
+  border-radius: 0 0.6rem 0.6rem 0;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: #fff;
+  border-color: var(--f-azul);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.18);
+}
+
+.form-text {
+  font-size: 0.8rem;
+}
+
+/* Interruptor y botones segmentados */
+.ff-interruptor {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  height: 100%;
+  min-height: 2.6rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--f-linea);
+  border-radius: 0.6rem;
+  background: var(--f-fondo);
+}
+
+.ff-interruptor .form-check-input {
+  margin: 0;
+  float: none;
+  width: 2.4rem;
+  height: 1.3rem;
+  cursor: pointer;
+}
+
+.ff-interruptor label {
+  margin: 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: #334155;
+}
+
+.ff-segmentado {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ff-segmentado label {
+  flex: 1;
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+  border: 1px solid var(--f-linea);
+  border-radius: 0.6rem;
+  background: var(--f-fondo);
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+}
+
+.btn-check:checked + label {
+  background: var(--f-azul);
+  border-color: var(--f-azul);
+  color: #fff;
+}
+
+.btn-check:focus-visible + label {
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.3);
+}
+
+/* Barra de acciones */
+.ff-acciones {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin: 1.2rem -1.6rem -1.6rem;
+  padding: 0.9rem 1.6rem;
+  border-top: 1px solid var(--f-linea);
+  border-radius: 0 0 1rem 1rem;
+  background: rgb(255 255 255 / 0.94);
+  backdrop-filter: blur(4px);
+}
+
+.ff-acciones .btn {
+  border-radius: 0.6rem;
+  padding: 0.5rem 1.3rem;
+  font-weight: 600;
+}
+
+.ff-estado {
+  padding: 1.2rem 1.6rem;
+  color: var(--f-texto-suave);
+}
+
+@media (max-width: 575px) {
+  .ff-cabecera,
+  .ff-cuerpo {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .ff-acciones {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Placa en vivo: se actualiza mientras se escribe */
+.placa {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 9.5rem;
+  border: 3px solid #0f172a;
+  border-radius: 0.55rem;
+  background: #fff;
+  color: #0f172a;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.35);
+}
+
+.placa-pais {
+  width: 100%;
+  padding: 0.05rem 0;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  text-align: center;
+}
+
+.placa-texto {
+  padding: 0.15rem 0.8rem 0.3rem;
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.15;
+}
+
+.placa-vacia {
+  color: #94a3b8;
+}
+
+/* Listados */
+.ff-suelta {
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ff-cabecera-lista {
+  flex: 1;
+}
+
+.ff-nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.6rem;
+  background: var(--f-ambar);
+  color: #1e293b;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ff-nuevo:hover {
+  background: #fbbf24;
+  color: #0f172a;
+}
+
+.ff-suelto {
+  padding: 0;
+  border-top: 1px solid var(--f-linea);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.ff-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid var(--f-linea);
+  background: var(--f-fondo);
+}
+
+.ff-tabla {
+  margin: 0;
+}
+
+.ff-tabla thead th {
+  padding: 0.75rem 1rem;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--f-linea);
+}
+
+.ff-tabla tbody td {
+  padding: 0.8rem 1rem;
+}
+
+.ff-tabla tbody tr:hover > * {
+  background: #f8fafc;
+}
+
+.ff-pagina.ff-ancha {
+  max-width: none;
+}
+
+/* Tablas: sin partir el texto y acciones compactas */
+.ff-tabla th,
+.ff-tabla td {
+  white-space: nowrap;
+}
+
+.ff-placa-mini {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border: 2px solid #0f172a;
+  border-radius: 0.35rem;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.ff-fila-acciones {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+}
+
+.ff-fila-acciones .btn {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.ff-icono-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  padding: 0;
+  border-radius: 0.55rem;
+  font-size: 1rem;
+}
+
+/* Pantalla de asientos: mapa al centro y datos al lado */
+.ff-asientos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.ff-lienzo {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  border: 1px solid var(--f-linea);
+  border-radius: 0.9rem;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 31px, rgb(148 163 184 / 0.12) 31px 32px),
+    var(--f-fondo);
+  overflow: auto;
+}
+
+.ff-panel {
+  border: 1px solid var(--f-linea);
+  border-radius: 0.9rem;
+  overflow: hidden;
+}
+
+.ff-panel-titulo {
+  margin: 0;
+  padding: 0.7rem 1rem;
+  background: #eef2f7;
+  border-bottom: 1px solid var(--f-linea);
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ff-dato {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 0.92rem;
+}
+
+.ff-dato:last-child {
+  border-bottom: 0;
+}
+
+.ff-dato span:first-child {
+  color: var(--f-texto-suave);
+}
+
+.ff-dato span:last-child {
+  font-weight: 600;
+  color: #1e293b;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .ff-asientos {
+    grid-template-columns: 1fr;
+  }
+}

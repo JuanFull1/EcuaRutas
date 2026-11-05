@@ -1,13 +1,16 @@
 <div class="disenador">
 
-  <header class="cabecera">
-    <div>
-      <h1 class="titulo">{{ existente() ? 'Diseño de la plantilla' : 'Nueva plantilla' }}</h1>
-      <p class="subtitulo">
-        Arma la distribución de asientos del bus y elige cuáles llevan recargo.
-      </p>
+  <header class="ff-cabecera ff-suelta">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-grid-3x3-gap"></i></span>
+      <div>
+        <h1 class="ff-titulo">{{ existente() ? 'Diseño de la plantilla' : 'Nueva plantilla' }}</h1>
+        <p class="ff-subtitulo">
+          Arma la distribución de asientos del bus y elige cuáles llevan recargo.
+        </p>
+      </div>
     </div>
-    <a routerLink="/cooperativas/plantillas" class="btn btn-outline-secondary btn-sm">
+    <a routerLink="/cooperativas/plantillas" class="ff-volver">
       <i class="bi bi-arrow-left"></i> Volver
     </a>
   </header>
