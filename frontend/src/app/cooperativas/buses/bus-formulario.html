@@ -52,6 +52,38 @@
           }
         </div>
 
+        <div class="col-md-8">
+          <label class="form-label" for="plantillaId">Plantilla de asientos</label>
+          <select id="plantillaId" class="form-select" formControlName="plantillaId">
+            <option [ngValue]="null">Sin plantilla</option>
+            @for (p of plantillas(); track p.id) {
+              <option [ngValue]="p.id">
+                {{ p.nombre }} ({{ p.pisos }} {{ p.pisos === 1 ? 'piso' : 'pisos' }})
+              </option>
+            }
+          </select>
+          @if (errorPlantillas()) {
+            <div class="form-text text-danger">{{ errorPlantillas() }}</div>
+          } @else if (plantillaActual() !== null) {
+            <div class="form-text">
+              Si eliges otra plantilla, los asientos del bus se reemplazan por los de la nueva.
+            </div>
+          } @else {
+            <div class="form-text">
+              Define la distribución de los asientos del bus. Puedes crearla en Plantillas.
+            </div>
+          }
+        </div>
+
+        @if (esEdicion() && plantillaActual() !== null) {
+          <div class="col-md-4 d-flex align-items-end">
+            <a [routerLink]="['/cooperativas/buses', busId(), 'asientos']"
+               class="btn btn-outline-primary">
+              <i class="bi bi-grid-3x3-gap"></i> Ver asientos
+            </a>
+          </div>
+        }
+
         <div class="col-md-3">
           <label class="form-label" for="color">Color</label>
           <input id="color" class="form-control" formControlName="color"
