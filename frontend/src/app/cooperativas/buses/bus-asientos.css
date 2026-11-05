@@ -13,8 +13,9 @@
 }
 
 .punto {
-  width: 0.85rem;
-  height: 0.85rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-right: 0.3rem;
   border-radius: 50%;
   display: inline-block;
 }
