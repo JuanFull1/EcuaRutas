@@ -81,21 +81,25 @@
                 </span>
               </td>
               <td class="text-end">
-                <a
-                  [routerLink]="['/cooperativas/grupos', grupo.id, 'editar']"
-                  class="btn btn-sm btn-outline-primary"
-                >
-                  <i class="bi bi-pencil"></i> Editar
-                </a>
-                @if (grupo.activo) {
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-danger ms-1"
-                    (click)="desactivar(grupo)"
+                <div class="ff-fila-acciones">
+                  <a
+                    [routerLink]="['/cooperativas/grupos', grupo.id, 'editar']"
+                    class="btn btn-outline-primary ff-icono-btn"
+                    title="Editar" aria-label="Editar"
                   >
-                    <i class="bi bi-slash-circle"></i> Desactivar
-                  </button>
-                }
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  @if (grupo.activo) {
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger ff-icono-btn"
+                      title="Desactivar" aria-label="Desactivar"
+                      (click)="desactivar(grupo)"
+                    >
+                      <i class="bi bi-slash-circle"></i>
+                    </button>
+                  }
+                </div>
               </td>
             </tr>
           }

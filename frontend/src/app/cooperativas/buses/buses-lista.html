@@ -99,7 +99,7 @@
           @for (bus of buses(); track bus.id) {
             <tr>
               <td class="fw-semibold">{{ bus.numeroInterno }}</td>
-              <td>{{ bus.placa }}</td>
+              <td><span class="ff-placa-mini">{{ bus.placa }}</span></td>
               <td>{{ bus.modelo ?? '-' }}</td>
               <td class="text-center">{{ bus.anio ?? '-' }}</td>
               <td class="text-center">{{ bus.pisos }}</td>
@@ -110,27 +110,32 @@
                 </span>
               </td>
               <td class="text-end">
-                <a
-                  [routerLink]="['/cooperativas/buses', bus.id, 'asientos']"
-                  class="btn btn-sm btn-outline-secondary me-1"
-                >
-                  <i class="bi bi-grid-3x3-gap"></i> Asientos
-                </a>
-                <a
-                  [routerLink]="['/cooperativas/buses', bus.id, 'editar']"
-                  class="btn btn-sm btn-outline-primary"
-                >
-                  <i class="bi bi-pencil"></i> Editar
-                </a>
-                @if (bus.estado !== 'INACTIVO') {
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-danger ms-1"
-                    (click)="darDeBaja(bus)"
+                <div class="ff-fila-acciones">
+                  <a
+                    [routerLink]="['/cooperativas/buses', bus.id, 'asientos']"
+                    class="btn btn-outline-secondary ff-icono-btn"
+                    title="Ver asientos" aria-label="Ver asientos"
                   >
-                    <i class="bi bi-trash"></i> Dar de baja
-                  </button>
-                }
+                    <i class="bi bi-grid-3x3-gap"></i>
+                  </a>
+                  <a
+                    [routerLink]="['/cooperativas/buses', bus.id, 'editar']"
+                    class="btn btn-outline-primary ff-icono-btn"
+                    title="Editar" aria-label="Editar"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  @if (bus.estado !== 'INACTIVO') {
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger ff-icono-btn"
+                      title="Dar de baja" aria-label="Dar de baja"
+                      (click)="darDeBaja(bus)"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  }
+                </div>
               </td>
             </tr>
           }
