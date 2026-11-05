@@ -1,0 +1,114 @@
+<div class="container-fluid px-0">
+  <section class="bg-white border rounded-4 p-4 mb-4">
+    <span class="badge text-bg-primary mb-3">Cooperativa</span>
+    <h1 class="h3 fw-bold">Gestión de lugares</h1>
+    <p class="text-secondary mb-0">Administración de ciudades, terminales y puntos geográficos utilizados en las rutas.</p>
+    @if (puedeEscribir()) {
+      <button type="button" class="btn btn-primary mt-3" [disabled]="ocupado() || formularioVisible()" (click)="nuevo()">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo lugar
+      </button>
+    }
+  </section>
+
+  @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+  @if (error(); as mensaje) {
+    <div class="alert alert-danger d-flex flex-wrap justify-content-between align-items-center gap-3" role="alert">
+      <span>{{ mensaje }}</span>
+      <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="ocupado()" (click)="cargar()">Actualizar listado</button>
+    </div>
+  }
+  @if (cargandoDetalle()) {
+    <p class="text-secondary" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando datos del lugar...</p>
+  }
+  @if (formularioVisible()) {
+    <app-lugar-formulario [lugar]="seleccionado()" [guardando]="guardando()" [error]="errorFormulario()"
+      [autorizado]="puedeEscribir()" (guardarLugar)="guardar($event)" (cancelar)="cerrarFormulario()" />
+  }
+
+  <section class="card border-0 shadow-sm" aria-labelledby="titulo-listado" [attr.aria-busy]="cargando()">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <h2 id="titulo-listado" class="h5 mb-0">Lugares registrados</h2>
+        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="ocupado()" (click)="cargar()">
+          <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Actualizar
+        </button>
+      </div>
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6">
+          <label for="buscar-lugar" class="form-label">Buscar por nombre</label>
+          <input #buscar id="buscar-lugar" type="search" class="form-control" placeholder="Nombre del lugar"
+            [value]="busqueda()" (input)="busqueda.set(buscar.value)">
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <label for="estado-lugar" class="form-label">Estado</label>
+          <select #estado id="estado-lugar" class="form-select" [value]="filtroEstado()" (change)="filtroEstado.set(estado.value)">
+            <option value="">Todos</option><option value="activo">Activos</option><option value="inactivo">Inactivos</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()">Limpiar filtros</button>
+        </div>
+      </div>
+    </div>
+    @if (cargando()) {
+      <div class="text-center text-secondary py-5" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando lugares...</div>
+    } @else if (!error() && lugares().length === 0) {
+      <p class="text-center text-secondary py-5 mb-0" role="status">No hay lugares registrados.</p>
+    } @else if (!error() && lugaresFiltrados().length === 0) {
+      <p class="text-center text-secondary py-5 mb-0" role="status">No hay lugares que coincidan con la búsqueda y el estado seleccionados.</p>
+    } @else if (lugaresFiltrados().length > 0) {
+      @if (error()) { <p class="text-secondary small px-3">Se muestran los últimos datos consultados; podrían estar desactualizados.</p> }
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla de lugares, desplazamiento horizontal disponible">
+        <table class="table table-hover align-middle mb-0">
+          <caption class="visually-hidden">Lugares registrados con ubicación, estado y acciones disponibles.</caption>
+          <thead class="table-light"><tr>
+            <th scope="col">ID</th><th scope="col">Nombre</th><th scope="col">Provincia</th><th scope="col">Cantón</th>
+            <th scope="col">Tipo</th><th scope="col">Coordenadas</th><th scope="col">Estado</th>
+            @if (puedeEscribir()) { <th scope="col">Acciones</th> }
+          </tr></thead>
+          <tbody>
+            @for (lugar of lugaresFiltrados(); track lugar.id) {
+              <tr>
+                <td>{{ lugar.id }}</td><th scope="row" class="fw-semibold">{{ lugar.nombre }}</th>
+                <td>{{ lugar.provincia ?? '—' }}</td><td>{{ lugar.canton ?? '—' }}</td><td>{{ lugar.tipo }}</td>
+                <td class="coordenadas">
+                  @if (lugar.ubicacion; as ubicacion) {
+                    <span class="d-block">Lat.: {{ ubicacion.latitud }}</span><span class="d-block">Long.: {{ ubicacion.longitud }}</span>
+                  } @else { <span class="text-secondary">Sin ubicación</span> }
+                </td>
+                <td><span class="badge" [class.text-bg-success]="lugar.activo" [class.text-bg-secondary]="!lugar.activo">{{ lugar.activo ? 'Activo' : 'Inactivo' }}</span></td>
+                @if (puedeEscribir()) {
+                  <td><div class="d-flex flex-wrap gap-2 acciones">
+                    <a class="btn btn-sm btn-outline-secondary" routerLink="/cooperativas/mapas/lugares" [queryParams]="{ lugarId: lugar.id }"
+                      [attr.aria-label]="'Ver en mapa ' + lugar.nombre"><i class="bi bi-map me-1" aria-hidden="true"></i>Ver en mapa</a>
+                    <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || formularioVisible()"
+                      [attr.aria-label]="'Editar ' + lugar.nombre" (click)="editar(lugar)">Editar</button>
+                    @if (lugar.activo) {
+                      <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || formularioVisible()"
+                        [attr.aria-label]="'Desactivar ' + lugar.nombre" (click)="solicitarBaja(lugar)">Desactivar</button>
+                    }
+                  </div></td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="text-secondary small p-3 mb-0" role="status">Mostrando {{ lugaresFiltrados().length }} de {{ lugares().length }} lugares.</p>
+    }
+  </section>
+</div>
+
+<dialog #dialogoBaja class="border-0 rounded-4 shadow p-4" aria-labelledby="titulo-baja" aria-describedby="descripcion-baja"
+  [attr.aria-busy]="desactivando()" (cancel)="cancelarBaja($event)">
+  <h2 id="titulo-baja" class="h5">Desactivar lugar</h2>
+  <p id="descripcion-baja">¿Deseas desactivar <strong>{{ pendienteBaja()?.nombre }}</strong>? Esta operación cambia su estado a inactivo y conserva el registro; no lo elimina físicamente.</p>
+  @if (errorBaja(); as mensaje) { <div class="alert alert-danger" role="alert">{{ mensaje }}</div> }
+  <div class="d-flex flex-wrap justify-content-end gap-2">
+    <button type="button" class="btn btn-outline-secondary" autofocus [disabled]="desactivando()" (click)="cancelarBaja()">Cancelar</button>
+    <button type="button" class="btn btn-danger" [disabled]="desactivando() || !puedeEscribir()" (click)="confirmarBaja()">
+      @if (desactivando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+      {{ desactivando() ? 'Desactivando...' : 'Desactivar' }}
+    </button>
+  </div>
+</dialog>

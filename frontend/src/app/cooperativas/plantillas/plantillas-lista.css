@@ -1,0 +1,139 @@
+:host {
+  --asfalto: #1f2733;
+  --linea: #f4c430;
+  --gris: #64748b;
+  --borde: #dde3ea;
+  font-family: Bahnschrift, 'DIN Alternate', 'Segoe UI', system-ui, sans-serif;
+  color: #1b2430;
+}
+
+.plantillas {
+  padding: 0.5rem 0 2rem;
+}
+
+.cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.titulo {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.subtitulo {
+  margin: 0.15rem 0 0;
+  color: var(--gris);
+}
+
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--borde);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.tarjeta.inactiva {
+  opacity: 0.65;
+}
+
+.tarjeta-bus {
+  min-height: 15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--asfalto);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 1rem,
+    rgb(255 255 255 / 0.45) 1rem,
+    rgb(255 255 255 / 0.45) 1.8rem
+  );
+  background-size: 2px 100%;
+  background-position: 0.8rem 0;
+  background-repeat: no-repeat;
+}
+
+.sin-asientos {
+  color: #aab4c2;
+  font-size: 0.9rem;
+}
+
+.tarjeta-cuerpo {
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.tarjeta-nombre {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.tarjeta-datos {
+  margin: 0.25rem 0 0.7rem;
+  color: var(--gris);
+  font-size: 0.9rem;
+}
+
+.tarjeta-datos strong {
+  color: #1b2430;
+}
+
+.tarjeta-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.etiqueta {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.etiqueta-ok {
+  background: #dcf5e7;
+  color: #0f6b3a;
+}
+
+.vacio {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 2px dashed var(--borde);
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+}
+
+.vacio h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.vacio p {
+  color: var(--gris);
+}
+
+.tarjeta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}

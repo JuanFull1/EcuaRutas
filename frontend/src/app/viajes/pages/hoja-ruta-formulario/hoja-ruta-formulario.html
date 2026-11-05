@@ -1,0 +1,72 @@
+<div class="container-fluid px-0">
+  <h1 class="h4 fw-bold mb-3">Nueva hoja de ruta (manual)</h1>
+  @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
+  
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+          <label class="form-label fw-semibold">Grupo</label>
+          <select class="form-select" formControlName="grupoBusId">
+            <option [ngValue]="null">Seleccione grupo</option>
+            @for (g of grupos; track g.id) {
+              <option [ngValue]="g.id">{{ g.nombre }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label fw-semibold">Fecha</label>
+          <input type="date" class="form-control" formControlName="fecha">
+        </div>
+      </div>
+      
+      <h2 class="h6 fw-semibold">Detalles</h2>
+      <div formArrayName="detalles">
+        @for (d of detalles.controls; track $index) {
+          <div class="row g-2 align-items-end mb-2" [formGroup]="d">
+            <div class="col-6 col-md-2">
+              <label class="form-label small">Bus</label>
+              <select class="form-select" formControlName="busId">
+                <option [ngValue]="null">Bus</option>
+                @for (b of buses; track b.id) {
+                  <option [ngValue]="b.id">{{ b.numeroInterno }} ({{ b.placa }})</option>
+                }
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label small">Tipo</label>
+              <select class="form-select" formControlName="tipoAsignacion">
+                <option value="SERVICIO">SERVICIO</option>
+                <option value="PARADA">PARADA</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label small">Frecuencia (ID)</label>
+              <input type="number" class="form-control" formControlName="frecuenciaId" placeholder="Ej. 1">
+            </div>
+            <div class="col-3 col-md-1">
+              <label class="form-label small">Orden</label>
+              <input type="number" class="form-control" formControlName="ordenDia">
+            </div>
+            <div class="col-3 col-md-2">
+              <label class="form-label small">Hora</label>
+              <input type="time" class="form-control" formControlName="horaProgramada">
+            </div>
+            <div class="col-9 col-md-2">
+              <label class="form-label small">Observación</label>
+              <input type="text" class="form-control" formControlName="observacion">
+            </div>
+            <div class="col-3 col-md-1">
+              <button type="button" class="btn btn-outline-danger w-100" (click)="quitarDetalle($index)">X</button>
+            </div>
+          </div>
+        }
+      </div>
+      <button type="button" class="btn btn-outline-secondary btn-sm mt-2" (click)="agregarDetalle()">Agregar detalle</button>
+    </div>
+    <div class="card-footer bg-white d-flex gap-2 justify-content-end">
+      <a routerLink="/viajes/hojas-ruta" class="btn btn-outline-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary" [disabled]="guardando()">{{ guardando() ? 'Guardando...' : 'Guardar hoja' }}</button>
+    </div>
+  </form>
+</div>

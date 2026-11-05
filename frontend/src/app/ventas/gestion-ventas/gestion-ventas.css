@@ -1,0 +1,154 @@
+:host {
+  display: block;
+}
+
+.gestion-ventas {
+  max-width: 1080px;
+
+  margin: 0 auto;
+
+  padding:
+    2rem 1.25rem;
+}
+
+.filtros {
+  padding: 1.25rem;
+
+  border:
+    1px solid #dfe5ec;
+
+  border-radius: 12px;
+
+  background: #fff;
+}
+
+.ventas-listado {
+  margin-top: 1.5rem;
+}
+
+.venta-card {
+  margin-bottom: 1rem;
+
+  padding: 1.25rem;
+
+  border:
+    1px solid #dfe5ec;
+
+  border-radius: 12px;
+
+  background: #fff;
+}
+
+.venta-cabecera {
+  display: flex;
+
+  justify-content:
+    space-between;
+
+  align-items: center;
+
+  gap: 1rem;
+
+  padding-bottom: 1rem;
+
+  border-bottom:
+    1px solid #e8ecf1;
+}
+
+.venta-cabecera small,
+.venta-grid small {
+  display: block;
+
+  margin-bottom: .2rem;
+
+  color: #667085;
+}
+
+.venta-cabecera strong {
+  font-size: 1rem;
+}
+
+.venta-grid {
+  display: grid;
+
+  grid-template-columns:
+    1.25fr
+    1fr
+    1.15fr
+    .6fr;
+
+  gap: 1.25rem;
+
+  padding:
+    1.1rem 0;
+}
+
+.venta-grid strong,
+.venta-grid span {
+  display: block;
+}
+
+.venta-grid span {
+  margin-top: .2rem;
+
+  color: #475467;
+}
+
+.total {
+  font-size: 1.3rem;
+}
+
+.venta-acciones {
+  display: flex;
+
+  justify-content:
+    space-between;
+
+  align-items: center;
+
+  gap: 1rem;
+
+  padding-top: 1rem;
+
+  border-top:
+    1px solid #e8ecf1;
+}
+
+.paginacion {
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 1rem;
+
+  padding-top: .5rem;
+}
+
+@media (
+  max-width: 900px
+) {
+
+  .venta-grid {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+  .venta-acciones {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+}
+
+@media (
+  max-width: 600px
+) {
+
+  .venta-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+}

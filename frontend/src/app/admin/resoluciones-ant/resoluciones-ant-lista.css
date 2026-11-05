@@ -1,0 +1,9 @@
+:host { display: block; min-width: 0; }
+.card { border-radius: 14px; min-width: 0; }
+.table { min-width: 900px; }
+.table th, .table td { padding: 0.85rem 1rem; max-width: 260px; overflow-wrap: anywhere; }
+.acciones { min-width: 220px; }
+.detalle { overflow-wrap: anywhere; }
+.table-responsive:focus-visible { outline: 2px solid #1769aa; outline-offset: 2px; }
+dialog { width: min(520px, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; color: inherit; }
+dialog::backdrop { background: rgb(0 0 0 / 48%); }

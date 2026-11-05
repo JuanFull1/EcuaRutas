@@ -1,0 +1,244 @@
+:host {
+  display: block;
+}
+
+.pagina-disponibilidad {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+.encabezado-pagina {
+  margin-bottom: 1.5rem;
+}
+
+.encabezado-pagina h1 {
+  margin: 0 0 .35rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.encabezado-pagina p {
+  margin: 0;
+  color: #667085;
+}
+
+.panel-busqueda {
+  padding: 1.35rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.viaje-card {
+  display: grid;
+  grid-template-columns:
+    120px minmax(0, 1fr) 180px;
+  gap: 1.5rem;
+  align-items: center;
+
+  margin-bottom: 1rem;
+  padding: 1.4rem;
+
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+
+  background: #fff;
+}
+
+.hora strong {
+  display: block;
+  font-size: 1.7rem;
+  color: #152238;
+}
+
+.hora span {
+  display: block;
+  margin-top: .35rem;
+  color: #667085;
+  font-size: .85rem;
+}
+
+.datos-viaje h3 {
+  margin: 0 0 .35rem;
+  font-size: 1.45rem;
+}
+
+.datos-viaje p {
+  margin: .25rem 0;
+  color: #475467;
+}
+
+.precio-viaje {
+  text-align: right;
+}
+
+.precio-viaje small {
+  display: block;
+  color: #667085;
+}
+
+.precio-viaje strong {
+  display: block;
+  font-size: 1.7rem;
+  color: #152238;
+}
+
+.dialogo-asientos {
+  width: min(
+    1180px,
+    calc(100vw - 2rem)
+  );
+
+  max-width: 1180px;
+
+  max-height:
+    calc(100vh - 2rem);
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 16px;
+
+  overflow: auto;
+}
+
+.dialogo-asientos::backdrop {
+  background:
+    rgba(15, 23, 42, .62);
+
+  backdrop-filter:
+    blur(2px);
+}
+
+.dialogo-contenido {
+  padding: 1.5rem;
+}
+
+.dialogo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 1rem;
+
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+
+  border-bottom:
+    1px solid #e5e7eb;
+}
+
+.dialogo-header h2 {
+  margin: 0 0 .25rem;
+}
+
+.dialogo-header p,
+.dialogo-header small {
+  margin: 0;
+  color: #667085;
+}
+
+.contenido-venta {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.35fr)
+    minmax(330px, .65fr);
+
+  gap: 1.5rem;
+}
+
+.mapa-panel,
+.venta-panel {
+  padding: 1.25rem;
+
+  border: 1px solid #e1e6ed;
+
+  border-radius: 14px;
+
+  background: #fff;
+}
+
+.mapa-panel {
+  background: #f8fafc;
+}
+
+.mapa-panel h3,
+.venta-panel h3 {
+  margin:
+    0 0 .25rem;
+}
+
+.mapa-panel p {
+  margin: 0;
+  color: #667085;
+}
+
+.mapa-scroll {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.asiento-elegido {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 1rem;
+
+  border:
+    2px solid #0d6efd;
+
+  border-radius: 12px;
+
+  background: #eef5ff;
+}
+
+.asiento-elegido small {
+  display: block;
+  color: #667085;
+}
+
+.asiento-elegido strong {
+  display: block;
+  margin-top: .2rem;
+  font-size: 1.35rem;
+}
+
+.acciones-venta {
+  display: grid;
+  gap: .65rem;
+
+  margin-top: 1.25rem;
+}
+
+.cargando {
+  padding: 4rem 1rem;
+  text-align: center;
+}
+
+.cargando p {
+  margin-top: 1rem;
+  color: #667085;
+}
+
+@media (
+  max-width: 900px
+) {
+
+  .viaje-card {
+    grid-template-columns:
+      1fr;
+  }
+
+  .precio-viaje {
+    text-align: left;
+  }
+
+  .contenido-venta {
+    grid-template-columns:
+      1fr;
+  }
+
+}

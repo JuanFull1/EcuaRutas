@@ -1,0 +1,63 @@
+
+<section
+  class="mapa-marco border rounded-4 overflow-hidden bg-white"
+  [attr.aria-label]="etiqueta()"
+  [attr.aria-busy]="cargando()">
+
+  <!-- Mapa real de calles -->
+  <div
+    #contenedor
+    class="mapa-contenedor">
+  </div>
+
+  @if (cargando()) {
+    <div
+      class="mapa-estado bg-white rounded-3 shadow-sm p-3 text-secondary"
+      role="status">
+
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true">
+      </span>
+
+      Cargando mapa de OpenStreetMap...
+    </div>
+  }
+
+  @if (error(); as mensaje) {
+    <div
+      class="mapa-estado alert alert-danger shadow-sm mb-0"
+      role="alert">
+      {{ mensaje }}
+    </div>
+  }
+
+  @if (estilo() === estiloDesarrollo) {
+    <footer class="mapa-creditos small px-3 py-2">
+
+      <span class="text-secondary">
+        Cartografía:
+      </span>
+
+      <a
+        href="https://www.openstreetmap.org/"
+        target="_blank"
+        rel="noopener noreferrer">
+        OpenStreetMap
+      </a>
+
+      <span class="text-secondary">
+        ·
+      </span>
+
+      <a
+        href="https://www.openstreetmap.org/copyright"
+        target="_blank"
+        rel="noopener noreferrer">
+        © OpenStreetMap contributors
+      </a>
+
+    </footer>
+  }
+
+</section>

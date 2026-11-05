@@ -1,0 +1,925 @@
+<div class="container-fluid px-0">
+
+  <section
+    class="bg-white border rounded-4 p-4 mb-4"
+  >
+
+    <div
+      class="d-flex flex-column
+             flex-lg-row
+             justify-content-between
+             align-items-lg-center
+             gap-3"
+    >
+
+      <div>
+
+        <span
+          class="badge text-bg-primary mb-2"
+        >
+          Administración
+        </span>
+
+        <h1
+          class="h3 fw-bold mb-1"
+        >
+          Cooperativas
+        </h1>
+
+        <p
+          class="text-secondary mb-0"
+        >
+          Registra cooperativas y crea
+          sus cuentas de acceso.
+        </p>
+
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="abrirCrear()"
+      >
+
+        <i
+          class="bi bi-plus-circle me-2"
+        ></i>
+
+        Nueva cooperativa
+
+      </button>
+
+    </div>
+
+  </section>
+
+  <div
+    *ngIf="mensaje()"
+    class="alert alert-success"
+  >
+
+    <i
+      class="bi bi-check-circle me-2"
+    ></i>
+
+    {{ mensaje() }}
+
+  </div>
+
+  <div
+    *ngIf="error()"
+    class="alert alert-danger"
+  >
+
+    <i
+      class="bi bi-exclamation-circle me-2"
+    ></i>
+
+    {{ error() }}
+
+  </div>
+
+  <section
+    class="bg-white border
+           rounded-4 p-4 mb-4"
+  >
+
+    <form
+      [formGroup]="filtros"
+      (ngSubmit)="buscar()"
+    >
+
+      <div class="row g-3">
+
+        <div
+          class="col-12 col-lg-7"
+        >
+
+          <label
+            for="busquedaCooperativa"
+            class="form-label fw-semibold"
+          >
+            Buscar
+          </label>
+
+          <input
+            id="busquedaCooperativa"
+            type="text"
+            class="form-control"
+            formControlName="busqueda"
+            placeholder="Nombre o RUC"
+          >
+
+        </div>
+
+        <div
+          class="col-12
+                 col-sm-6
+                 col-lg-3"
+        >
+
+          <label
+            for="estadoCooperativa"
+            class="form-label fw-semibold"
+          >
+            Estado
+          </label>
+
+          <select
+            id="estadoCooperativa"
+            class="form-select"
+            formControlName="estado"
+          >
+
+            <option value="">
+              Todos
+            </option>
+
+            <option value="activo">
+              Activas
+            </option>
+
+            <option value="inactivo">
+              Inactivas
+            </option>
+
+          </select>
+
+        </div>
+
+        <div
+          class="col-12
+                 col-sm-6
+                 col-lg-2
+                 d-flex
+                 align-items-end
+                 gap-2"
+        >
+
+          <button
+            type="submit"
+            class="btn
+                   btn-primary
+                   flex-fill"
+          >
+            <i
+              class="bi bi-search"
+            ></i>
+          </button>
+
+          <button
+            type="button"
+            class="btn
+                   btn-outline-secondary"
+            title="Limpiar filtros"
+            (click)="limpiarFiltros()"
+          >
+            <i
+              class="bi
+                     bi-arrow-counterclockwise"
+            ></i>
+          </button>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </section>
+
+  <section
+    class="bg-white border
+           rounded-4
+           overflow-hidden"
+  >
+
+    <div
+      class="d-flex
+             justify-content-between
+             align-items-center
+             p-4 border-bottom"
+    >
+
+      <div>
+
+        <h2
+          class="h5 fw-bold mb-1"
+        >
+          Cooperativas registradas
+        </h2>
+
+        <small
+          class="text-secondary"
+        >
+          {{ cooperativas().length }}
+          resultado(s)
+        </small>
+
+      </div>
+
+    </div>
+
+    <div
+      *ngIf="cargando()"
+      class="text-center py-5"
+    >
+
+      <div
+        class="spinner-border
+               text-primary"
+      ></div>
+
+      <div
+        class="text-secondary mt-3"
+      >
+        Cargando cooperativas...
+      </div>
+
+    </div>
+
+    <div
+      *ngIf="
+        !cargando() &&
+        cooperativas().length === 0
+      "
+      class="text-center py-5 px-3"
+    >
+
+      <i
+        class="bi bi-building
+               fs-1 text-secondary"
+      ></i>
+
+      <h3
+        class="h6 fw-bold mt-3"
+      >
+        No existen cooperativas
+      </h3>
+
+      <p
+        class="text-secondary mb-0"
+      >
+        Registra la primera
+        cooperativa para comenzar.
+      </p>
+
+    </div>
+
+    <div
+      *ngIf="
+        !cargando() &&
+        cooperativas().length > 0
+      "
+      class="table-responsive"
+    >
+
+      <table
+        class="table align-middle mb-0"
+      >
+
+        <thead
+          class="table-light"
+        >
+
+          <tr>
+
+            <th>
+              Cooperativa
+            </th>
+
+            <th>
+              RUC
+            </th>
+
+            <th>
+              Usuarios
+            </th>
+
+            <th>
+              Estado
+            </th>
+
+            <th
+              class="text-end"
+            >
+              Acciones
+            </th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr
+            *ngFor="
+              let cooperativa
+              of cooperativas()
+            "
+          >
+
+            <td>
+
+              <div
+                class="d-flex
+                       align-items-center
+                       gap-3"
+              >
+
+                <div
+                  class="cooperativa-icon"
+                >
+
+                  <i
+                    class="bi bi-building"
+                  ></i>
+
+                </div>
+
+                <div>
+
+                  <div
+                    class="fw-semibold"
+                  >
+                    {{ cooperativa.nombre }}
+                  </div>
+
+                  <small
+                    class="text-secondary"
+                  >
+                    ID:
+                    {{ cooperativa.id }}
+                  </small>
+
+                </div>
+
+              </div>
+
+            </td>
+
+            <td>
+
+              {{
+                cooperativa.ruc ||
+                'Sin registrar'
+              }}
+
+            </td>
+
+            <td>
+
+              <span
+                class="badge
+                       text-bg-light
+                       border"
+              >
+                {{
+                  cooperativa
+                    .cantidadUsuarios
+                }}
+              </span>
+
+            </td>
+
+            <td>
+
+              <span
+                class="badge"
+                [ngClass]="
+                  cooperativa.activa
+                    ? 'text-bg-success'
+                    : 'text-bg-secondary'
+                "
+              >
+                {{
+                  cooperativa.activa
+                    ? 'Activa'
+                    : 'Inactiva'
+                }}
+              </span>
+
+            </td>
+
+            <td
+              class="text-end"
+            >
+
+              <div
+                class="d-inline-flex
+                       flex-wrap
+                       justify-content-end
+                       gap-2"
+              >
+
+                <a
+                  routerLink="/admin/usuarios"
+                  class="btn
+                         btn-outline-secondary
+                         btn-sm"
+                  title="Gestionar usuarios"
+                >
+                  <i
+                    class="bi bi-people"
+                  ></i>
+                </a>
+
+                <button
+                  type="button"
+                  class="btn
+                         btn-outline-primary
+                         btn-sm"
+                  title="Editar"
+                  (click)="
+                    abrirEditar(
+                      cooperativa
+                    )
+                  "
+                >
+                  <i
+                    class="bi bi-pencil"
+                  ></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [ngClass]="
+                    cooperativa.activa
+                      ? 'btn-outline-danger'
+                      : 'btn-outline-success'
+                  "
+                  [title]="
+                    cooperativa.activa
+                      ? 'Desactivar'
+                      : 'Activar'
+                  "
+                  (click)="
+                    abrirConfirmacionEstado(
+                      cooperativa
+                    )
+                  "
+                >
+
+                  <i
+                    class="bi"
+                    [ngClass]="
+                      cooperativa.activa
+                        ? 'bi-slash-circle'
+                        : 'bi-check-circle'
+                    "
+                  ></i>
+
+                </button>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+</div>
+
+
+<div
+  *ngIf="mostrarFormulario()"
+  class="modal-custom-backdrop"
+>
+
+  <div
+    class="modal-custom-card"
+  >
+
+    <div
+      class="modal-custom-header"
+    >
+
+      <div>
+
+        <h2
+          class="h5 fw-bold mb-1"
+        >
+          {{
+            cooperativaEditando()
+              ? 'Editar cooperativa'
+              : 'Nueva cooperativa'
+          }}
+        </h2>
+
+        <p
+          class="text-secondary
+                 small mb-0"
+        >
+          {{
+            cooperativaEditando()
+              ? 'Actualiza los datos administrativos.'
+              : 'Registra la cooperativa y su usuario de acceso.'
+          }}
+        </p>
+
+      </div>
+
+      <button
+        type="button"
+        class="btn-close"
+        [disabled]="guardando()"
+        (click)="cerrarFormulario()"
+      ></button>
+
+    </div>
+
+    <form
+      [formGroup]="formulario"
+      (ngSubmit)="guardar()"
+    >
+
+      <div
+        class="modal-custom-body"
+      >
+
+        <h3
+          class="section-title"
+        >
+          Datos de la cooperativa
+        </h3>
+
+        <div class="row g-3">
+
+          <div class="col-12">
+
+            <label
+              for="nombreCooperativa"
+              class="form-label fw-semibold"
+            >
+              Nombre
+            </label>
+
+            <input
+              id="nombreCooperativa"
+              type="text"
+              class="form-control"
+              formControlName="nombre"
+              placeholder="Ej. Cooperativa Baños"
+            >
+
+            <div
+              *ngIf="
+                formulario.controls.nombre.touched &&
+                formulario.controls.nombre.invalid
+              "
+              class="text-danger small mt-1"
+            >
+              El nombre es obligatorio.
+            </div>
+
+          </div>
+
+          <div class="col-12">
+
+            <label
+              for="rucCooperativa"
+              class="form-label fw-semibold"
+            >
+              RUC
+            </label>
+
+            <input
+              id="rucCooperativa"
+              type="text"
+              class="form-control"
+              formControlName="ruc"
+              maxlength="20"
+              placeholder="RUC de la cooperativa"
+            >
+
+          </div>
+
+        </div>
+
+        <div
+          *ngIf="!cooperativaEditando()"
+          class="mt-4"
+        >
+
+          <div
+            [formGroup]="formularioUsuario"
+          >
+
+            <hr>
+
+            <h3
+              class="section-title"
+            >
+              Usuario de acceso
+            </h3>
+
+            <p
+              class="text-secondary small"
+            >
+              Esta cuenta tendrá el rol
+              COOPERATIVA y quedará vinculada
+              automáticamente.
+            </p>
+
+            <div class="row g-3">
+
+              <div
+                class="col-12 col-md-6"
+              >
+
+                <label
+                  for="usuarioNombres"
+                  class="form-label
+                         fw-semibold"
+                >
+                  Nombres
+                </label>
+
+                <input
+                  id="usuarioNombres"
+                  type="text"
+                  class="form-control"
+                  formControlName="nombres"
+                >
+
+              </div>
+
+              <div
+                class="col-12 col-md-6"
+              >
+
+                <label
+                  for="usuarioApellidos"
+                  class="form-label
+                         fw-semibold"
+                >
+                  Apellidos
+                </label>
+
+                <input
+                  id="usuarioApellidos"
+                  type="text"
+                  class="form-control"
+                  formControlName="apellidos"
+                >
+
+              </div>
+
+              <div class="col-12">
+
+                <label
+                  for="usuarioCorreo"
+                  class="form-label
+                         fw-semibold"
+                >
+                  Correo de acceso
+                </label>
+
+                <input
+                  id="usuarioCorreo"
+                  type="email"
+                  class="form-control"
+                  formControlName="correo"
+                  placeholder="gerencia@cooperativa.ec"
+                >
+
+                <div
+                  *ngIf="
+                    formularioUsuario
+                      .controls
+                      .correo
+                      .touched &&
+                    formularioUsuario
+                      .controls
+                      .correo
+                      .invalid
+                  "
+                  class="text-danger
+                         small mt-1"
+                >
+                  Ingresa un correo válido.
+                </div>
+
+              </div>
+
+              <div
+                class="col-12 col-md-6"
+              >
+
+                <label
+                  for="usuarioPassword"
+                  class="form-label
+                         fw-semibold"
+                >
+                  Contraseña
+                </label>
+
+                <input
+                  id="usuarioPassword"
+                  type="password"
+                  class="form-control"
+                  formControlName="password"
+                >
+
+                <small
+                  class="text-secondary"
+                >
+                  Mínimo 8 caracteres.
+                </small>
+
+              </div>
+
+              <div
+                class="col-12 col-md-6"
+              >
+
+                <label
+                  for="usuarioConfirmarPassword"
+                  class="form-label
+                         fw-semibold"
+                >
+                  Confirmar contraseña
+                </label>
+
+                <input
+                  id="usuarioConfirmarPassword"
+                  type="password"
+                  class="form-control"
+                  formControlName="confirmarPassword"
+                >
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div
+        class="modal-custom-footer"
+      >
+
+        <button
+          type="button"
+          class="btn
+                 btn-outline-secondary"
+          [disabled]="guardando()"
+          (click)="cerrarFormulario()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="guardando()"
+        >
+
+          <span
+            *ngIf="guardando()"
+            class="spinner-border
+                   spinner-border-sm
+                   me-2"
+          ></span>
+
+          {{
+            cooperativaEditando()
+              ? 'Guardar cambios'
+              : 'Crear cooperativa y usuario'
+          }}
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<div
+  *ngIf="mostrarConfirmacion()"
+  class="modal-custom-backdrop"
+>
+
+  <div
+    class="modal-custom-card
+           modal-custom-card-sm"
+  >
+
+    <div
+      class="modal-custom-body
+             text-center p-4"
+    >
+
+      <div
+        class="confirm-icon
+               mx-auto mb-3"
+        [ngClass]="
+          cooperativaEstado()?.activa
+            ? 'confirm-icon-danger'
+            : 'confirm-icon-success'
+        "
+      >
+
+        <i
+          class="bi"
+          [ngClass]="
+            cooperativaEstado()?.activa
+              ? 'bi-exclamation-triangle'
+              : 'bi-check-circle'
+          "
+        ></i>
+
+      </div>
+
+      <h2
+        class="h5 fw-bold"
+      >
+        {{
+          cooperativaEstado()?.activa
+            ? 'Desactivar cooperativa'
+            : 'Activar cooperativa'
+        }}
+      </h2>
+
+      <p
+        class="text-secondary mb-4"
+      >
+        ¿Deseas
+        {{
+          cooperativaEstado()?.activa
+            ? 'desactivar'
+            : 'activar'
+        }}
+        a
+        <strong>
+          {{
+            cooperativaEstado()?.nombre
+          }}
+        </strong>?
+      </p>
+
+      <div
+        class="d-flex
+               justify-content-center
+               gap-2"
+      >
+
+        <button
+          type="button"
+          class="btn
+                 btn-outline-secondary"
+          [disabled]="guardando()"
+          (click)="cerrarConfirmacion()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn"
+          [ngClass]="
+            cooperativaEstado()?.activa
+              ? 'btn-danger'
+              : 'btn-success'
+          "
+          [disabled]="guardando()"
+          (click)="confirmarEstado()"
+        >
+
+          <span
+            *ngIf="guardando()"
+            class="spinner-border
+                   spinner-border-sm
+                   me-2"
+          ></span>
+
+          {{
+            cooperativaEstado()?.activa
+              ? 'Desactivar'
+              : 'Activar'
+          }}
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

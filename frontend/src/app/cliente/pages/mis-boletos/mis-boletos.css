@@ -1,0 +1,62 @@
+
+:host {
+  display: block;
+}
+
+/* Diseño general EcuaRutas */
+.card {
+  border-radius: 14px;
+}
+
+.card-body {
+  padding: 22px;
+}
+
+/* Campos de búsqueda */
+.form-control,
+.form-select {
+  min-height: 44px;
+  border-radius: 8px;
+  border-color: #dce3eb;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #1769aa;
+  box-shadow: 0 0 0 0.2rem rgba(23, 105, 170, 0.12);
+}
+
+/* Botones */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Tarjetas de boletos */
+.boleto-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  border-color: #e2e8f0 !important;
+}
+
+.boleto-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(21, 47, 77, 0.09);
+}
+
+.boleto-card h5 {
+  color: #152f4d;
+  overflow-wrap: anywhere;
+}
+
+.boleto-qr { display: flex; align-items: center; gap: 16px; }
+.boleto-qr img { width: 140px; height: 140px; image-rendering: pixelated; }
+
+
+/* Responsive */
+@media (max-width: 767.98px) {
+  .card-body {
+    padding: 18px;
+  }
+}

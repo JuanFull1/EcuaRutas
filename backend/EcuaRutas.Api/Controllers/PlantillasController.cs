@@ -1,0 +1,277 @@
+using EcuaRutas.Api.DTOs;
+using EcuaRutas.Api.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace EcuaRutas.Api.Controllers;
+
+[ApiController]
+[Route("api/plantillas")]
+[Authorize(Roles = "COOPERATIVA,OFICINISTA")]
+public class PlantillasController : ControllerBase
+{
+    private readonly IPlantillaService _servicio;
+    private readonly IBusService _busServicio;
+
+    public PlantillasController(IPlantillaService servicio, IBusService busServicio)
+    {
+        _servicio = servicio;
+        _busServicio = busServicio;
+    }
+
+    private ActionResult? DenegarSiOtraCooperativa(long? cooperativaId, bool permitirGeneral)
+    {
+        try
+        {
+            var contexto = User.ObtenerCooperativaContexto();
+
+            if (contexto is null)
+            {
+                return null;
+            }
+
+            if (cooperativaId is null)
+            {
+                return permitirGeneral
+                    ? null
+                    : StatusCode(403, new { mensaje = "Solo un administrador puede operar sobre plantillas generales." });
+            }
+
+            if (cooperativaId == contexto)
+            {
+                return null;
+            }
+
+            return StatusCode(403, new { mensaje = "No puede operar sobre otra cooperativa." });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.StatusCode, new { mensaje = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<PlantillaBusDto>>> Listar(
+        [FromQuery] long? cooperativaId, CancellationToken ct)
+    {
+        var denegado = DenegarSiOtraCooperativa(cooperativaId, permitirGeneral: true);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var contexto = User.ObtenerCooperativaContexto();
+
+        return Ok(await _servicio.ListarAsync(cooperativaId ?? contexto, ct));
+    }
+
+    [HttpGet("{id:long}")]
+    public async Task<ActionResult<PlantillaBusDto>> Obtener(long id, CancellationToken ct)
+    {
+        var plantilla = await _servicio.ObtenerAsync(id, ct);
+
+        if (plantilla is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(plantilla.CooperativaId, permitirGeneral: true);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        return Ok(plantilla);
+    }
+
+    [Authorize(Roles = "COOPERATIVA")]
+    [HttpPost]
+    public async Task<ActionResult<PlantillaBusDto>> Crear(
+        CrearPlantillaBusRequest request, CancellationToken ct)
+    {
+        var denegado = DenegarSiOtraCooperativa(request.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        try
+        {
+            var plantilla = await _servicio.CrearAsync(request, ct);
+            return CreatedAtAction(nameof(Obtener), new { id = plantilla.Id }, plantilla);
+        }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<PlantillaBusDto>> Actualizar(
+        long id, ActualizarPlantillaBusRequest request, CancellationToken ct)
+    {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var plantilla = await _servicio.ActualizarAsync(id, request, ct);
+        return plantilla is null ? NotFound() : Ok(plantilla);
+    }
+
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> Desactivar(long id, CancellationToken ct)
+    {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var desactivada = await _servicio.DesactivarAsync(id, ct);
+        return desactivada ? NoContent() : NotFound();
+    }
+
+    [HttpGet("{id:long}/asientos")]
+    public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> ObtenerDisposicion(
+        long id, CancellationToken ct)
+    {
+        var plantilla = await _servicio.ObtenerAsync(id, ct);
+
+        if (plantilla is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(plantilla.CooperativaId, permitirGeneral: true);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var asientos = await _servicio.ObtenerDisposicionAsync(id, ct);
+        return asientos is null ? NotFound() : Ok(asientos);
+    }
+
+    [Authorize(Roles = "COOPERATIVA")]
+    [HttpPut("{id:long}/asientos")]
+    public async Task<ActionResult<IReadOnlyList<PlantillaAsientoDto>>> DefinirDisposicion(
+        long id, List<CrearAsientoPlantillaRequest> asientos, CancellationToken ct)
+    {
+        var plantilla = await _servicio.ObtenerAsync(id, ct);
+
+        if (plantilla is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(plantilla.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        try
+        {
+            var resultado = await _servicio.DefinirDisposicionAsync(id, asientos, ct);
+            return resultado is null ? NotFound() : Ok(resultado);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "COOPERATIVA")]
+    [HttpPut("/api/buses/{busId:long}/plantilla/{plantillaId:long}")]
+    public async Task<IActionResult> AsignarABus(long busId, long plantillaId, CancellationToken ct)
+    {
+        var bus = await _busServicio.ObtenerAsync(busId, ct);
+
+        if (bus is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(bus.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var plantilla = await _servicio.ObtenerAsync(plantillaId, ct);
+
+        if (plantilla is null)
+        {
+            return NotFound();
+        }
+
+        var denegadoPlantilla = DenegarSiOtraCooperativa(plantilla.CooperativaId, permitirGeneral: true);
+
+        if (denegadoPlantilla is not null)
+        {
+            return denegadoPlantilla;
+        }
+
+        try
+        {
+            var asignada = await _servicio.AsignarABusAsync(busId, plantillaId, ct);
+            return asignada ? NoContent() : NotFound();
+        }
+        catch (ConflictoException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
+    }
+
+    [HttpGet("/api/buses/{busId:long}/asientos")]
+    public async Task<ActionResult<IReadOnlyList<AsientoBusDto>>> ListarAsientosDeBus(
+        long busId, CancellationToken ct)
+    {
+        var bus = await _busServicio.ObtenerAsync(busId, ct);
+
+        if (bus is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(bus.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var asientos = await _servicio.ListarAsientosDeBusAsync(busId, ct);
+        return asientos is null ? NotFound() : Ok(asientos);
+    }
+}

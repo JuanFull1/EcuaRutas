@@ -1,0 +1,206 @@
+<div class="disenador">
+
+  <header class="ff-cabecera ff-suelta">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-grid-3x3-gap"></i></span>
+      <div>
+        <h1 class="ff-titulo">{{ existente() ? 'Diseño de la plantilla' : 'Nueva plantilla' }}</h1>
+        <p class="ff-subtitulo">
+          Arma la distribución de asientos del bus y elige cuáles llevan recargo.
+        </p>
+      </div>
+    </div>
+    <a routerLink="/cooperativas/plantillas" class="ff-volver">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+  </header>
+
+  @if (cargando()) {
+    <div class="text-secondary mb-3">
+      <span class="spinner-border spinner-border-sm me-2"></span>
+      Cargando plantilla...
+    </div>
+  }
+
+  @if (errorCargar(); as mensaje) {
+    <div class="alert alert-danger">{{ mensaje }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <div class="rejilla">
+
+      <!-- Ficha del bus -->
+      <aside class="panel ficha">
+        <h2 class="panel-titulo">Ficha del bus</h2>
+
+        <label class="form-label" for="nombre">Nombre de la plantilla</label>
+        <input id="nombre" class="form-control" formControlName="nombre"
+               placeholder="Ej.: Bus 40 asientos"
+               [class.is-invalid]="invalido('nombre')" />
+        @if (invalido('nombre')) {
+          <div class="invalid-feedback">Obligatorio, máximo 120 caracteres.</div>
+        }
+
+        <div class="campos mt-3">
+          <div>
+            <label class="form-label" for="pisos">Pisos</label>
+            <select id="pisos" class="form-select" [disabled]="existente()"
+                    [value]="pisos()" (change)="cambiarPisos($any($event.target).value)">
+              <option value="1">1 piso</option>
+              <option value="2">2 pisos</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="filas">Filas</label>
+            <input id="filas" type="number" class="form-control"
+                   min="1" [max]="maxFilas" [value]="filas()"
+                   (change)="cambiarFilas($any($event.target).value)" />
+          </div>
+          <div>
+            <label class="form-label" for="columnas">Columnas</label>
+            <input id="columnas" type="number" class="form-control"
+                   min="1" [max]="maxColumnas" [value]="columnas()"
+                   (change)="cambiarColumnas($any($event.target).value)" />
+          </div>
+        </div>
+
+        <div class="form-check form-switch mt-3">
+          <input id="tieneBanio" type="checkbox" class="form-check-input"
+                 role="switch" formControlName="tieneBanio" />
+          <label class="form-check-label" for="tieneBanio">El bus tiene baño</label>
+        </div>
+
+        <div class="generador">
+          <label class="form-label" for="cantidad">Cantidad de asientos</label>
+          <div class="generador-fila">
+            <input id="cantidad" type="number" class="form-control"
+                   min="1" [max]="maxAsientos" [value]="cantidad()"
+                   (change)="cambiarCantidad($any($event.target).value)" />
+            <button type="button" class="btn btn-dark" (click)="generar()">
+              Generar 2 + 2
+            </button>
+          </div>
+          <button type="button" class="btn btn-link btn-sm text-danger px-0 mt-2"
+                  (click)="vaciar()">
+            Vaciar diseño
+          </button>
+        </div>
+
+        <p class="nota">
+          Una columna sin asientos queda como pasillo. Los asientos se numeran solos.
+        </p>
+      </aside>
+
+      <!-- Bus sobre el asfalto -->
+      <section class="lienzo" aria-label="Diseño del bus">
+        <div class="lienzo-cinta">
+          <span class="dato"><strong>{{ totalAsientos() }}</strong> asientos</span>
+          @for (item of resumenPorTipo(); track item.tipo.id) {
+            <span class="dato">
+              <span [class]="'punto t' + indiceTipo(item.tipo.id)"></span>
+              {{ item.total }} {{ item.tipo.nombre }}
+            </span>
+          }
+        </div>
+
+        <div class="lienzo-bus">
+          <app-mapa-asientos
+            [pisos]="pisos()"
+            [filas]="filas()"
+            [columnas]="columnas()"
+            [asientos]="asientosMapa()"
+            [editable]="true"
+            [tieneBanio]="tieneBanio()"
+            [mostrarPrecio]="true"
+            [seleccionado]="seleccion()"
+            (celdaClick)="alHacerClic($event)"
+            (soltarTipo)="alSoltarTipo($event)"
+            (mover)="alMover($event)"
+          />
+        </div>
+
+        <p class="lienzo-ayuda">
+          Arrastra una ficha hasta una casilla, o haz clic en una casilla vacía.
+          Arrastra un asiento para moverlo.
+        </p>
+      </section>
+
+      <!-- Fichas de asiento -->
+      <aside class="panel fichas">
+        <h2 class="panel-titulo">Tipos de asiento</h2>
+
+        <div class="fichas-lista">
+          @for (tipo of tipos(); track tipo.id) {
+            <div
+              class="ficha-tipo"
+              [class.activa]="tipoSeleccionado() === tipo.id"
+              draggable="true"
+              (dragstart)="arrastrarTipo($event, tipo.id)"
+              (click)="seleccionarTipo(tipo.id)"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="seleccionarTipo(tipo.id)"
+            >
+              <span [class]="'miniasiento t' + indiceTipo(tipo.id)"></span>
+              <span class="ficha-texto">
+                <strong>{{ tipo.nombre }}</strong>
+                <small>
+                  {{ tipo.recargoPorcentaje > 0 ? '+' + tipo.recargoPorcentaje + '% sobre la tarifa' : 'Tarifa normal' }}
+                </small>
+              </span>
+              <span class="ficha-precio">${{ precioDe(tipo.id).toFixed(2) }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="precio-ejemplo">
+          <label class="form-label" for="precio">Precio base de ejemplo</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input id="precio" type="number" class="form-control" min="0" step="0.5"
+                   [value]="precioEjemplo()" (input)="cambiarPrecio($any($event.target).value)" />
+          </div>
+          <p class="nota">
+            Solo sirve para previsualizar. El precio real sale de la tarifa de cada frecuencia.
+          </p>
+        </div>
+
+        <h2 class="panel-titulo mt-4">Asiento elegido</h2>
+        @if (asientoSeleccionado(); as asiento) {
+          <div class="elegido">
+            <div>
+              <strong class="elegido-numero">N.º {{ asiento.numero }}</strong>
+              <span class="text-secondary">{{ asiento.tipoNombre }}</span>
+            </div>
+            <small class="text-secondary">
+              Piso {{ asiento.piso }}, fila {{ asiento.fila }}, columna {{ asiento.columna }}
+            </small>
+            <small class="text-secondary">Toca otra ficha para cambiar su tipo.</small>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    (click)="eliminarSeleccionado()">
+              <i class="bi bi-trash"></i> Quitar asiento
+            </button>
+          </div>
+        } @else {
+          <p class="nota mb-0">Haz clic en un asiento del bus.</p>
+        }
+      </aside>
+
+    </div>
+
+    @if (errorGuardar()) {
+      <div class="alert alert-danger mt-3 mb-0">{{ errorGuardar() }}</div>
+    }
+
+    <div class="acciones">
+      <span class="acciones-resumen">{{ totalAsientos() }} asientos en el diseño</span>
+      <a routerLink="/cooperativas/plantillas" class="btn btn-outline-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+        @if (guardando()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        {{ existente() ? 'Guardar diseño' : 'Guardar plantilla' }}
+      </button>
+    </div>
+  </form>
+</div>

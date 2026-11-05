@@ -1,0 +1,144 @@
+<div class="container-fluid px-0">
+  <section class="bg-white border rounded-4 p-4 mb-4">
+    <span class="badge text-bg-primary mb-3">Cooperativa</span>
+    <h1 class="h3 fw-bold">Gestión de resoluciones ANT</h1>
+    <p class="text-secondary mb-0">Administra las resoluciones de la Agencia Nacional de Tránsito asociadas a las cooperativas.</p>
+    @if (puedeGestionar()) {
+      <button type="button" class="btn btn-primary mt-3" [disabled]="ocupado() || panelAbierto()" (click)="nueva()">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva resolución
+      </button>
+    }
+  </section>
+
+  @if (!puedeGestionar()) {
+    <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol COOPERATIVA para consultar y gestionar resoluciones ANT.</div>
+  } @else {
+    @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+    @if (error(); as mensaje) {
+      <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
+        <span>{{ mensaje }}</span>
+        <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || panelAbierto()" (click)="cargar()">Actualizar listado</button>
+      </div>
+    }
+    @if (errorCooperativas() && !formularioVisible()) {
+      <div class="alert alert-warning" role="alert">
+        No se pudieron actualizar los nombres de cooperativas. {{ errorCooperativas() }}
+        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" [disabled]="ocupado() || cargandoCooperativas()" (click)="cargarCooperativas()">Reintentar cooperativas</button>
+      </div>
+    }
+    @if (cargandoDetalle()) { <p class="text-secondary" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando resolución...</p> }
+    @if (formularioVisible()) {
+      <app-resolucion-ant-formulario [resolucion]="seleccionada()" [cooperativas]="cooperativas()"
+        [cargandoCooperativas]="cargandoCooperativas()" [errorCooperativas]="errorCooperativas()" [autorizado]="puedeGestionar()"
+        [guardando]="guardando()" [error]="errorFormulario()" (guardarResolucion)="guardar($event)"
+        (cancelar)="cerrarPanel()" (reintentarCooperativas)="cargarCooperativas()" />
+    }
+    @if (detalleVisible()) {
+      @if (seleccionada(); as actual) {
+        <section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-detalle-resolucion">
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <h2 id="titulo-detalle-resolucion" class="h5 mb-0">Resolución {{ actual.numeroResolucion }}</h2>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cerrarPanel()">Cerrar detalle</button>
+            </div>
+            <dl class="row mb-0 detalle">
+              <dt class="col-12 col-sm-4">Identificador</dt><dd class="col-12 col-sm-8">{{ actual.id }}</dd>
+              <dt class="col-12 col-sm-4">Cooperativa</dt><dd class="col-12 col-sm-8">{{ nombreCooperativa(actual.cooperativaId) }} · #{{ actual.cooperativaId }}</dd>
+              <dt class="col-12 col-sm-4">Fecha</dt><dd class="col-12 col-sm-8">{{ actual.fechaResolucion ?? 'Sin fecha' }}</dd>
+              <dt class="col-12 col-sm-4">Documento</dt><dd class="col-12 col-sm-8">
+                @if (enlaceDocumento(actual.archivoUrl); as enlace) { <a [href]="enlace" target="_blank" rel="noopener noreferrer">Abrir documento <span class="visually-hidden">en una pestaña nueva</span></a> }
+                @else { {{ actual.archivoUrl || 'Sin documento' }} }
+              </dd>
+              <dt class="col-12 col-sm-4">Estado</dt><dd class="col-12 col-sm-8">{{ actual.activa ? 'Activa' : 'Inactiva' }}</dd>
+            </dl>
+          </div>
+        </section>
+      }
+    }
+
+    <section class="card border-0 shadow-sm" aria-labelledby="titulo-listado-resoluciones" [attr.aria-busy]="cargando()">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+          <h2 id="titulo-listado-resoluciones" class="h5 mb-0">Resoluciones registradas</h2>
+          <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="ocupado() || panelAbierto()" (click)="cargar()">
+            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Actualizar
+          </button>
+        </div>
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-6">
+            <label for="buscar-resolucion" class="form-label">Buscar por número o cooperativa</label>
+            <input #buscarInput id="buscar-resolucion" type="search" class="form-control" placeholder="Número, nombre o ID de cooperativa"
+              [value]="busqueda()" (input)="buscar(buscarInput.value)">
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <label for="estado-resolucion" class="form-label">Estado</label>
+            <select #estado id="estado-resolucion" class="form-select" [value]="filtroEstado()" (change)="filtrarEstado(estado.value)">
+              <option value="">Todas</option><option value="activa">Activas</option><option value="inactiva">Inactivas</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3"><button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()">Limpiar filtros</button></div>
+        </div>
+      </div>
+      @if (cargando()) {
+        <div class="text-center text-secondary py-5" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando resoluciones...</div>
+      } @else if (!error() && resoluciones().length === 0) {
+        <p class="text-center text-secondary py-5 mb-0" role="status">No hay resoluciones ANT registradas.</p>
+      } @else if (!error() && filtradas().length === 0) {
+        <p class="text-center text-secondary py-5 mb-0" role="status">No hay resoluciones que coincidan con los filtros seleccionados.</p>
+      } @else if (filtradas().length > 0) {
+        @if (error()) { <p class="text-secondary small px-3">Se muestran los últimos datos consultados; podrían estar desactualizados.</p> }
+        <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla de resoluciones ANT, desplazamiento horizontal disponible">
+          <table class="table table-hover align-middle mb-0">
+            <caption class="visually-hidden">Resoluciones ANT, cooperativas, documentos, estado y acciones.</caption>
+            <thead class="table-light"><tr><th scope="col">Número de resolución</th><th scope="col">Cooperativa</th><th scope="col">Fecha</th><th scope="col">Archivo</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+            <tbody>
+              @for (resolucion of filasPagina(); track resolucion.id) {
+                <tr>
+                  <th scope="row" class="fw-semibold">{{ resolucion.numeroResolucion }}</th>
+                  <td>{{ nombreCooperativa(resolucion.cooperativaId) }}</td>
+                  <td class="text-nowrap">{{ resolucion.fechaResolucion ?? 'Sin fecha' }}</td>
+                  <td>
+                    @if (enlaceDocumento(resolucion.archivoUrl); as enlace) {
+                      <a [href]="enlace" target="_blank" rel="noopener noreferrer" [attr.aria-label]="'Abrir documento de ' + resolucion.numeroResolucion + ' en una pestaña nueva'">Ver documento</a>
+                    } @else { <span class="text-secondary">{{ resolucion.archivoUrl ? 'URL sin enlace disponible' : 'Sin documento' }}</span> }
+                  </td>
+                  <td><span class="badge" [class.text-bg-success]="resolucion.activa" [class.text-bg-secondary]="!resolucion.activa">{{ resolucion.activa ? 'Activa' : 'Inactiva' }}</span></td>
+                  <td><div class="d-flex flex-wrap gap-2 acciones">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado() || panelAbierto()" (click)="abrir(resolucion, 'consultar')" [attr.aria-label]="'Consultar ' + resolucion.numeroResolucion">Consultar</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || panelAbierto()" (click)="abrir(resolucion, 'editar')" [attr.aria-label]="'Editar ' + resolucion.numeroResolucion">Editar</button>
+                    @if (resolucion.activa) {
+                      <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || panelAbierto()" (click)="solicitarBaja(resolucion)" [attr.aria-label]="'Desactivar ' + resolucion.numeroResolucion">Desactivar</button>
+                    }
+                  </div></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3">
+          <p class="text-secondary small mb-0" role="status">{{ filtradas().length }} de {{ resoluciones().length }} resoluciones · Página {{ paginaActual() }} de {{ totalPaginas() }}</p>
+          <nav class="d-flex flex-wrap gap-2" aria-label="Paginación de resoluciones ANT">
+            <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="paginaActual() === 1" (click)="cambiarPagina(-1)">Anterior</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="paginaActual() === totalPaginas()" (click)="cambiarPagina(1)">Siguiente</button>
+          </nav>
+        </div>
+      }
+    </section>
+  }
+</div>
+
+<dialog #dialogoBaja class="border-0 rounded-4 shadow p-4" aria-labelledby="titulo-baja-resolucion" aria-describedby="descripcion-baja-resolucion"
+  [attr.aria-busy]="desactivando()" (cancel)="cancelarBaja($event)">
+  <h2 id="titulo-baja-resolucion" class="h5">Desactivar resolución ANT</h2>
+  <p id="descripcion-baja-resolucion">¿Deseas desactivar <strong>{{ pendienteBaja()?.numeroResolucion }}</strong>? La resolución quedará inactiva y conservará su registro.</p>
+  @if (errorBaja(); as mensaje) { <div class="alert alert-danger" role="alert">{{ mensaje }}</div> }
+  <div class="d-flex flex-wrap justify-content-end gap-2">
+    <button type="button" class="btn btn-outline-secondary" autofocus [disabled]="desactivando()" (click)="cancelarBaja()">Cancelar</button>
+    @if (puedeGestionar()) {
+      <button type="button" class="btn btn-danger" [disabled]="desactivando()" (click)="confirmarBaja()">
+        @if (desactivando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }
+        {{ desactivando() ? 'Desactivando...' : 'Desactivar' }}
+      </button>
+    }
+  </div>
+</dialog>

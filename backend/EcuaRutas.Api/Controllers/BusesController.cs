@@ -1,0 +1,137 @@
+using EcuaRutas.Api.DTOs;
+using EcuaRutas.Api.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace EcuaRutas.Api.Controllers;
+
+[ApiController]
+[Route("api/buses")]
+[Authorize(Roles = "COOPERATIVA,OFICINISTA")]
+public class BusesController : ControllerBase
+{
+    private readonly IBusService _servicio;
+
+    public BusesController(IBusService servicio)
+    {
+        _servicio = servicio;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<BusDto>>> Listar(
+        [FromQuery] long cooperativaId,
+        [FromQuery] long? grupoBusId,
+        [FromQuery] string? estado,
+        CancellationToken ct)
+    {
+        var denegado = DenegarSiOtraCooperativa(cooperativaId);
+        if (denegado is not null)
+            return denegado;
+
+        var buses = await _servicio.ListarAsync(cooperativaId, grupoBusId, estado, ct);
+        return Ok(buses);
+    }
+
+    [HttpGet("{id:long}")]
+    public async Task<ActionResult<BusDto>> Obtener(long id, CancellationToken ct)
+    {
+        var bus = await _servicio.ObtenerAsync(id, ct);
+        if (bus is null)
+            return NotFound();
+
+        var denegado = DenegarSiOtraCooperativa(bus.CooperativaId);
+        if (denegado is not null)
+            return denegado;
+
+        return Ok(bus);
+    }
+
+    [Authorize(Roles = "COOPERATIVA")]
+    [HttpPost]
+    public async Task<ActionResult<BusDto>> Crear(CrearBusRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var denegado = DenegarSiOtraCooperativa(request.CooperativaId);
+            if (denegado is not null)
+                return denegado;
+
+            var bus = await _servicio.CrearAsync(request, ct);
+            return CreatedAtAction(nameof(Obtener), new { id = bus.Id }, bus);
+        }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
+        catch (ConflictoException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "COOPERATIVA")]
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<BusDto>> Actualizar(long id, ActualizarBusRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var existente = await _servicio.ObtenerAsync(id, ct);
+            if (existente is null)
+                return NotFound();
+
+            var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+            if (denegado is not null)
+                return denegado;
+
+            var bus = await _servicio.ActualizarAsync(id, request, ct);
+            if (bus is null)
+                return NotFound();
+
+            return Ok(bus);
+        }
+        catch (RecursoNoEncontradoException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
+        catch (ConflictoException ex)
+        {
+            return Conflict(new { mensaje = ex.Message });
+        }
+    }
+    
+    [Authorize(Roles = "COOPERATIVA")]
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> DarDeBaja(long id, CancellationToken ct)
+    {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+        if (existente is null)
+            return NotFound();
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId);
+        if (denegado is not null)
+            return denegado;
+
+        var dadoDeBaja = await _servicio.DarDeBajaAsync(id, ct);
+        if (!dadoDeBaja)
+            return NotFound();
+
+        return NoContent();
+    }
+
+    // Devuelve 403 si un usuario que no es ADMIN intenta operar sobre otra cooperativa.
+    private ActionResult? DenegarSiOtraCooperativa(long cooperativaId)
+    {
+        try
+        {
+            var contexto = User.ObtenerCooperativaContexto();
+            if (contexto is null || contexto == cooperativaId)
+                return null;
+
+            return StatusCode(403, new { mensaje = "No puede operar sobre otra cooperativa." });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            return StatusCode(ex.StatusCode, new { mensaje = ex.Message });
+        }
+    }
+}

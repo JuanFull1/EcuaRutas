@@ -1,0 +1,488 @@
+<div class="gestion-ventas">
+
+  <header class="mb-4">
+
+    <span
+      class="badge text-bg-primary mb-2"
+    >
+      Punto de venta
+    </span>
+
+    <h1 class="h2 mb-1">
+      Venta de boletos
+    </h1>
+
+    <p class="text-secondary mb-0">
+      Consulta reservas, registra pagos
+      en efectivo e imprime boletos con QR.
+    </p>
+
+  </header>
+
+
+  <section class="filtros">
+
+    <div class="row g-3 align-items-end">
+
+      <div class="col-12 col-lg-4">
+
+        <label class="form-label">
+          Código o cédula
+        </label>
+
+        <input
+          class="form-control"
+          [(ngModel)]="busqueda"
+          placeholder="Venta, boleto o cédula"
+        >
+
+      </div>
+
+
+      <div class="col-12 col-lg-2">
+
+        <label class="form-label">
+          Estado
+        </label>
+
+        <select
+          class="form-select"
+          [(ngModel)]="estado"
+        >
+          <option value="">
+            Todos
+          </option>
+
+          <option value="RESERVADA">
+            Reservada
+          </option>
+
+          <option value="PENDIENTE_PAGO">
+            Pendiente de pago
+          </option>
+
+          <option value="PAGADA">
+            Pagada
+          </option>
+
+          <option value="CANCELADA">
+            Cancelada
+          </option>
+
+          <option value="EXPIRADA">
+            Expirada
+          </option>
+        </select>
+
+      </div>
+
+
+      <div class="col-12 col-lg-2">
+
+        <label class="form-label">
+          Desde
+        </label>
+
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="desde"
+        >
+
+      </div>
+
+
+      <div class="col-12 col-lg-2">
+
+        <label class="form-label">
+          Hasta
+        </label>
+
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="hasta"
+        >
+
+      </div>
+
+
+      <div class="col-12 col-lg-2">
+
+        <div class="d-flex gap-2">
+
+          <button
+            type="button"
+            class="btn
+                   btn-primary
+                   flex-fill"
+            (click)="buscar(1)"
+          >
+            Buscar
+          </button>
+
+          <button
+            type="button"
+            class="btn
+                   btn-outline-secondary"
+            (click)="limpiar()"
+          >
+            Limpiar
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  @if (mensaje) {
+
+    <div
+      class="alert
+             alert-success
+             mt-3"
+    >
+      {{ mensaje }}
+    </div>
+
+  }
+
+
+  @if (error) {
+
+    <div
+      class="alert
+             alert-danger
+             mt-3"
+    >
+      {{ error }}
+    </div>
+
+  }
+
+
+  @if (cargando) {
+
+    <div class="text-center py-5">
+
+      <span
+        class="spinner-border
+               text-primary"
+      ></span>
+
+    </div>
+
+  } @else {
+
+    <section class="ventas-listado">
+
+      <div
+        class="d-flex
+               justify-content-between
+               align-items-center
+               mb-3"
+      >
+        <h2 class="h4 mb-0">
+          Ventas registradas
+        </h2>
+
+        <span class="text-secondary">
+          {{ total }} registro(s)
+        </span>
+      </div>
+
+
+      @for (
+        venta of ventas;
+        track venta.ventaId
+      ) {
+
+        <article class="venta-card">
+
+          <header class="venta-cabecera">
+
+            <div>
+
+              <small>
+                Código
+              </small>
+
+              <strong>
+                {{ venta.codigo }}
+              </strong>
+
+            </div>
+
+
+            <span
+              class="badge"
+              [class.text-bg-success]="
+                venta.estado === 'PAGADA'
+              "
+              [class.text-bg-warning]="
+                venta.estado === 'RESERVADA'
+                ||
+                venta.estado === 'PENDIENTE_PAGO'
+              "
+              [class.text-bg-danger]="
+                venta.estado === 'CANCELADA'
+                ||
+                venta.estado === 'EXPIRADA'
+              "
+            >
+              {{ venta.estado }}
+            </span>
+
+          </header>
+
+
+          <div class="venta-grid">
+
+            <div>
+
+              <small>Ruta</small>
+
+              <strong>
+                {{ venta.rutaNombre }}
+              </strong>
+
+              <span>
+                {{ venta.origen }}
+                →
+                {{ venta.destino }}
+              </span>
+
+            </div>
+
+
+            <div>
+
+              <small>
+                Viaje / Pago
+              </small>
+
+              <strong>
+                {{
+                  venta.salidaProgramada
+                    | date:'dd/MM/yy, HH:mm'
+                }}
+              </strong>
+
+              <span>
+                Creada
+                {{
+                  venta.creadoEn
+                    | date:'dd/MM/yy, HH:mm'
+                }}
+              </span>
+
+              @if (venta.metodoPago) {
+
+                <span>
+                  {{ venta.metodoPago }}
+                  ·
+                  {{ venta.estadoPago }}
+                </span>
+
+              }
+
+            </div>
+
+
+            <div>
+
+              <small>
+                Pasajero(s) y asiento(s)
+              </small>
+
+              @for (
+                asiento of venta.asientos;
+                track asiento.numeroAsiento
+              ) {
+
+                <span>
+                  {{ asiento.pasajero }}
+
+                  ·
+
+                  {{ asiento.documento }}
+
+                  · Asiento
+                  {{ asiento.numeroAsiento }}
+                </span>
+
+              }
+
+            </div>
+
+
+            <div class="text-end">
+
+              <small>Total</small>
+
+              <strong class="total">
+                ${{
+                  venta.total
+                    | number:'1.2-2'
+                }}
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <footer class="venta-acciones">
+
+            <div>
+
+              @if (
+                venta.estado ===
+                'RESERVADA'
+              ) {
+
+                <span class="text-secondary">
+
+                  Vence
+
+                  {{
+                    venta.expiraEn
+                      | date:'dd/MM/yy, HH:mm'
+                  }}
+
+                </span>
+
+              }
+
+            </div>
+
+
+            <div class="d-flex gap-2">
+
+              @if (
+                venta.estado ===
+                'RESERVADA'
+              ) {
+
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  [disabled]="
+                    procesandoId ===
+                    venta.ventaId
+                  "
+                  (click)="
+                    confirmarEfectivo(venta)
+                  "
+                >
+                  Registrar efectivo
+                  y emitir boletos
+                </button>
+
+
+                <button
+                  type="button"
+                  class="btn
+                         btn-outline-danger"
+                  [disabled]="
+                    procesandoId ===
+                    venta.ventaId
+                  "
+                  (click)="cancelar(venta)"
+                >
+                  Cancelar reserva
+                </button>
+
+              }
+
+
+              @if (
+                venta.estado ===
+                'PAGADA'
+              ) {
+
+                <button
+                  type="button"
+                  class="btn
+                         btn-outline-primary"
+                  (click)="
+                    imprimir(venta.ventaId)
+                  "
+                >
+                  <i
+                    class="bi
+                           bi-printer
+                           me-1"
+                  ></i>
+
+                  Imprimir boleto con QR
+                </button>
+
+              }
+
+            </div>
+
+          </footer>
+
+        </article>
+
+      } @empty {
+
+        <div
+          class="alert
+                 alert-light
+                 border"
+        >
+          No existen ventas para
+          los filtros indicados.
+        </div>
+
+      }
+
+
+      <div
+        class="paginacion"
+      >
+
+        <button
+          type="button"
+          class="btn
+                 btn-outline-secondary"
+          [disabled]="pagina <= 1"
+          (click)="buscar(pagina - 1)"
+        >
+          Anterior
+        </button>
+
+
+        <span>
+          Página
+          {{ pagina }}
+          de
+          {{ totalPaginas }}
+        </span>
+
+
+        <button
+          type="button"
+          class="btn
+                 btn-outline-secondary"
+          [disabled]="
+            pagina >= totalPaginas
+          "
+          (click)="buscar(pagina + 1)"
+        >
+          Siguiente
+        </button>
+
+      </div>
+
+    </section>
+
+  }
+
+</div>

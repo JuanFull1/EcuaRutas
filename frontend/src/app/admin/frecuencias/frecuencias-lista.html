@@ -1,0 +1,86 @@
+<div class="container-fluid px-0">
+  <section class="bg-white border rounded-4 p-4 mb-4">
+    <span class="badge text-bg-primary mb-3">Cooperativa</span>
+    <h1 class="h3 fw-bold">Gestión de frecuencias</h1>
+    <p class="text-secondary mb-0">Administra los horarios de salida y las frecuencias de transporte de las cooperativas.</p>
+    @if (puedeGestionar()) { <button type="button" class="btn btn-primary mt-3" [disabled]="ocupado() || panelAbierto()" (click)="nueva()"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva frecuencia</button> }
+  </section>
+  @if (!puedeGestionar()) { <div class="alert alert-warning" role="alert">Se requiere una sesión vigente con rol COOPERATIVA para consultar y gestionar frecuencias.</div> }
+  @else {
+    @if (exito(); as mensaje) { <div class="alert alert-success" role="status">{{ mensaje }}</div> }
+    @if (error(); as mensaje) {
+      <div class="alert alert-danger d-flex flex-wrap justify-content-between gap-2" role="alert"><span>{{ mensaje }}</span><button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || panelAbierto()" (click)="cargar()">Actualizar listado</button></div>
+    }
+    @if (!formularioVisible()) {
+      @if (cargandoCatalogos()) { <p class="text-secondary" role="status">Cargando nombres de cooperativas, rutas y resoluciones...</p> }
+      @if (erroresCatalogos().length) {
+        <div class="alert alert-warning" role="alert">
+          @for (mensaje of erroresCatalogos(); track $index) { <p class="mb-1">{{ mensaje }}</p> }
+          <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado() || cargandoCatalogos()" (click)="cargarCatalogos()">Reintentar catálogos</button>
+        </div>
+      }
+    }
+    @if (cargandoDetalle()) { <p role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando frecuencia...</p> }
+    @if (formularioVisible()) {
+      <app-frecuencia-formulario [frecuencia]="seleccionada()" [cooperativas]="cooperativas()" [rutas]="rutas()" [resoluciones]="resoluciones()"
+        [cargandoCatalogos]="cargandoCatalogos()" [erroresCatalogos]="erroresCatalogos()" [autorizado]="puedeGestionar()"
+        [guardando]="guardando()" [error]="errorFormulario()" (guardarFrecuencia)="guardar($event)" (cancelar)="cerrarPanel()" (reintentarCatalogos)="cargarCatalogos()" />
+    }
+    @if (detalleVisible()) { @if (seleccionada(); as actual) {
+      <section class="card border-0 shadow-sm mb-4" aria-labelledby="titulo-detalle-frecuencia"><div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 id="titulo-detalle-frecuencia" class="h5 mb-0">Frecuencia #{{ actual.id }}</h2><button type="button" class="btn btn-sm btn-outline-secondary" (click)="cerrarPanel()">Cerrar detalle</button></div>
+        <dl class="row mb-0 detalle">
+          <dt class="col-12 col-sm-4">Código</dt><dd class="col-12 col-sm-8">{{ actual.codigo || 'Sin código' }}</dd>
+          <dt class="col-12 col-sm-4">Cooperativa</dt><dd class="col-12 col-sm-8">{{ nombreCooperativa(actual.cooperativaId) }} · #{{ actual.cooperativaId }}</dd>
+          <dt class="col-12 col-sm-4">Ruta</dt><dd class="col-12 col-sm-8">{{ nombreRuta(actual.rutaId) }} · #{{ actual.rutaId }}</dd>
+          <dt class="col-12 col-sm-4">Resolución ANT</dt><dd class="col-12 col-sm-8">{{ numeroResolucion(actual.resolucionAntId) }} · #{{ actual.resolucionAntId }}</dd>
+          <dt class="col-12 col-sm-4">Hora de salida</dt><dd class="col-12 col-sm-8">{{ actual.horaSalida }}</dd>
+          <dt class="col-12 col-sm-4">Estado</dt><dd class="col-12 col-sm-8">{{ actual.activa ? 'Activa' : 'Inactiva' }}</dd>
+        </dl>
+      </div></section>
+    } }
+    <section class="card border-0 shadow-sm" aria-labelledby="titulo-listado-frecuencias" [attr.aria-busy]="cargando()">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3"><h2 id="titulo-listado-frecuencias" class="h5 mb-0">Frecuencias registradas</h2><button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || panelAbierto()" (click)="cargar()"><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Actualizar</button></div>
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-lg-4"><label for="buscar-frecuencia" class="form-label">Buscar por código o información visible</label><input #buscador id="buscar-frecuencia" class="form-control" type="search" placeholder="Código, ruta, resolución u horario" [value]="busqueda()" (input)="buscar(buscador.value)"></div>
+          <div class="col-12 col-sm-6 col-lg-3"><label for="filtro-cooperativa" class="form-label">Cooperativa</label><select #cooperativa id="filtro-cooperativa" class="form-select" [value]="filtroCooperativa()" (change)="filtrarCooperativa(cooperativa.value)"><option value="">Todas</option>@for (c of cooperativasFiltro(); track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }</select></div>
+          <div class="col-12 col-sm-6 col-lg-2"><label for="filtro-estado" class="form-label">Estado</label><select #estado id="filtro-estado" class="form-select" [value]="filtroEstado()" (change)="filtrarEstado(estado.value)"><option value="">Todas</option><option value="activa">Activas</option><option value="inactiva">Inactivas</option></select></div>
+          <div class="col-12 col-lg-3"><button type="button" class="btn btn-outline-secondary" (click)="limpiarFiltros()">Limpiar filtros</button></div>
+        </div>
+      </div>
+      @if (cargando()) { <p class="text-center text-secondary py-5" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Cargando frecuencias...</p> }
+      @else if (!error() && frecuencias().length === 0) { <p class="text-center text-secondary py-5 mb-0" role="status">No hay frecuencias registradas.</p> }
+      @else if (!error() && filtradas().length === 0) { <p class="text-center text-secondary py-5 mb-0" role="status">No hay frecuencias que coincidan con los filtros seleccionados.</p> }
+      @else if (filtradas().length) {
+        @if (error()) { <p class="text-secondary small px-3">Se muestran los últimos datos consultados; podrían estar desactualizados.</p> }
+        <div class="table-responsive" tabindex="0" role="region" aria-label="Tabla de frecuencias, desplazamiento horizontal disponible">
+          <table class="table table-hover align-middle mb-0">
+            <caption class="visually-hidden">Frecuencias con cooperativa, ruta, resolución ANT, horario, estado y acciones.</caption>
+            <thead class="table-light"><tr><th scope="col">Código</th><th scope="col">Cooperativa</th><th scope="col">Ruta</th><th scope="col">Resolución ANT</th><th scope="col">Hora de salida</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+            <tbody>@for (frecuencia of filasPagina(); track frecuencia.id) {
+              <tr><th scope="row">{{ frecuencia.codigo || 'Sin código' }}<span class="d-block small text-secondary">#{{ frecuencia.id }}</span></th>
+                <td>{{ nombreCooperativa(frecuencia.cooperativaId) }}</td><td>{{ nombreRuta(frecuencia.rutaId) }}</td><td>{{ numeroResolucion(frecuencia.resolucionAntId) }}</td><td class="text-nowrap">{{ frecuencia.horaSalida }}</td>
+                <td><span class="badge" [class.text-bg-success]="frecuencia.activa" [class.text-bg-secondary]="!frecuencia.activa">{{ frecuencia.activa ? 'Activa' : 'Inactiva' }}</span></td>
+                <td><div class="d-flex flex-wrap gap-2 acciones">
+                  <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="ocupado() || panelAbierto()" [attr.aria-label]="'Consultar ' + identificar(frecuencia)" (click)="abrir(frecuencia, 'consultar')">Consultar</button>
+                  <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="ocupado() || panelAbierto()" [attr.aria-label]="'Editar ' + identificar(frecuencia)" (click)="abrir(frecuencia, 'editar')">Editar</button>
+                  @if (frecuencia.activa) { <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="ocupado() || panelAbierto()" [attr.aria-label]="'Desactivar ' + identificar(frecuencia)" (click)="solicitarBaja(frecuencia)">Desactivar</button> }
+                </div></td>
+              </tr>
+            }</tbody>
+          </table>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 p-3"><p class="text-secondary small mb-0" role="status">{{ filtradas().length }} de {{ frecuencias().length }} frecuencias · Página {{ paginaActual() }} de {{ totalPaginas() }}</p><nav class="d-flex flex-wrap gap-2" aria-label="Paginación de frecuencias"><button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="paginaActual() === 1" (click)="cambiarPagina(-1)">Anterior</button><button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="paginaActual() === totalPaginas()" (click)="cambiarPagina(1)">Siguiente</button></nav></div>
+      }
+    </section>
+  }
+</div>
+<dialog #dialogoBaja class="border-0 rounded-4 shadow p-4" aria-labelledby="titulo-baja-frecuencia" aria-describedby="descripcion-baja-frecuencia" [attr.aria-busy]="desactivando()" (cancel)="cancelarBaja($event)">
+  <h2 id="titulo-baja-frecuencia" class="h5">Desactivar frecuencia</h2>
+  <p id="descripcion-baja-frecuencia">¿Deseas desactivar <strong>{{ pendienteBaja() ? identificar(pendienteBaja()!) : '' }}</strong>? La frecuencia quedará inactiva y conservará su registro.</p>
+  @if (errorBaja(); as mensaje) { <div class="alert alert-danger" role="alert">{{ mensaje }}</div> }
+  <div class="d-flex flex-wrap justify-content-end gap-2"><button type="button" class="btn btn-outline-secondary" autofocus [disabled]="desactivando()" (click)="cancelarBaja()">Cancelar</button>
+    @if (puedeGestionar()) { <button type="button" class="btn btn-danger" [disabled]="desactivando()" (click)="confirmarBaja()">@if (desactivando()) { <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> }{{ desactivando() ? 'Desactivando...' : 'Desactivar' }}</button> }
+  </div>
+</dialog>

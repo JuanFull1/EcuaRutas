@@ -1,0 +1,700 @@
+<div class="pagina-disponibilidad">
+
+  <header class="encabezado-pagina">
+    <div>
+      <span class="badge text-bg-primary mb-2">
+        Punto de venta
+      </span>
+
+      <h1>Venta presencial de boletos</h1>
+
+      <p>
+        Busca un viaje, selecciona el asiento
+        en el mapa del bus y registra al pasajero.
+      </p>
+    </div>
+  </header>
+
+
+  <section class="panel-busqueda">
+
+    <form
+      class="row g-3 align-items-end"
+      (ngSubmit)="buscarViajes()"
+    >
+
+      <div class="col-12 col-lg-3">
+
+        <label class="form-label">
+          Origen
+        </label>
+
+        <select
+          class="form-select"
+          name="origen"
+          [(ngModel)]="origenLugarId"
+          required
+        >
+
+          <option [ngValue]="null">
+            Selecciona origen
+          </option>
+
+          @for (
+            lugar of lugares;
+            track lugar.lugarId
+          ) {
+            <option
+              [ngValue]="lugar.lugarId"
+            >
+              {{ lugar.nombre }}
+            </option>
+          }
+
+        </select>
+
+      </div>
+
+
+      <div class="col-12 col-lg-3">
+
+        <label class="form-label">
+          Destino
+        </label>
+
+        <select
+          class="form-select"
+          name="destino"
+          [(ngModel)]="destinoLugarId"
+          required
+        >
+
+          <option [ngValue]="null">
+            Selecciona destino
+          </option>
+
+          @for (
+            lugar of lugares;
+            track lugar.lugarId
+          ) {
+            <option
+              [ngValue]="lugar.lugarId"
+            >
+              {{ lugar.nombre }}
+            </option>
+          }
+
+        </select>
+
+      </div>
+
+
+      <div class="col-12 col-lg-3">
+
+        <label class="form-label">
+          Fecha del viaje
+        </label>
+
+        <input
+          type="date"
+          class="form-control"
+          name="fecha"
+          [(ngModel)]="fecha"
+          required
+        >
+
+      </div>
+
+
+      <div class="col-12 col-lg-3">
+
+        <button
+          type="submit"
+          class="btn btn-primary w-100"
+          [disabled]="buscando"
+        >
+
+          @if (buscando) {
+            <span
+              class="spinner-border
+                     spinner-border-sm
+                     me-2"
+            ></span>
+          }
+
+          Buscar viajes
+
+        </button>
+
+      </div>
+
+    </form>
+
+
+    @if (error) {
+      <div
+        class="alert alert-danger mt-3 mb-0"
+      >
+        {{ error }}
+      </div>
+    }
+
+  </section>
+
+
+  @if (busquedaRealizada) {
+
+    <section class="mt-4">
+
+      <div
+        class="d-flex
+               justify-content-between
+               align-items-center
+               mb-3"
+      >
+        <h2 class="h4 mb-0">
+          Viajes disponibles
+        </h2>
+
+        <span
+          class="badge
+                 text-bg-light
+                 border"
+        >
+          {{ viajes.length }} resultado(s)
+        </span>
+      </div>
+
+
+      @for (
+        viaje of viajes;
+        track viaje.viajeId
+      ) {
+
+        <article
+          class="viaje-card"
+        >
+
+          <div class="hora">
+
+            <strong>
+              {{
+                viaje.salidaProgramada
+                  | date:'HH:mm'
+              }}
+            </strong>
+
+            <span>
+              Hora de salida
+            </span>
+
+          </div>
+
+
+          <div class="datos-viaje">
+
+            <h3>
+              {{ viaje.rutaNombre }}
+            </h3>
+
+            <p>
+              {{
+                viajeSeleccionado?.rutaNombre
+              }}
+
+              {{ viaje.cooperativa }}
+            </p>
+
+            <p>
+              <i
+                class="bi
+                       bi-geo-alt
+                       me-1"
+              ></i>
+
+              Ruta disponible para
+              el tramo seleccionado.
+            </p>
+
+            <p>
+              <i
+                class="bi
+                       bi-bus-front
+                       me-1"
+              ></i>
+
+              Bus:
+              {{ viaje.numeroInternoBus }}
+
+              ·
+
+              Placa:
+              {{ viaje.placaBus }}
+            </p>
+
+          </div>
+
+
+          <div class="precio-viaje">
+
+            <small>Desde</small>
+
+            <strong>
+              ${{
+                viaje.precioBase
+                  | number:'1.2-2'
+              }}
+            </strong>
+
+            <button
+              type="button"
+              class="btn btn-primary mt-2"
+              (click)="abrirAsientos(viaje)"
+            >
+              <i
+                class="bi
+                       bi-grid-3x3-gap
+                       me-2"
+              ></i>
+
+              Elegir asiento
+            </button>
+
+          </div>
+
+        </article>
+
+      } @empty {
+
+        <div
+          class="alert alert-light border"
+        >
+          No existen viajes para los criterios
+          seleccionados.
+        </div>
+
+      }
+
+    </section>
+
+  }
+
+</div>
+
+
+<dialog
+  #dialogoAsientos
+  class="dialogo-asientos"
+>
+
+  <div class="dialogo-contenido">
+
+    <header class="dialogo-header">
+
+      <div>
+
+        <h2>
+          Venta presencial
+        </h2>
+
+        @if (viajeSeleccionado) {
+
+          <p>
+            {{ viajeSeleccionado.rutaNombre }}
+
+            ·
+
+            {{
+              viajeSeleccionado.salidaProgramada
+                | date:'dd/MM/yyyy HH:mm'
+            }}
+          </p>
+
+          <small>
+            Unidad
+            {{ viajeSeleccionado.numeroInternoBus }}
+
+            ·
+
+            {{ viajeSeleccionado.placaBus }}
+          </small>
+
+        }
+
+      </div>
+
+
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Cerrar"
+        [disabled]="procesandoVenta"
+        (click)="cerrarAsientos()"
+      ></button>
+
+    </header>
+
+
+    @if (cargandoAsientos) {
+
+      <div class="cargando">
+        <span
+          class="spinner-border"
+        ></span>
+
+        <p>
+          Consultando asientos...
+        </p>
+      </div>
+
+    } @else {
+
+      <div class="contenido-venta">
+
+        <section class="mapa-panel">
+
+          <div class="mb-3">
+
+            <h3>
+              Selecciona el asiento
+            </h3>
+
+            <p>
+              La distribución corresponde
+              al bus asignado al viaje.
+            </p>
+
+          </div>
+
+
+          @if (asientos.length > 0) {
+
+            <div class="mapa-scroll">
+
+              <app-mapa-asientos
+                [pisos]="pisosMapa"
+                [filas]="filasMapa"
+                [columnas]="columnasMapa"
+                [asientos]="asientosMapa"
+                [editable]="false"
+                [mostrarPrecio]="true"
+                [seleccionado]="posicionSeleccionada"
+                vistaPisos="pestanas"
+                (celdaClick)="seleccionarAsiento($event)"
+              />
+
+            </div>
+
+          } @else {
+
+            <div
+              class="alert alert-warning"
+            >
+              No existen asientos disponibles
+              para este tramo.
+            </div>
+
+          }
+
+        </section>
+
+
+        <aside class="venta-panel">
+
+          <h3>
+            Datos de venta
+          </h3>
+
+
+          @if (
+            asientoSeleccionado;
+            as asiento
+          ) {
+
+            <div class="asiento-elegido">
+
+              <div>
+                <small>Asiento</small>
+
+                <strong>
+                  {{ asiento.numero }}
+                </strong>
+              </div>
+
+              <div class="text-end">
+                <span
+                  class="badge
+                         text-bg-primary"
+                >
+                  {{ asiento.tipoAsiento }}
+                </span>
+
+                <strong>
+                  ${{
+                    asiento.precioFinal
+                      | number:'1.2-2'
+                  }}
+                </strong>
+              </div>
+
+            </div>
+
+          } @else {
+
+            <div
+              class="alert
+                     alert-light
+                     border"
+            >
+              Selecciona un asiento
+              en el mapa.
+            </div>
+
+          }
+
+
+          <hr>
+
+
+          <h4>
+            Pasajero
+          </h4>
+
+
+          <div class="row g-2">
+
+            <div class="col-12 col-md-4">
+
+              <label class="form-label">
+                Tipo
+              </label>
+
+              <select
+                class="form-select"
+                [(ngModel)]="tipoDocumento"
+              >
+                <option value="CEDULA">
+                  Cédula
+                </option>
+
+                <option value="PASAPORTE">
+                  Pasaporte
+                </option>
+
+                <option value="OTRO">
+                  Otro
+                </option>
+              </select>
+
+            </div>
+
+
+            <div class="col-12 col-md-8">
+
+              <label class="form-label">
+                Documento
+              </label>
+
+              <div class="input-group">
+
+                <input
+                  class="form-control"
+                  [(ngModel)]="documento"
+                  (ngModelChange)="pasajero = null"
+                >
+
+                <button
+                  type="button"
+                  class="btn
+                         btn-outline-primary"
+                  [disabled]="buscandoPasajero"
+                  (click)="buscarPasajero()"
+                >
+                  Buscar
+                </button>
+
+              </div>
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label class="form-label">
+                Nombres
+              </label>
+
+              <input
+                class="form-control"
+                [(ngModel)]="nombres"
+                [readonly]="!!pasajero"
+              >
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label class="form-label">
+                Apellidos
+              </label>
+
+              <input
+                class="form-control"
+                [(ngModel)]="apellidos"
+                [readonly]="!!pasajero"
+              >
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label class="form-label">
+                Correo
+              </label>
+
+              <input
+                type="email"
+                class="form-control"
+                [(ngModel)]="correo"
+                [readonly]="!!pasajero"
+              >
+
+            </div>
+
+
+            <div class="col-12 col-md-6">
+
+              <label class="form-label">
+                Teléfono
+              </label>
+
+              <input
+                class="form-control"
+                [(ngModel)]="telefono"
+                [readonly]="!!pasajero"
+              >
+
+            </div>
+
+
+            <div class="col-12">
+
+              <div class="form-check">
+
+                <input
+                  id="pasajero-discapacidad"
+                  type="checkbox"
+                  class="form-check-input"
+                  [(ngModel)]="discapacidad"
+                  [disabled]="!!pasajero"
+                >
+
+                <label
+                  for="pasajero-discapacidad"
+                  class="form-check-label"
+                >
+                  Persona con discapacidad
+                </label>
+
+              </div>
+
+            </div>
+
+
+            @if (discapacidad) {
+
+              <div class="col-12">
+
+                <label class="form-label">
+                  Carnet CONADIS
+                </label>
+
+                <input
+                  class="form-control"
+                  [(ngModel)]="carnetConadis"
+                >
+
+              </div>
+
+            }
+
+          </div>
+
+
+          @if (mensajeModal) {
+
+            <div
+              class="alert
+                     alert-success
+                     mt-3"
+            >
+              {{ mensajeModal }}
+            </div>
+
+          }
+
+
+          @if (errorModal) {
+
+            <div
+              class="alert
+                     alert-danger
+                     mt-3"
+            >
+              {{ errorModal }}
+            </div>
+
+          }
+
+
+          <div class="acciones-venta">
+
+            <button
+              type="button"
+              class="btn
+                     btn-outline-primary"
+              [disabled]="
+                procesandoVenta ||
+                !asientoSeleccionadoId
+              "
+              (click)="reservar()"
+            >
+              Reservar 15 minutos
+            </button>
+
+
+            <button
+              type="button"
+              class="btn btn-success"
+              [disabled]="
+                procesandoVenta ||
+                !asientoSeleccionadoId
+              "
+              (click)="venderEfectivo()"
+            >
+
+              @if (procesandoVenta) {
+                <span
+                  class="spinner-border
+                         spinner-border-sm
+                         me-2"
+                ></span>
+              }
+
+              Cobrar efectivo y emitir boleto
+
+            </button>
+
+          </div>
+
+        </aside>
+
+      </div>
+
+    }
+
+  </div>
+
+</dialog>

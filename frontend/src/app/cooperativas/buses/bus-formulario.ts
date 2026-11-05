@@ -1,0 +1,266 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map, of, switchMap } from 'rxjs';
+
+import { ActualizarBusRequest, CrearBusRequest, EstadoBus } from '../../models/bus.model';
+import { GrupoBus } from '../../models/grupo-bus.model';
+import { PlantillaBus } from '../../models/plantilla-bus.model';
+import { AuthService } from '../../services/auth.service';
+import { BusService } from '../../services/bus.service';
+import { GrupoBusService } from '../../services/grupo-bus.service';
+import { PlantillaService } from '../../services/plantilla.service';
+
+@Component({
+  selector: 'app-bus-formulario',
+  standalone: true,
+  imports: [ReactiveFormsModule, RouterLink],
+  templateUrl: './bus-formulario.html',
+  styleUrls: ['../../shared/formulario/formulario.css', './bus-formulario.css']
+})
+export class BusFormulario implements OnInit {
+
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
+  private readonly busService = inject(BusService);
+  private readonly grupoBusService = inject(GrupoBusService);
+  private readonly plantillaService = inject(PlantillaService);
+
+  readonly grupos = signal<GrupoBus[]>([]);
+  readonly errorGrupos = signal<string | null>(null);
+  readonly plantillas = signal<PlantillaBus[]>([]);
+  readonly errorPlantillas = signal<string | null>(null);
+  /** Plantilla que el bus ya tiene asignada al abrir el formulario. */
+  readonly plantillaActual = signal<number | null>(null);
+  readonly guardando = signal(false);
+  readonly errorGuardar = signal<string | null>(null);
+  readonly busId = signal<number | null>(null);
+  readonly esEdicion = computed(() => this.busId() !== null);
+  readonly cargandoBus = signal(false);
+  readonly errorCargar = signal<string | null>(null);
+
+  readonly form = this.fb.group({
+    numeroInterno: ['', [Validators.required, Validators.maxLength(30)]],
+    placa: ['', [Validators.required, Validators.maxLength(20)]],
+    grupoBusId: [null as number | null],
+    plantillaId: [null as number | null],
+    color: ['', [Validators.maxLength(50)]],
+    marcaChasis: ['', [Validators.maxLength(100)]],
+    marcaCarroceria: ['', [Validators.maxLength(100)]],
+    modelo: ['', [Validators.maxLength(100)]],
+    anio: [null as number | null, [Validators.min(1900), Validators.max(2100)]],
+    pisos: [1, [Validators.required, Validators.min(1), Validators.max(2)]],
+    capacidad: [null as number | null, [Validators.required, Validators.min(1), Validators.max(32767)]],
+    tieneBanio: [false],
+    fotoUrl: ['', [Validators.maxLength(500)]],
+    estado: ['ACTIVO' as EstadoBus]
+  });
+
+  /** Valores en vivo para la placa y la vista previa de la foto. */
+  readonly placaVista = toSignal(this.form.controls.placa.valueChanges, { initialValue: '' });
+  private readonly fotoEscrita = toSignal(this.form.controls.fotoUrl.valueChanges, { initialValue: '' });
+  readonly fotoVista = computed(() => {
+    const url = (this.fotoEscrita() ?? '').trim();
+    return /^https?:\/\//i.test(url) ? url : '';
+  });
+
+  ngOnInit(): void {
+    this.cargarGrupos();
+    this.cargarPlantillas();
+    this.cargarBusSiEdita();
+  }
+
+  invalido(campo: string): boolean {
+    const control = this.form.get(campo);
+    return !!control && control.invalid && (control.dirty || control.touched);
+  }
+
+  guardar(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const cooperativaId = this.authService.usuarioActual()?.cooperativaId;
+
+    if (cooperativaId == null) {
+      this.errorGuardar.set('Tu usuario no está asociado a una cooperativa.');
+      return;
+    }
+
+    const v = this.form.getRawValue();
+
+    const request: CrearBusRequest = {
+      cooperativaId,
+      grupoBusId: v.grupoBusId,
+      numeroInterno: (v.numeroInterno ?? '').trim(),
+      placa: (v.placa ?? '').trim(),
+      color: this.texto(v.color),
+      marcaChasis: this.texto(v.marcaChasis),
+      marcaCarroceria: this.texto(v.marcaCarroceria),
+      modelo: this.texto(v.modelo),
+      anio: v.anio ?? undefined,
+      pisos: v.pisos ?? 1,
+      capacidad: v.capacidad ?? 0,
+      tieneBanio: v.tieneBanio ?? false,
+      fotoUrl: this.texto(v.fotoUrl)
+    };
+
+    this.errorGuardar.set(null);
+    this.guardando.set(true);
+
+    const id = this.busId();
+    const plantillaId = v.plantillaId;
+    const peticion$ = id === null
+      ? this.busService.crear(request)
+      : this.busService.actualizar(id, this.aActualizar(request, v.estado ?? 'ACTIVO'));
+
+    let busGuardado = false;
+
+    peticion$
+      .pipe(
+        switchMap(bus => {
+          busGuardado = true;
+          // Si falla la plantilla, un nuevo intento actualiza este bus en vez de crear otro.
+          this.busId.set(bus.id);
+
+          return plantillaId != null && plantillaId !== this.plantillaActual()
+            ? this.plantillaService.asignarABus(bus.id, plantillaId).pipe(map(() => bus))
+            : of(bus);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.guardando.set(false);
+          this.router.navigate(['/cooperativas/buses']);
+        },
+        error: (e: HttpErrorResponse) => {
+          this.guardando.set(false);
+          this.errorGuardar.set(
+            busGuardado ? this.mensajeErrorPlantilla(e) : this.mensajeError(e)
+          );
+        }
+      });
+  }
+
+  private cargarBusSiEdita(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+
+    if (!id) {
+      return;
+    }
+
+    this.busId.set(id);
+    this.cargandoBus.set(true);
+
+    this.busService.obtener(id).subscribe({
+      next: bus => {
+        this.form.patchValue({
+          numeroInterno: bus.numeroInterno,
+          placa: bus.placa,
+          grupoBusId: bus.grupoBusId,
+          plantillaId: bus.plantillaId,
+          color: bus.color ?? '',
+          marcaChasis: bus.marcaChasis ?? '',
+          marcaCarroceria: bus.marcaCarroceria ?? '',
+          modelo: bus.modelo ?? '',
+          anio: bus.anio,
+          pisos: bus.pisos,
+          capacidad: bus.capacidad,
+          tieneBanio: bus.tieneBanio,
+          fotoUrl: bus.fotoUrl ?? '',
+          estado: bus.estado
+        });
+        this.plantillaActual.set(bus.plantillaId);
+        this.cargandoBus.set(false);
+      },
+      error: (e: HttpErrorResponse) => {
+        this.cargandoBus.set(false);
+        this.errorCargar.set(
+          e.status === 404
+            ? 'El bus no existe.'
+            : e.status === 403
+              ? 'No puedes editar un bus de otra cooperativa.'
+              : 'No se pudo cargar el bus. Inténtalo de nuevo.'
+        );
+      }
+    });
+  }
+
+  private aActualizar(request: CrearBusRequest, estado: EstadoBus): ActualizarBusRequest {
+    const { cooperativaId, ...resto } = request;
+    return { ...resto, estado };
+  }
+
+  private texto(valor: string | null | undefined): string | undefined {
+    const limpio = valor?.trim();
+    return limpio ? limpio : undefined;
+  }
+
+  private mensajeError(e: HttpErrorResponse): string {
+    switch (e.status) {
+      case 0:
+        return 'No se pudo conectar con el servidor. Verifica tu conexión.';
+      case 400:
+        return 'Revisa los datos ingresados, alguno no es válido.';
+      case 403:
+        return 'No puedes modificar un bus de otra cooperativa.';
+      case 404:
+        return 'La cooperativa o el grupo seleccionado ya no existe.';
+      case 409:
+        return 'Ya existe un bus con ese número interno o esa placa.';
+      default:
+        return 'No se pudo guardar el bus. Inténtalo de nuevo.';
+    }
+  }
+
+  private mensajeErrorPlantilla(e: HttpErrorResponse): string {
+    const base = 'El bus se guardó, pero no se pudo asignar la plantilla. ';
+
+    switch (e.status) {
+      case 0:
+        return base + 'No se pudo conectar con el servidor.';
+      case 403:
+        return base + 'No puedes usar una plantilla de otra cooperativa.';
+      case 404:
+        return base + 'La plantilla ya no existe.';
+      case 409:
+        return base + (e.error?.mensaje ?? 'La plantilla no se puede asignar a este bus.');
+      default:
+        return base + 'Inténtalo de nuevo.';
+    }
+  }
+
+  private cargarPlantillas(): void {
+    const cooperativaId = this.authService.usuarioActual()?.cooperativaId;
+
+    if (cooperativaId == null) {
+      return;
+    }
+
+    this.plantillaService.listar(cooperativaId).subscribe({
+      next: plantillas => this.plantillas.set(plantillas.filter(p => p.activa)),
+      error: () =>
+        this.errorPlantillas.set('No se pudieron cargar las plantillas de asientos.')
+    });
+  }
+
+  private cargarGrupos(): void {
+    const cooperativaId = this.authService.usuarioActual()?.cooperativaId;
+
+    if (cooperativaId == null) {
+      this.errorGrupos.set('Tu usuario no está asociado a una cooperativa.');
+      return;
+    }
+
+    this.grupoBusService.listar(cooperativaId).subscribe({
+      next: grupos => this.grupos.set(grupos.filter(g => g.activo)),
+      error: () =>
+        this.errorGrupos.set('No se pudieron cargar los grupos de buses.')
+    });
+  }
+}

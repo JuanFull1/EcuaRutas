@@ -1,0 +1,170 @@
+<div class="app-shell">
+
+  <aside
+    class="sidebar"
+    [class.sidebar-open]="menuAbierto()"
+  >
+
+    <div class="sidebar-brand">
+
+      <div class="sidebar-logo">
+        <i class="bi bi-bus-front-fill"></i>
+      </div>
+
+      <div>
+
+        <strong class="d-block">
+          EcuaRutas
+        </strong>
+
+        <small class="text-white-50">
+          {{ subtituloPanel() }}
+        </small>
+
+      </div>
+
+    </div>
+
+    <nav class="nav flex-column px-2">
+
+      <div class="menu-title">
+        Navegación
+      </div>
+
+      <ng-container
+        *ngFor="let item of menuItems()"
+      >
+
+        <a
+          *ngIf="item.ruta; else itemDeshabilitado"
+          class="nav-link"
+          [routerLink]="item.ruta"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="item.ruta?.startsWith('/cooperativas/mapas/') ? {
+            paths: 'exact',
+            queryParams: 'ignored',
+            matrixParams: 'ignored',
+            fragment: 'ignored'
+          } : { exact: true }"
+          (click)="cerrarMenu()"
+        >
+
+          <i
+            class="bi me-2"
+            [ngClass]="item.icono"
+          ></i>
+
+          {{ item.texto }}
+
+        </a>
+
+        <ng-template #itemDeshabilitado>
+
+          <span
+            class="nav-link disabled-item"
+            title="Módulo pendiente de desarrollo"
+          >
+
+            <i
+              class="bi me-2"
+              [ngClass]="item.icono"
+            ></i>
+
+            {{ item.texto }}
+
+          </span>
+
+        </ng-template>
+
+      </ng-container>
+
+    </nav>
+
+    <div
+      class="sidebar-role"
+      *ngIf="usuario() as actual"
+    >
+
+      <span>
+        Sesión iniciada como
+      </span>
+
+      <strong>
+        {{ actual.rol }}
+      </strong>
+
+    </div>
+
+  </aside>
+
+  <div
+    *ngIf="menuAbierto()"
+    class="sidebar-overlay"
+    (click)="cerrarMenu()"
+  ></div>
+
+  <section class="main-content">
+
+    <header
+      class="navbar bg-white border-bottom px-3 px-md-4"
+    >
+
+      <button
+        type="button"
+        class="btn btn-light d-lg-none"
+        (click)="toggleMenu()"
+        aria-label="Abrir menú"
+      >
+        <i class="bi bi-list fs-4"></i>
+      </button>
+
+      <div
+        class="ms-auto d-flex align-items-center gap-3"
+      >
+
+        <div
+          class="text-end d-none d-sm-block"
+        >
+
+          <strong class="d-block small">
+            {{ usuario()?.nombres }}
+            {{ usuario()?.apellidos }}
+          </strong>
+
+          <span class="text-secondary small">
+            {{ usuario()?.rol }}
+          </span>
+
+        </div>
+
+        <div class="user-avatar">
+          <i class="bi bi-person-fill"></i>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          (click)="cerrarSesion()"
+        >
+
+          <i
+            class="bi bi-box-arrow-right me-1"
+          ></i>
+
+          <span class="d-none d-sm-inline">
+            Salir
+          </span>
+
+        </button>
+
+      </div>
+
+    </header>
+
+    <main class="page-content">
+      <router-outlet />
+    </main>
+
+  </section>
+
+</div>

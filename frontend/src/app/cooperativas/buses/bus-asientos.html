@@ -1,0 +1,84 @@
+<div class="ff-pagina">
+  <header class="ff-cabecera">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-grid-3x3-gap"></i></span>
+      <div>
+        <h1 class="ff-titulo">Asientos del bus</h1>
+        <p class="ff-subtitulo">Así quedan distribuidos los asientos según su plantilla.</p>
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+      @if (bus(); as b) {
+        <div class="placa" aria-label="Placa del bus">
+          <span class="placa-pais">ECUADOR</span>
+          <span class="placa-texto">{{ b.placa.toUpperCase() }}</span>
+        </div>
+        <a [routerLink]="['/cooperativas/buses', b.id, 'editar']" class="ff-volver">
+          <i class="bi bi-pencil"></i> Editar bus
+        </a>
+      }
+      <a routerLink="/cooperativas/buses" class="ff-volver">
+        <i class="bi bi-arrow-left"></i> Volver
+      </a>
+    </div>
+  </header>
+
+  <div class="ff-cuerpo">
+    <div>
+      @if (cargando()) {
+        <div class="text-secondary">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Cargando asientos...
+        </div>
+      } @else if (error(); as mensaje) {
+        <div class="alert alert-danger mb-0">{{ mensaje }}</div>
+      } @else if (asientos().length === 0) {
+        <div class="alert alert-info mb-0">
+          Este bus todavía no tiene asientos. Elige una plantilla en
+          @if (bus(); as b) {
+            <a [routerLink]="['/cooperativas/buses', b.id, 'editar']">Editar bus</a>
+          }
+          para generarlos.
+        </div>
+      } @else {
+        @if (sinPosicion() > 0) {
+          <div class="alert alert-warning">
+            {{ sinPosicion() }} asiento(s) no tienen posición y no se muestran en el mapa.
+          </div>
+        }
+
+        <div class="ff-asientos">
+          <div class="ff-lienzo">
+            <app-mapa-asientos
+              [pisos]="bus()?.pisos ?? 1"
+              [filas]="filas()"
+              [columnas]="columnas()"
+              [asientos]="asientosMapa()"
+              [tieneBanio]="bus()?.tieneBanio ?? false"
+            />
+          </div>
+
+          <aside class="ff-panel">
+            <h2 class="ff-panel-titulo">Resumen</h2>
+            <div class="ff-dato"><span>Asientos</span><span>{{ asientos().length }}</span></div>
+            @for (r of resumen(); track r.nombre) {
+              <div class="ff-dato">
+                <span><span [class]="'punto t' + r.color"></span> {{ r.nombre }}</span>
+                <span>{{ r.cantidad }}</span>
+              </div>
+            }
+            @if (bus(); as b) {
+              <h2 class="ff-panel-titulo">Bus</h2>
+              <div class="ff-dato"><span>N.º interno</span><span>{{ b.numeroInterno }}</span></div>
+              <div class="ff-dato"><span>Pisos</span><span>{{ b.pisos }}</span></div>
+              <div class="ff-dato"><span>Capacidad</span><span>{{ b.capacidad }}</span></div>
+              <div class="ff-dato"><span>Baño</span><span>{{ b.tieneBanio ? 'Sí' : 'No' }}</span></div>
+              <div class="ff-dato"><span>Estado</span><span>{{ b.estado }}</span></div>
+            }
+          </aside>
+        </div>
+      }
+    </div>
+  </div>
+</div>

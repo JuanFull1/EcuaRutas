@@ -1,0 +1,361 @@
+
+<section
+  class="card border-0 shadow-sm mb-4"
+  aria-labelledby="titulo-formulario">
+
+  <div class="card-header bg-white border-0 pt-3">
+    <h2 id="titulo-formulario" class="h5 mb-0">
+      {{ lugar() === null ? 'Nuevo lugar' : 'Editar lugar' }}
+    </h2>
+  </div>
+
+  <form
+    class="card-body"
+    [formGroup]="form"
+    (ngSubmit)="guardar()"
+    novalidate
+    [attr.aria-busy]="guardando()">
+
+    <p class="text-secondary small">
+      Los campos marcados con * son obligatorios.
+    </p>
+
+    <fieldset [disabled]="guardando() || !autorizado()">
+
+      <div class="row g-3">
+
+        <div class="col-12 col-md-8">
+          <label for="lugar-nombre" class="form-label">
+            Nombre *
+          </label>
+
+          <input
+            #nombreInput
+            id="lugar-nombre"
+            class="form-control"
+            formControlName="nombre"
+            required
+            maxlength="150"
+            [class.is-invalid]="invalido('nombre')"
+            [attr.aria-invalid]="invalido('nombre')"
+            aria-describedby="error-nombre">
+
+          @if (invalido('nombre')) {
+            <div id="error-nombre" class="invalid-feedback">
+              Ingresa un nombre de hasta 150 caracteres.
+            </div>
+          }
+        </div>
+
+        <div class="col-12 col-md-4">
+          <label for="lugar-tipo" class="form-label">
+            Tipo *
+          </label>
+
+          <select
+            id="lugar-tipo"
+            class="form-select"
+            formControlName="tipo"
+            required
+            [class.is-invalid]="invalido('tipo')"
+            [attr.aria-invalid]="invalido('tipo')"
+            (change)="sincronizarMarcador(false)">
+
+            <option value="">Selecciona un tipo</option>
+
+            @for (tipo of tipos; track tipo) {
+              <option [value]="tipo">
+                {{ tipo }}
+              </option>
+            }
+          </select>
+
+          @if (invalido('tipo')) {
+            <div class="invalid-feedback">
+              Selecciona ciudad, terminal o parada.
+            </div>
+          }
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label for="lugar-provincia" class="form-label">
+            Provincia
+          </label>
+
+          <input
+            id="lugar-provincia"
+            class="form-control"
+            formControlName="provincia"
+            maxlength="100"
+            [class.is-invalid]="invalido('provincia')">
+
+          @if (invalido('provincia')) {
+            <div class="invalid-feedback">
+              Máximo 100 caracteres.
+            </div>
+          }
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label for="lugar-canton" class="form-label">
+            Cantón
+          </label>
+
+          <input
+            id="lugar-canton"
+            class="form-control"
+            formControlName="canton"
+            maxlength="100"
+            [class.is-invalid]="invalido('canton')">
+
+          @if (invalido('canton')) {
+            <div class="invalid-feedback">
+              Máximo 100 caracteres.
+            </div>
+          }
+        </div>
+
+        <!-- SELECCIÓN INTERACTIVA EN EL MAPA -->
+
+        <div class="col-12">
+
+          <div class="d-flex flex-wrap align-items-center gap-2">
+
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm"
+              [disabled]="guardando() || !autorizado()"
+              (click)="selectorMapaVisible()
+                ? cerrarSelectorMapa()
+                : abrirSelectorMapa()">
+
+              <i
+                class="bi bi-geo-alt-fill me-1"
+                aria-hidden="true">
+              </i>
+
+              {{
+                selectorMapaVisible()
+                  ? 'Cerrar selector de ubicación'
+                  : 'Seleccionar ubicación en mapa'
+              }}
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              [disabled]="guardando() || !autorizado()"
+              (click)="limpiarCoordenadas()">
+
+              Limpiar coordenadas
+            </button>
+
+          </div>
+
+          <p
+            id="ayuda-coordenadas"
+            class="text-secondary small mt-2 mb-0">
+
+            Haz clic en el mapa sobre la ubicación
+            exacta del lugar o arrastra el marcador.
+            También puedes escribir las coordenadas
+            WGS84 manualmente.
+          </p>
+        </div>
+
+        @if (selectorMapaVisible()) {
+
+          <div class="col-12">
+
+            <div class="selector-ubicacion border rounded-3 p-2 bg-light">
+
+              <div
+                class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-2 py-2">
+
+                <strong>
+                  <i
+                    class="bi bi-map me-1"
+                    aria-hidden="true">
+                  </i>
+                  Ubicación del lugar
+                </strong>
+
+                <div>
+                  <label
+                    for="ciudad-referencia"
+                    class="visually-hidden">
+                    Ir a ciudad
+                  </label>
+
+                  <select
+                    #ciudad
+                    id="ciudad-referencia"
+                    class="form-select form-select-sm"
+                    (change)="irACiudad(ciudad.value); ciudad.value = ''">
+
+                    <option value="">
+                      Ir a una ciudad...
+                    </option>
+
+                    @for (
+                      item of ciudadesReferencia;
+                      track item.nombre
+                    ) {
+                      <option [value]="item.nombre">
+                        {{ item.nombre }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <app-mapa
+                etiqueta="Seleccionar ubicación exacta de ciudad, terminal o parada"
+                [centro]="centroMapa()"
+                [zoom]="zoomMapa()"
+                (mapaListo)="alPrepararMapa($event)"
+                (falloMapa)="errorMapa.set('No fue posible abrir el mapa interactivo.')">
+              </app-mapa>
+
+              <p class="small text-secondary mt-2 mb-1 px-2">
+                🏙️ Ciudad · 🏢 Terminal · 🚏 Parada.
+                Haz clic en cualquier punto para
+                colocar el marcador.
+              </p>
+
+              @if (errorMapa(); as mensaje) {
+                <p
+                  class="alert alert-warning small mx-2 mb-2"
+                  role="alert">
+                  {{ mensaje }}
+                </p>
+              }
+
+            </div>
+          </div>
+        }
+
+        <!-- COORDENADAS -->
+
+        <div class="col-12 col-md-6">
+          <label for="lugar-latitud" class="form-label">
+            Latitud
+          </label>
+
+          <input
+            id="lugar-latitud"
+            type="number"
+            step="any"
+            min="-90"
+            max="90"
+            class="form-control"
+            formControlName="latitud"
+            (change)="sincronizarMarcador()"
+            [class.is-invalid]="invalido('latitud')"
+            [attr.aria-invalid]="invalido('latitud') || coordenadasIncompletas()"
+            aria-describedby="ayuda-coordenadas">
+
+          @if (invalido('latitud')) {
+            <div class="invalid-feedback">
+              Ingresa un número entre -90 y 90.
+            </div>
+          }
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label for="lugar-longitud" class="form-label">
+            Longitud
+          </label>
+
+          <input
+            id="lugar-longitud"
+            type="number"
+            step="any"
+            min="-180"
+            max="180"
+            class="form-control"
+            formControlName="longitud"
+            (change)="sincronizarMarcador()"
+            [class.is-invalid]="invalido('longitud')"
+            [attr.aria-invalid]="invalido('longitud') || coordenadasIncompletas()"
+            aria-describedby="ayuda-coordenadas">
+
+          @if (invalido('longitud')) {
+            <div class="invalid-feedback">
+              Ingresa un número entre -180 y 180.
+            </div>
+          }
+        </div>
+
+        @if (coordenadasIncompletas()) {
+          <div class="col-12 text-danger small" role="alert">
+            Completa ambas coordenadas o deja ambas vacías.
+          </div>
+        }
+
+        @if (lugar() !== null) {
+          <div class="col-12">
+            <div class="form-check">
+              <input
+                id="lugar-activo"
+                type="checkbox"
+                class="form-check-input"
+                formControlName="activo">
+
+              <label
+                for="lugar-activo"
+                class="form-check-label">
+                Activo
+              </label>
+            </div>
+          </div>
+        }
+
+      </div>
+    </fieldset>
+
+    @if (error(); as mensaje) {
+      <div
+        class="alert alert-danger mt-3 mb-0"
+        role="alert">
+        {{ mensaje }}
+      </div>
+    }
+
+    @if (!autorizado()) {
+      <div
+        class="alert alert-warning mt-3"
+        role="alert">
+        La escritura requiere una sesión vigente
+        con rol COOPERATIVA.
+      </div>
+    }
+
+    <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        [disabled]="guardando()"
+        (click)="cancelar.emit()">
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="guardando() || !autorizado()">
+
+        @if (guardando()) {
+          <span
+            class="spinner-border spinner-border-sm me-1"
+            aria-hidden="true">
+          </span>
+        }
+
+        {{ guardando() ? 'Guardando...' : 'Guardar lugar' }}
+      </button>
+
+    </div>
+  </form>
+</section>

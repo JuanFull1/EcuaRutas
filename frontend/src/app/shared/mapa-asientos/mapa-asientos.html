@@ -1,0 +1,125 @@
+<div class="mapa" [class.compacto]="compacto()">
+
+  @if (pisos() > 1 && vistaPisos() === 'pestanas') {
+    <div class="pestanas" role="tablist">
+      @for (piso of listaPisos(); track piso) {
+        <button
+          type="button"
+          role="tab"
+          class="pestana"
+          [class.activa]="pisoActivo() === piso"
+          [attr.aria-selected]="pisoActivo() === piso"
+          (click)="elegirPiso(piso)"
+        >
+          Piso {{ piso }} · {{ piso === 1 ? 'inferior' : 'superior' }}
+          <span class="pestana-total">{{ asientosDelPiso(piso) }}</span>
+        </button>
+      }
+    </div>
+  }
+
+  @for (piso of pisosVisibles(); track piso) {
+    <div class="mapa-piso">
+
+      @if (pisos() > 1 && vistaPisos() === 'juntos') {
+        <h6 class="mapa-titulo">Piso {{ piso }} · {{ piso === 1 ? 'inferior' : 'superior' }}</h6>
+      }
+
+      <div class="bus-contenedor">
+
+        @if (piso === 1) {
+          <span class="rueda rueda-1"></span>
+          <span class="rueda rueda-2"></span>
+          <span class="rueda rueda-3"></span>
+          <span class="rueda rueda-4"></span>
+        }
+
+      <div class="bus">
+
+        <div class="bus-frente">
+          <div class="parabrisas"></div>
+          <span class="bus-faro bus-faro-izq"></span>
+          <span class="bus-faro bus-faro-der"></span>
+          <span class="bus-etiqueta">
+            {{ piso === 1 ? 'FRENTE' : 'PISO SUPERIOR' }}
+          </span>
+          @if (piso === 1) {
+            <span class="bus-puerta">PUERTA</span>
+          } @else {
+            <span class="bus-puerta bus-escalera">ESCALERA</span>
+          }
+        </div>
+
+        <div class="bus-cuadricula" [style.--columnas]="columnas()">
+          @for (fila of listaFilas(); track fila) {
+            @for (columna of listaColumnas(); track columna) {
+              @let a = asientoEn(piso, fila, columna);
+
+              <div
+                class="celda"
+                [class.celda-editable]="editable()"
+                [class.pasillo]="esPasillo(piso, columna)"
+                (dragover)="alPasarSobre($event)"
+                (drop)="alSoltar($event, piso, fila, columna)"
+              >
+                @if (a) {
+                  <button
+                    type="button"
+                    class="asiento"
+                    [class]="'asiento t' + a.colorIndex
+                      + (a.estado === 'OCUPADO' ? ' ocupado' : '')
+                      + (a.estado === 'SELECCIONADO' || esSeleccionado(piso, fila, columna) ? ' elegido' : '')"
+                    [title]="titulo(a)"
+                    [disabled]="!editable() && a.estado === 'OCUPADO'"
+                    [attr.draggable]="editable() ? 'true' : null"
+                    (dragstart)="alArrastrarAsiento($event, a)"
+                    (click)="alHacerClic(piso, fila, columna)"
+                  >
+                    <span class="asiento-numero">{{ a.numero }}</span>
+                    @if (mostrarPrecio() && a.precio != null) {
+                      <span class="asiento-precio">${{ a.precio.toFixed(2) }}</span>
+                    }
+                  </button>
+                } @else if (editable()) {
+                  <button
+                    type="button"
+                    class="celda-vacia"
+                    aria-label="Colocar asiento"
+                    (click)="alHacerClic(piso, fila, columna)"
+                  ></button>
+                }
+              </div>
+            }
+          }
+        </div>
+
+        <div class="bus-fondo">
+          @if (tieneBanio() && piso === 1) {
+            <span class="bus-banio">WC</span>
+          }
+          <span class="bus-etiqueta-fondo">ATRÁS</span>
+        </div>
+
+      </div>
+      </div>
+    </div>
+  }
+
+  @if (leyenda().length > 0) {
+    <div class="leyenda">
+      @for (item of leyenda(); track item.tipoId) {
+        <span class="leyenda-item">
+          <span [class]="'leyenda-color t' + item.colorIndex"></span>
+          {{ item.tipoNombre }}
+        </span>
+      }
+      @if (!editable()) {
+        <span class="leyenda-item">
+          <span class="leyenda-color ocupado"></span>
+          Ocupado
+        </span>
+      }
+    </div>
+  }
+
+</div>

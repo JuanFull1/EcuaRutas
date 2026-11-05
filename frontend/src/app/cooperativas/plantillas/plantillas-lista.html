@@ -1,0 +1,118 @@
+<div class="plantillas ff-pagina ff-ancha">
+
+  <header class="ff-cabecera ff-suelta">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-grid-3x3-gap"></i></span>
+      <div>
+        <h1 class="ff-titulo">Plantillas de asientos</h1>
+        <p class="ff-subtitulo">
+          Cada plantilla define cómo se distribuyen los asientos de un tipo de bus.
+        </p>
+      </div>
+    </div>
+    <a routerLink="/cooperativas/plantillas/nueva" class="ff-nuevo">
+      <i class="bi bi-plus-lg"></i> Nueva plantilla
+    </a>
+  </header>
+
+  @if (error(); as mensaje) {
+    <div
+      class="alert alert-danger d-flex justify-content-between align-items-center gap-3"
+      role="alert"
+    >
+      <span>{{ mensaje }}</span>
+
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="cargar()">
+        Reintentar
+      </button>
+    </div>
+  }
+
+  @if (errorAccion(); as mensaje) {
+    <div class="alert alert-danger" role="alert">{{ mensaje }}</div>
+  }
+
+  @if (cargando()) {
+    <p class="text-secondary">
+      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+      Cargando plantillas...
+    </p>
+  } @else if (!error() && plantillas().length === 0) {
+    <div class="vacio">
+      <h2>Aún no hay plantillas</h2>
+      <p>Crea la primera para definir los asientos de tus buses.</p>
+      <a routerLink="/cooperativas/plantillas/nueva" class="ff-nuevo">
+        <i class="bi bi-plus-lg"></i> Crear plantilla
+      </a>
+    </div>
+  }
+
+  <div class="tarjetas">
+    @for (plantilla of plantillas(); track plantilla.id) {
+      <article class="tarjeta" [class.inactiva]="!plantilla.activa">
+
+        <div class="tarjeta-bus">
+          @if (vistaDe(plantilla.id); as vista) {
+            @if (vista.asientos.length > 0) {
+              <app-mapa-asientos
+                [compacto]="true"
+                [pisos]="plantilla.pisos"
+                [filas]="vista.filas"
+                [columnas]="vista.columnas"
+                [asientos]="vista.asientos"
+                [tieneBanio]="plantilla.tieneBanio"
+              />
+            } @else {
+              <span class="sin-asientos">Sin asientos definidos</span>
+            }
+          } @else {
+            <span class="sin-asientos">Cargando dibujo...</span>
+          }
+        </div>
+
+        <div class="tarjeta-cuerpo">
+          <h2 class="tarjeta-nombre">{{ plantilla.nombre }}</h2>
+
+          <p class="tarjeta-datos">
+            @if (vistaDe(plantilla.id); as vista) {
+              <strong>{{ vista.asientos.length }}</strong> asientos ·
+            }
+            {{ plantilla.pisos === 1 ? '1 piso' : plantilla.pisos + ' pisos' }}
+            @if (plantilla.tieneBanio) {
+              · con baño
+            }
+          </p>
+
+          <div class="tarjeta-etiquetas">
+            <span class="etiqueta">
+              {{ plantilla.cooperativaId === null ? 'General' : 'Mi cooperativa' }}
+            </span>
+            <span class="etiqueta" [class.etiqueta-ok]="plantilla.activa">
+              {{ plantilla.activa ? 'Activa' : 'Inactiva' }}
+            </span>
+          </div>
+
+          @if (plantilla.cooperativaId !== null) {
+            <div class="tarjeta-acciones">
+              <a
+                [routerLink]="['/cooperativas/plantillas', plantilla.id, 'disposicion']"
+                class="btn btn-sm btn-outline-primary"
+              >
+                <i class="bi bi-grid-3x3-gap"></i> Editar diseño
+              </a>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                (click)="eliminar(plantilla)"
+              >
+                <i class="bi bi-trash"></i> Eliminar
+              </button>
+            </div>
+          }
+        </div>
+
+      </article>
+    }
+  </div>
+
+</div>
