@@ -11,8 +11,12 @@
     </h1>
 
     <p class="text-secondary mb-0">
-      Consulta las plantillas que definen la distribución de asientos de los buses.
+      Consulta y administra las plantillas que definen la distribución de asientos de los buses.
     </p>
+
+    <a routerLink="/cooperativas/plantillas/nueva" class="btn btn-primary mt-3">
+      <i class="bi bi-plus-lg"></i> Nueva plantilla
+    </a>
 
   </section>
 
@@ -46,13 +50,14 @@
             <th class="text-center">Baño</th>
             <th>Alcance</th>
             <th>Estado</th>
+            <th class="text-end">Acciones</th>
           </tr>
         </thead>
 
         <tbody>
           @if (cargando()) {
             <tr>
-              <td colspan="5" class="text-center text-secondary py-4">
+              <td colspan="6" class="text-center text-secondary py-4">
                 <span
                   class="spinner-border spinner-border-sm me-2"
                   aria-hidden="true"
@@ -62,7 +67,7 @@
             </tr>
           } @else if (!error() && plantillas().length === 0) {
             <tr>
-              <td colspan="5" class="text-center text-secondary py-4">
+              <td colspan="6" class="text-center text-secondary py-4">
                 No hay plantillas registradas.
               </td>
             </tr>
@@ -81,6 +86,16 @@
                 >
                   {{ plantilla.activa ? 'ACTIVA' : 'INACTIVA' }}
                 </span>
+              </td>
+              <td class="text-end">
+                @if (plantilla.cooperativaId !== null) {
+                  <a
+                    [routerLink]="['/cooperativas/plantillas', plantilla.id, 'disposicion']"
+                    class="btn btn-sm btn-outline-primary"
+                  >
+                    <i class="bi bi-grid-3x3-gap"></i> Disposición
+                  </a>
+                }
               </td>
             </tr>
           }

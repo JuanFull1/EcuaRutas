@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { PlantillaBus } from '../../models/plantilla-bus.model';
 import { AuthService } from '../../services/auth.service';
@@ -7,6 +8,7 @@ import { PlantillaService } from '../../services/plantilla.service';
 @Component({
   selector: 'app-plantillas-lista',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './plantillas-lista.html',
   styleUrl: './plantillas-lista.css'
 })
