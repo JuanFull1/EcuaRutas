@@ -1,0 +1,27 @@
+.resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+}
+
+.resumen-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #475569;
+}
+
+.punto {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.t0 { background: #2563eb; }
+.t1 { background: #d97706; }
+.t2 { background: #059669; }
+.t3 { background: #7c3aed; }
+.t4 { background: #db2777; }
+.t5 { background: #475569; }
