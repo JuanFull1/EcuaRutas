@@ -43,7 +43,7 @@ La guía del equipo distribuye trabajo entre Juan (usuarios/cooperativas), Damar
 
 ## Convención de commits
 
-Se exige usar **Conventional Commits**:
+Se recomienda usar **Conventional Commits**:
 
 ```text
 feat(cliente): agrega historial de compras
@@ -64,7 +64,7 @@ Cada PR debe incluir:
 - **Validaciones realizadas:** comandos de compilación y pruebas efectivamente ejecutadas.
 - **Pendientes y limitaciones:** pruebas aún no realizadas, cambios de configuración o migraciones requeridas.
 - **Evidencias** cuando correspondan: capturas sin datos personales, resultados de pruebas o referencias a incidencias.
-- **Archivos y endpoints principales**, cambios SQL, pasos de prueba e incidencia o petición Jira relacionada, cuando aplique.
+- **Archivos y endpoints principales**, cambios SQL, pasos de prueba e Issue de GitHub relacionado, cuando aplique.
 
 No se debe afirmar que una funcionalidad fue probada si solamente compiló.
 
@@ -83,7 +83,7 @@ Si modificas SQL, revisa su compatibilidad con bases ya existentes y proporciona
 
 ## Gestión de cambios y revisión
 
-El equipo utiliza GitHub para el historial de código y propone Jira Service Management para registrar, clasificar y seguir peticiones de cambio. Según el impacto, se contemplan cambios estándar, normales y de emergencia; la coordinación y aprobación se realizan conforme a los acuerdos del equipo.
+El equipo utiliza GitHub para el historial de código y la revisión mediante Pull Requests. Cuando aplique, las incidencias y solicitudes de cambio se documentan en GitHub Issues y se vinculan con su rama y Pull Request. Según el impacto, se contemplan cambios estándar, normales y de emergencia; la coordinación y aprobación se realizan conforme a los acuerdos del equipo.
 
 La guía propone una rotación de revisión: Juan → Bryan, Bryan → Damaris, Damaris → Tati, Tati → Vicky, Vicky → Eve y Eve → Juan. Esta distribución es orientativa; el responsable real de cada revisión debe acordarse en el PR.
 

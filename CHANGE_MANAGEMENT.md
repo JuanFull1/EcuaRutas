@@ -7,7 +7,7 @@ Este documento define el proceso inicial de control de cambios utilizado en Ecua
 El proyecto utilizará:
 
 - Git y GitHub para control de versiones.
-- Jira Service Management para registrar y administrar peticiones de cambio.
+- GitHub Issues y Pull Requests para documentar solicitudes de cambio, cuando aplique, y revisar su implementación.
 - GitFlow como flujo de trabajo para el desarrollo.
 
 ## Comité de Control de Cambios
@@ -30,7 +30,9 @@ Cambios que requieren evaluación y aprobación antes de ser implementados.
 
 Cambios urgentes relacionados con errores críticos de una versión estable.
 
-Los cambios de emergencia podrán implementarse mediante ramas `hotfix/*`.
+Los cambios de emergencia que afectan una versión estable podrán implementarse mediante ramas `hotfix/*`, creadas desde `main`. Una vez aprobada la corrección, se integra en `main` y también en `develop` para conservarla en el desarrollo futuro.
+
+Los errores encontrados durante el desarrollo se corrigen mediante ramas `bugfix/*`, creadas desde `develop` e integradas de vuelta en `develop`. No se clasifican como cambios de emergencia salvo que afecten una versión estable publicada.
 
 ## Proceso general
 
@@ -39,7 +41,7 @@ Los cambios de emergencia podrán implementarse mediante ramas `hotfix/*`.
 3. Analizar impacto y justificación.
 4. Revisar la petición mediante el CCB.
 5. Aprobar, rechazar o cancelar el cambio.
-6. Implementar el cambio en una rama correspondiente.
+6. Implementar el cambio en una rama correspondiente: `feature/*` para funcionalidad, `docs/*` para documentación, `bugfix/*` para errores de desarrollo o `hotfix/*` para una corrección urgente de una versión estable.
 7. Registrar los cambios mediante commits.
 8. Crear un Pull Request.
 9. Realizar revisión por otro integrante.

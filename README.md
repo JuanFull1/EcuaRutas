@@ -2,7 +2,7 @@
 
 **Sistema web para la gestión de transporte interprovincial y la consulta, reserva y venta de pasajes en Ecuador.**
 
-EcuaRutas es un proyecto de desarrollo colaborativo que integra procesos de cooperativas de transporte, administración de flota, rutas, viajes, ventas, pagos y servicios para pasajeros. 
+EcuaRutas es un proyecto de desarrollo colaborativo que integra procesos de cooperativas de transporte, administración de flota, rutas, viajes, ventas, pagos y servicios para pasajeros.
 
 > **Estado del proyecto:** en desarrollo. La disponibilidad real de cada pantalla o función depende de los módulos integrados en la rama que se utilice.
 
@@ -109,13 +109,14 @@ Para una instalación nueva se utiliza `database/EcuaRutas.sql` en una base llam
 
 ## Documentación y colaboración
 
+- [Módulo de flota](docs/flota.md): endpoints, permisos, aislamiento por cooperativa y pantallas.
 - [Guía de contribución](CONTRIBUTING.md)
 - [Política de seguridad](SECURITY.md)
 - [Código de conducta](CODE_OF_CONDUCT.md)
 - [Licencia](LICENSE)
 
-La integración sigue un flujo basado en GitFlow (`main`, `develop`, `feature/*`, `docs/*`, `bugfix/*`, `release/*` y `hotfix/*`). Las ramas `feature/*`, `docs/*` y `bugfix/*` parten de `develop` y proponen sus cambios mediante Pull Requests hacia `develop`. Las ramas `hotfix/*` parten de `main`; una vez corregida la versión estable, el cambio debe incorporarse también a `develop`. Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para el procedimiento. Los cambios pueden relacionarse con incidencias o peticiones gestionadas en Jira Service Management. Para la incorporación de módulos se recomienda compilar los componentes afectados y documentar las pruebas realizadas y las pendientes.
+La integración sigue un flujo basado en GitFlow (`main`, `develop`, `feature/*`, `docs/*`, `bugfix/*`, `release/*` y `hotfix/*`). Las ramas `feature/*`, `docs/*` y `bugfix/*` parten de `develop` y proponen sus cambios mediante Pull Requests hacia `develop`. Las ramas `hotfix/*` parten de `main`; una vez corregida la versión estable, el cambio debe incorporarse también a `develop`. Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para el procedimiento. Cuando aplique, las solicitudes e incidencias se documentan en GitHub Issues y se vinculan al Pull Request correspondiente. Para la incorporación de módulos se recomienda compilar los componentes afectados y documentar las pruebas realizadas y las pendientes.
 
 ## Licencia
 
-El archivo [`LICENSE`](LICENSE) contiene los términos de la **GNU General Public License v3.0**. Su adopción para la totalidad del proyecto debe ser confirmada por los titulares de derechos del código y el equipo responsable del repositorio.
+El archivo [`LICENSE`](LICENSE) contiene los términos de la **GNU General Public License v3.0**. 
