@@ -143,6 +143,21 @@ public class PlantillaService : IPlantillaService
         return MapearPlantilla(plantilla);
     }
 
+    public async Task<PlantillaBusDto?> ActualizarAsync(
+        long id, ActualizarPlantillaBusRequest request, CancellationToken ct = default)
+    {
+        var plantilla = await _db.PlantillasBus.FirstOrDefaultAsync(p => p.Id == id, ct);
+
+        if (plantilla is null)
+            return null;
+
+        plantilla.Nombre = request.Nombre.Trim();
+        plantilla.TieneBanio = request.TieneBanio;
+        await _db.SaveChangesAsync(ct);
+
+        return MapearPlantilla(plantilla);
+    }
+
     public async Task<bool> DesactivarAsync(long id, CancellationToken ct = default)
     {
         var plantilla = await _db.PlantillasBus.FirstOrDefaultAsync(p => p.Id == id, ct);

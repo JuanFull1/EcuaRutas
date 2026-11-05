@@ -40,6 +40,11 @@ public interface IPlantillaService
         IReadOnlyList<CrearAsientoPlantillaRequest> asientos,
         CancellationToken ct = default);
 
+    // Cambia el nombre y si tiene baño. Los pisos no cambian: dependen de los asientos.
+    // Devuelve null si la plantilla no existe.
+    Task<PlantillaBusDto?> ActualizarAsync(
+        long id, ActualizarPlantillaBusRequest request, CancellationToken ct = default);
+
     // Desactiva la plantilla (no se borra: los buses pueden referenciarla).
     // Devuelve false si no existe.
     Task<bool> DesactivarAsync(long id, CancellationToken ct = default);
