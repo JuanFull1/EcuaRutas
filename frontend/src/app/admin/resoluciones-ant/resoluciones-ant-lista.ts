@@ -59,7 +59,7 @@ export class ResolucionesAntLista implements OnInit {
   readonly paginaActual = computed(() => Math.max(1, Math.min(this.pagina(), this.totalPaginas())));
   readonly filasPagina = computed(() => this.filtradas().slice((this.paginaActual() - 1) * this.tamanoPagina, this.paginaActual() * this.tamanoPagina));
 
-  puedeGestionar(): boolean { return this.auth.tieneRol('ADMIN'); }
+  puedeGestionar(): boolean { return this.auth.tieneRol('COOPERATIVA'); }
 
   ngOnInit(): void { this.cargar(); }
 

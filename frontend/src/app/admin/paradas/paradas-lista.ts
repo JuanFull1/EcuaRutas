@@ -57,7 +57,7 @@ export class ParadasLista implements OnInit {
   readonly seleccionBloqueada = computed(() => this.cargandoRutas() || this.guardando() || this.eliminando() || this.formularioVisible() || this.pendienteEliminar() !== null);
 
   puedeEscribir(): boolean {
-    return this.auth.tieneRol('ADMIN');
+    return this.auth.tieneRol('COOPERATIVA');
   }
 
   ngOnInit(): void {

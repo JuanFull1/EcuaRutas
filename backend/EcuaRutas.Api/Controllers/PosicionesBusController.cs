@@ -7,7 +7,7 @@ namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/posiciones-bus")]
-[Authorize(Roles = "ADMIN,COOPERATIVA,OFICINISTA,BUS")]
+[Authorize(Roles = "COOPERATIVA,OFICINISTA,BUS")]
 public class PosicionesBusController : ControllerBase
 {
     private readonly IPosicionBusService _service;

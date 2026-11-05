@@ -10,8 +10,8 @@ namespace EcuaRutas.Api.Controllers;
 [Authorize(Roles = RolesLectura)]
 public class HojasRutaController : ControllerBase
 {
-    private const string RolesLectura = "ADMIN,COOPERATIVA,OFICINISTA";
-    private const string RolesEscritura = "ADMIN,COOPERATIVA";
+    private const string RolesLectura = "COOPERATIVA,OFICINISTA";
+    private const string RolesEscritura = "COOPERATIVA";
 
     private readonly IHojaRutaService _service;
 
