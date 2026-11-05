@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, of, switchMap } from 'rxjs';
@@ -17,7 +18,7 @@ import { PlantillaService } from '../../services/plantilla.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './bus-formulario.html',
-  styleUrl: './bus-formulario.css'
+  styleUrls: ['../../shared/formulario/formulario.css', './bus-formulario.css']
 })
 export class BusFormulario implements OnInit {
 
@@ -57,6 +58,14 @@ export class BusFormulario implements OnInit {
     tieneBanio: [false],
     fotoUrl: ['', [Validators.maxLength(500)]],
     estado: ['ACTIVO' as EstadoBus]
+  });
+
+  /** Valores en vivo para la placa y la vista previa de la foto. */
+  readonly placaVista = toSignal(this.form.controls.placa.valueChanges, { initialValue: '' });
+  private readonly fotoEscrita = toSignal(this.form.controls.fotoUrl.valueChanges, { initialValue: '' });
+  readonly fotoVista = computed(() => {
+    const url = (this.fotoEscrita() ?? '').trim();
+    return /^https?:\/\//i.test(url) ? url : '';
   });
 
   ngOnInit(): void {
