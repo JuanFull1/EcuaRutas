@@ -9,6 +9,7 @@ import {
   TipoAsiento
 } from '../models/tipo-asiento.model';
 import {
+  ActualizarPlantillaBusRequest,
   CrearPlantillaBusRequest,
   PlantillaBus
 } from '../models/plantilla-bus.model';
@@ -65,6 +66,10 @@ export class PlantillaService {
 
   crear(request: CrearPlantillaBusRequest): Observable<PlantillaBus> {
     return this.http.post<PlantillaBus>(this.url, request);
+  }
+
+  actualizar(id: number, request: ActualizarPlantillaBusRequest): Observable<PlantillaBus> {
+    return this.http.put<PlantillaBus>(`${this.url}/${id}`, request);
   }
 
   obtenerDisposicion(plantillaId: number): Observable<PlantillaAsiento[]> {
