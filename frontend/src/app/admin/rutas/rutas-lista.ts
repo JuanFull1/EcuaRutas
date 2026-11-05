@@ -51,7 +51,7 @@ export class RutasLista implements OnInit {
   });
 
   puedeEscribir(): boolean {
-    return this.auth.tieneRol('ADMIN');
+    return this.auth.tieneRol('COOPERATIVA');
   }
 
   ngOnInit(): void {

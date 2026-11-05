@@ -7,7 +7,7 @@ namespace EcuaRutas.Api.Controllers;
 
 [ApiController]
 [Route("api/tipos-asiento")]
-[Authorize(Roles = "ADMIN,COOPERATIVA,OFICINISTA")]
+[Authorize(Roles = "COOPERATIVA,OFICINISTA")]
 public class TiposAsientoController : ControllerBase
 {
     private readonly IPlantillaService _servicio;

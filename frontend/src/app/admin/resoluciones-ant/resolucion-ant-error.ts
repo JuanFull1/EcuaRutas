@@ -9,7 +9,7 @@ export function mensajeErrorResolucion(error: unknown): string {
     case 0: return 'No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.';
     case 400: return mensajeError(error, 'Revisa los datos ingresados: hay valores que no son válidos.');
     case 401: return 'Tu sesión no es válida o ha expirado. Inicia sesión nuevamente.';
-    case 403: return 'No tienes permisos para gestionar resoluciones ANT. Se requiere el rol ADMIN.';
+    case 403: return 'No tienes permisos para gestionar resoluciones ANT. Se requiere una sesión válida con rol COOPERATIVA.';
     case 404: return mensajeError(error, 'La resolución o la cooperativa solicitada no está disponible. Actualiza el listado.');
     case 409: return mensajeError(error, 'No se pudo completar la operación por un conflicto con los datos actuales.');
     default: return error.status >= 500
