@@ -503,7 +503,6 @@ export class PlantillaFormulario implements OnInit {
           nombre: plantilla.nombre,
           tieneBanio: plantilla.tieneBanio
         });
-        this.form.disable();
         this.tieneBanio.set(plantilla.tieneBanio);
         this.pisos.set(plantilla.pisos);
 
