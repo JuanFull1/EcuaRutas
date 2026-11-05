@@ -110,6 +110,29 @@ public class PlantillasController : ControllerBase
     }
 
     [Authorize(Roles = "ADMIN,COOPERATIVA")]
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<PlantillaBusDto>> Actualizar(
+        long id, ActualizarPlantillaBusRequest request, CancellationToken ct)
+    {
+        var existente = await _servicio.ObtenerAsync(id, ct);
+
+        if (existente is null)
+        {
+            return NotFound();
+        }
+
+        var denegado = DenegarSiOtraCooperativa(existente.CooperativaId, permitirGeneral: false);
+
+        if (denegado is not null)
+        {
+            return denegado;
+        }
+
+        var plantilla = await _servicio.ActualizarAsync(id, request, ct);
+        return plantilla is null ? NotFound() : Ok(plantilla);
+    }
+
+    [Authorize(Roles = "ADMIN,COOPERATIVA")]
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> Desactivar(long id, CancellationToken ct)
     {

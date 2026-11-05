@@ -7,6 +7,11 @@ export interface PlantillaBus {
   activa: boolean;
 }
 
+export interface ActualizarPlantillaBusRequest {
+  nombre: string;
+  tieneBanio: boolean;
+}
+
 export interface CrearPlantillaBusRequest {
   cooperativaId?: number | null;
   nombre: string;

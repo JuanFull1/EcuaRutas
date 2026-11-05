@@ -8,6 +8,19 @@ public interface IPlantillaService
     Task<IReadOnlyList<TipoAsientoDto>> ListarTiposAsientoAsync(
         long? cooperativaId = null, CancellationToken ct = default);
 
+    Task<TipoAsientoDto?> ObtenerTipoAsientoAsync(long id, CancellationToken ct = default);
+
+    Task<TipoAsientoDto> CrearTipoAsientoAsync(
+        CrearTipoAsientoRequest request, CancellationToken ct = default);
+
+    // Devuelve null si el tipo no existe.
+    Task<TipoAsientoDto?> ActualizarTipoAsientoAsync(
+        long id, ActualizarTipoAsientoRequest request, CancellationToken ct = default);
+
+    // Desactiva el tipo (no se borra: los asientos ya creados lo referencian).
+    // Devuelve false si no existe.
+    Task<bool> DesactivarTipoAsientoAsync(long id, CancellationToken ct = default);
+
     // Plantillas de bus
     Task<IReadOnlyList<PlantillaBusDto>> ListarAsync(
         long? cooperativaId = null, CancellationToken ct = default);
@@ -26,6 +39,11 @@ public interface IPlantillaService
         long plantillaId,
         IReadOnlyList<CrearAsientoPlantillaRequest> asientos,
         CancellationToken ct = default);
+
+    // Cambia el nombre y si tiene baño. Los pisos no cambian: dependen de los asientos.
+    // Devuelve null si la plantilla no existe.
+    Task<PlantillaBusDto?> ActualizarAsync(
+        long id, ActualizarPlantillaBusRequest request, CancellationToken ct = default);
 
     // Desactiva la plantilla (no se borra: los buses pueden referenciarla).
     // Devuelve false si no existe.

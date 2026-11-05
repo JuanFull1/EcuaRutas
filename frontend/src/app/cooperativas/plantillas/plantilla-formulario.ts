@@ -327,7 +327,7 @@ export class PlantillaFormulario implements OnInit {
 
     const id = this.plantillaId();
 
-    if (id === null && this.form.invalid) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
@@ -340,7 +340,21 @@ export class PlantillaFormulario implements OnInit {
     this.guardando.set(true);
 
     if (id !== null) {
-      this.guardarDisposicion(id);
+      // Primero los datos de la plantilla (nombre y baño) y luego su diseño.
+      const datos = this.form.getRawValue();
+
+      this.plantillaService.actualizar(id, {
+        nombre: (datos.nombre ?? '').trim(),
+        tieneBanio: datos.tieneBanio ?? false
+      }).subscribe({
+        next: () => this.guardarDisposicion(id),
+        error: (e: unknown) => {
+          this.guardando.set(false);
+          this.errorGuardar.set(
+            mensajeError(e, 'No se pudieron guardar los datos de la plantilla. Inténtalo de nuevo.')
+          );
+        }
+      });
       return;
     }
 
@@ -363,6 +377,7 @@ export class PlantillaFormulario implements OnInit {
       next: plantilla => {
         // Si falla el guardado de asientos, un reintento no duplica la plantilla.
         this.plantillaId.set(plantilla.id);
+        this.recienCreada = true;
         this.guardarDisposicion(plantilla.id);
       },
       error: (e: unknown) => {
@@ -381,6 +396,9 @@ export class PlantillaFormulario implements OnInit {
     });
   }
 
+  /** Cierto cuando la plantilla se creó en este mismo guardado. */
+  private recienCreada = false;
+
   private guardarDisposicion(plantillaId: number): void {
     this.plantillaService
       .definirDisposicion(plantillaId, this.construirAsientos())
@@ -394,7 +412,9 @@ export class PlantillaFormulario implements OnInit {
           this.errorGuardar.set(
             mensajeError(
               e,
-              'La plantilla se creó, pero no se pudieron guardar los asientos. Inténtalo de nuevo.'
+              this.recienCreada
+                ? 'La plantilla se creó, pero no se pudieron guardar los asientos. Inténtalo de nuevo.'
+                : 'No se pudieron guardar los asientos. Inténtalo de nuevo.'
             )
           );
         }
@@ -483,7 +503,6 @@ export class PlantillaFormulario implements OnInit {
           nombre: plantilla.nombre,
           tieneBanio: plantilla.tieneBanio
         });
-        this.form.disable();
         this.tieneBanio.set(plantilla.tieneBanio);
         this.pisos.set(plantilla.pisos);
 

@@ -1,0 +1,105 @@
+<div class="ff-pagina ff-ancha">
+
+  <header class="ff-cabecera ff-suelta">
+    <div class="d-flex align-items-center gap-3">
+      <span class="ff-icono"><i class="bi bi-tags"></i></span>
+      <div>
+        <h1 class="ff-titulo">Tipos de asiento</h1>
+        <p class="ff-subtitulo">
+          Cada tipo puede llevar un recargo sobre el precio base del pasaje.
+        </p>
+      </div>
+    </div>
+    <a routerLink="/cooperativas/tipos-asiento/nuevo" class="ff-nuevo">
+      <i class="bi bi-plus-lg"></i> Nuevo tipo
+    </a>
+  </header>
+
+  @if (error(); as mensaje) {
+    <div
+      class="alert alert-danger d-flex justify-content-between align-items-center gap-3"
+      role="alert"
+    >
+      <span>{{ mensaje }}</span>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="cargar()">
+        Reintentar
+      </button>
+    </div>
+  }
+
+  @if (errorAccion(); as mensaje) {
+    <div class="alert alert-danger" role="alert">{{ mensaje }}</div>
+  }
+
+  <div class="ff-cuerpo ff-suelto">
+    <div class="table-responsive">
+      <table class="table align-middle ff-tabla">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th class="text-center">Recargo</th>
+            <th>Alcance</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (cargando()) {
+            <tr>
+              <td colspan="4" class="text-center text-secondary py-4">
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                Cargando tipos de asiento...
+              </td>
+            </tr>
+          } @else if (!error() && tipos().length === 0) {
+            <tr>
+              <td colspan="4" class="text-center text-secondary py-4">
+                No hay tipos de asiento registrados.
+              </td>
+            </tr>
+          }
+
+          @for (tipo of tipos(); track tipo.id) {
+            <tr>
+              <td class="fw-semibold">{{ tipo.nombre }}</td>
+              <td class="text-center">
+                <span class="badge rounded-pill"
+                      [class]="'badge rounded-pill ' + (tipo.recargoPorcentaje > 0 ? 'text-bg-warning' : 'text-bg-secondary')">
+                  {{ tipo.recargoPorcentaje > 0 ? '+' + tipo.recargoPorcentaje + ' %' : 'Sin recargo' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge rounded-pill"
+                      [class]="'badge rounded-pill ' + (tipo.cooperativaId === null ? 'text-bg-info' : 'text-bg-success')">
+                  {{ tipo.cooperativaId === null ? 'General' : 'Mi cooperativa' }}
+                </span>
+              </td>
+              <td class="text-end">
+                @if (tipo.cooperativaId !== null) {
+                  <div class="ff-fila-acciones">
+                    <a
+                      [routerLink]="['/cooperativas/tipos-asiento', tipo.id, 'editar']"
+                      class="btn btn-sm btn-outline-primary"
+                    >
+                      <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="desactivar(tipo)"
+                    >
+                      <i class="bi bi-slash-circle"></i> Desactivar
+                    </button>
+                  </div>
+                } @else {
+                  <span class="text-secondary small">Definido por el sistema</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

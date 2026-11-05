@@ -248,6 +248,42 @@ export const routes: Routes = [
       },
 
       {
+        path: 'tipos-asiento/nuevo',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/tipos-asiento/tipo-asiento-formulario'
+          )
+            .then(
+              m => m.TipoAsientoFormulario
+            )
+      },
+
+      {
+        path: 'tipos-asiento/:id/editar',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/tipos-asiento/tipo-asiento-formulario'
+          )
+            .then(
+              m => m.TipoAsientoFormulario
+            )
+      },
+
+      {
+        path: 'tipos-asiento',
+
+        loadComponent: () =>
+          import(
+            './cooperativas/tipos-asiento/tipos-asiento-lista'
+          )
+            .then(
+              m => m.TiposAsientoLista
+            )
+      },
+
+      {
         path: 'plantillas',
 
         loadComponent: () =>
