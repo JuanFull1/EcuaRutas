@@ -11,7 +11,7 @@ import { BusService } from '../../services/bus.service';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './buses-lista.html',
-  styleUrl: './buses-lista.css'
+  styleUrls: ['../../shared/formulario/formulario.css', './buses-lista.css']
 })
 export class BusesLista implements OnInit {
 

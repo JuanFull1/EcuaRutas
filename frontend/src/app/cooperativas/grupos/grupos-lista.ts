@@ -11,7 +11,7 @@ import { GrupoBusService } from '../../services/grupo-bus.service';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './grupos-lista.html',
-  styleUrl: './grupos-lista.css'
+  styleUrls: ['../../shared/formulario/formulario.css', './grupos-lista.css']
 })
 export class GruposLista implements OnInit {
 
