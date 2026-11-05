@@ -28,7 +28,7 @@ const paradas: RutaParadaDto[] = [
 
 const aviso = document.createElement('p');
 aviso.className = 'alert alert-info m-3';
-aviso.textContent = 'Prueba de navegador: rutas, paradas y lugares simulados; MapLibre y cartografía reales.';
+aviso.textContent = 'Prueba de navegador: rutas, paradas, lugares y teselas simulados; MapLibre real.';
 const desmontar = document.createElement('button');
 desmontar.type = 'button';
 desmontar.id = 'prueba-desmontar';

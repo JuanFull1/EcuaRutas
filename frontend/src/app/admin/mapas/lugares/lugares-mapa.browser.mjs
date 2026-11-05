@@ -6,6 +6,7 @@ import { access, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { comprobarBaseOSM, simularTeselasOSM } from '../teselas-prueba.browser.mjs';
 
 const frontend = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
 const salida = resolve(frontend, 'dist/mapa-lugares-browser');
@@ -114,6 +115,7 @@ try {
   await cdp.enviar('Page.enable');
   await cdp.enviar('Runtime.enable');
   await cdp.enviar('Network.enable');
+  await simularTeselasOSM(cdp);
   const evaluar = async expression => {
     const resultado = await cdp.enviar('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
     if (resultado.exceptionDetails) throw new Error(JSON.stringify(resultado.exceptionDetails));
@@ -144,6 +146,7 @@ try {
   await cdp.enviar('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
   await cdp.enviar('Page.navigate', { url: `http://127.0.0.1:${servidor.address().port}/` });
   await esperar(`document.querySelectorAll('.mapa-contenedor button[aria-label^=Seleccionar]').length === 2`, 'El mapa real no llegó a renderizar dos marcadores');
+  await comprobarBaseOSM(cdp);
   await evaluar(`document.querySelectorAll('.lugar-opcion')[0].click()`);
   await esperar(`document.querySelector('.maplibregl-popup-content')?.textContent.includes('Quito')`, 'Falló la selección desde la lista');
   await evaluar(`Array.from(document.querySelectorAll('.mapa-contenedor button')).find(boton => boton.getAttribute('aria-label') === 'Seleccionar Cuenca').click()`);
@@ -161,7 +164,7 @@ try {
   if (!await evaluar(puntosDentroDelMapa)) throw new Error('El ajuste móvil no incluye todos los marcadores.');
   await capturar('movil.png');
   const reporte = {
-    resultado: 'aprobado', webglReal: true, lugaresSimulados: true, marcadores: 2,
+    resultado: 'aprobado', webglReal: true, lugaresSimulados: true, teselasSimuladas: true, baseOSMYAtribucion: true, marcadores: 2,
     seleccionDesdeListaYMapa: true, ajusteCamara: true, sinDesbordamiento: [1440, 390],
     erroresNavegador: cdp.errores, capturas: ['escritorio.png', 'movil.png']
   };

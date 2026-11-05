@@ -477,7 +477,11 @@ describe('Interfaz Mapa de lugares', () => {
 
   it('conserva créditos y atribución del componente reutilizable', () => {
     iniciar();
-    expect(fixture.nativeElement.textContent).toContain('Natural Earth');
+    expect(dobles.crearMapa).toHaveBeenCalledWith(expect.objectContaining({
+      style: expect.objectContaining({ sources: { openstreetmap: expect.objectContaining({
+        type: 'raster', attribution: expect.stringContaining('OpenStreetMap')
+      }) } })
+    }));
     expect(dobles.crearMapa).toHaveBeenCalledWith(expect.objectContaining({ attributionControl: { compact: false } }));
   });
 

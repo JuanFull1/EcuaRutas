@@ -111,7 +111,8 @@ describe('Registro de los mapas administrativos', () => {
     };
     comprobar(routes);
     expect(routes.find(ruta => ruta.path === 'admin')!.children!.map(ruta => ruta.path))
-      .toEqual(['inicio', 'lugares', 'rutas', 'mapas/lugares', 'mapas/rutas', 'paradas', '']);
+      .toEqual(['inicio', 'cooperativas', 'lugares', 'rutas', 'paradas', 'mapas/lugares', 'mapas/rutas',
+        'resoluciones-ant', 'frecuencias', 'tarifas', 'usuarios', 'roles', '']);
   });
 
   it.each(['', '0', '-1', '1.5', '1e2', 'NaN', 'Infinity', '2147483648', ' 11', '11x'])('rechaza el identificador %s', valor => {
@@ -201,6 +202,15 @@ describe('Integración de mapas con la navegación administrativa', () => {
       expect(router.url).toBe(rol ? auth.obtenerRutaInicio(rol) : '/login');
       expect(harness.routeDebugElement!.query(By.directive(pantalla.componente))).toBeNull();
       expect(harness.routeNativeElement!.querySelector('a[href^="/admin/mapas/"]')).toBeNull();
+      // La redirección conserva el inicio de COOPERATIVA, que consulta sus indicadores.
+      // Estas lecturas no son accesos a los catálogos del mapa rechazado.
+      if (rol === 'COOPERATIVA') {
+        for (const recurso of ['buses', 'plantillas']) {
+          const consulta = http.expectOne(`${API_URL}/${recurso}?cooperativaId=5`);
+          expect(consulta.request.headers.get('Authorization')).toBe('Bearer token-de-prueba');
+          consulta.flush([]);
+        }
+      }
       http.expectNone(request => request.method === 'GET');
     });
   }

@@ -45,26 +45,30 @@ La interacción se inicia fuera de Angular; los estados y eventos públicos vuel
 a Angular. Al destruir, se retiran los listeners propios y se invoca `remove()`
 una sola vez para liberar controles, contexto gráfico, workers y observadores.
 
-## Fuente cartográfica de desarrollo
+## Cartografía estándar OpenStreetMap
 
-No se encontró un proveedor aprobado en el repositorio. El valor inicial es
-`https://demotiles.maplibre.org/style.json`, el mapa mundial de demostración de
-[MapLibre Demo Tiles](https://github.com/maplibre/demotiles). No requiere claves.
-Sus polígonos de países proceden de Natural Earth y sus teselas tienen niveles
-0–6: sirve para comprobar la integración, no como cartografía vial detallada.
+Los dos módulos utilizan `ESTILO_MAPA_OSM`: estilo MapLibre versión 8 con origen
+y capa ráster, teselas de 256 px y URL
+`https://tile.openstreetmap.org/{z}/{x}/{y}.png`. La fuente admite zoom 0–19;
+MapLibre amplía el último nivel disponible si el usuario sigue acercándose.
+No requiere claves ni servicios de pago. Los marcadores y el trazado GeoJSON se
+superponen a esta base sin modificar sus datos o algoritmos.
 
-El repositorio del ejemplo declara licencia BSD-3-Clause; deben respetarse su
-[licencia](https://github.com/maplibre/demotiles/blob/gh-pages/LICENSE) y las
-condiciones de las fuentes que se incorporen. Natural Earth declara sus datos de
-[dominio público](https://www.naturalearthdata.com/about/terms-of-use/).
-Se muestran créditos a MapLibre y Natural Earth para el estilo de demostración.
-El control nativo de atribución permanece expandido y conserva automáticamente
-las atribuciones declaradas por las fuentes de cualquier estilo configurado.
+La atribución `© OpenStreetMap contributors` enlaza a la licencia y aparece en el
+control nativo expandido. Se retiran los créditos de Natural Earth, que no es la
+fuente del nuevo estilo.
 
-El carácter público del servidor de demostración no equivale a una autorización
-de uso ilimitado ni a una garantía de disponibilidad en producción. Antes de
-publicar, seleccionar un proveedor aprobado o alojamiento propio y suministrar su
-estilo mediante `estilo`. No hay sustitución automática por otra fuente si falla.
+Se respeta la [política de teselas de OSM](https://operations.osmfoundation.org/policies/tiles/):
+el navegador mantiene su caché HTTP y envía sus cabeceras User-Agent y Referer
+normales. El alojamiento no debe suprimir Referer ni forzar cabeceras que
+desactiven la caché. No hay descargas masivas, precargas para uso sin conexión ni
+reintentos propios. El servicio público no garantiza disponibilidad; los fallos
+se comunican mediante el aviso existente sin sustituir el proveedor.
+
+Las pruebas de navegador interceptan las solicitudes OSM y devuelven un PNG local
+de 256 px. Comprueban el renderizador real, atribución, marcadores, ventanas,
+trazados y tamaños sin descargar teselas durante los movimientos automatizados.
+Sus capturas no verifican el contenido cartográfico real del servidor público.
 
 ## Worker de MapLibre 6
 

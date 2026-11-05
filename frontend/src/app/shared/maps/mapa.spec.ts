@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Mapa } from './mapa';
-import { CENTRO_ECUADOR, ESTILO_MAPA_DESARROLLO, MAPA_WORKER_URL, ZOOM_ECUADOR } from './mapa.config';
+import { CENTRO_ECUADOR, ESTILO_MAPA_OSM, MAPA_WORKER_URL, ZOOM_ECUADOR } from './mapa.config';
 
 const dobles = vi.hoisted(() => {
   class MapaSimulado {
@@ -72,7 +72,7 @@ describe('Mapa reutilizable', () => {
       container: (fixture.nativeElement as HTMLElement).querySelector('.mapa-contenedor'),
       center: CENTRO_ECUADOR,
       zoom: ZOOM_ECUADOR,
-      style: ESTILO_MAPA_DESARROLLO,
+      style: ESTILO_MAPA_OSM,
       trackResize: true,
       attributionControl: { compact: false }
     }));
@@ -137,13 +137,21 @@ describe('Mapa reutilizable', () => {
     expect(listo).not.toHaveBeenCalled();
   });
 
-  it('muestra créditos del mapa de demostración y conserva el control nativo de atribución', () => {
+  it('usa la base estándar OSM de 256 px con atribución en el control nativo expandido', () => {
     iniciar();
-    const enlaces = (fixture.nativeElement as HTMLElement).querySelectorAll('footer a');
-    expect(Array.from(enlaces).map(enlace => enlace.textContent)).toEqual(['MapLibre', 'Natural Earth']);
-    expect(enlaces[0].getAttribute('href')).toBe('https://maplibre.org/');
-    expect(enlaces[1].getAttribute('href')).toBe('https://www.naturalearthdata.com/');
-    expect(dobles.crearMapa).toHaveBeenCalledWith(expect.objectContaining({ attributionControl: { compact: false } }));
+    expect(dobles.crearMapa).toHaveBeenCalledWith(expect.objectContaining({
+      attributionControl: { compact: false },
+      style: {
+        version: 8,
+        sources: { openstreetmap: {
+          type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256, minzoom: 0, maxzoom: 19,
+          attribution: expect.stringContaining('https://www.openstreetmap.org/copyright')
+        } },
+        layers: [{ id: 'openstreetmap-base', type: 'raster', source: 'openstreetmap' }]
+      }
+    }));
+    expect(fixture.nativeElement.textContent).not.toContain('Natural Earth');
   });
 
   it('informa un error de inicialización sin mostrar detalles técnicos', () => {
@@ -209,7 +217,7 @@ describe('Mapa reutilizable', () => {
     expect(mapa.jumpTo).toHaveBeenCalledExactlyOnceWith({ center: [-79, -2], zoom: 8 });
   });
 
-  it('cambia el estilo sin recrear el mapa ni atribuir otras fuentes a Natural Earth', () => {
+  it('cambia el estilo sin recrear el mapa ni añadir créditos ajenos a la fuente', () => {
     const mapa = iniciar();
     fixture.componentRef.setInput('estilo', '/mapas/aprobado.json');
     fixture.detectChanges();

@@ -6,6 +6,7 @@ import { access, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { comprobarBaseOSM, simularTeselasOSM } from '../teselas-prueba.browser.mjs';
 
 const frontend = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
 const salida = resolve(frontend, 'dist/mapa-rutas-browser');
@@ -116,6 +117,7 @@ try {
   await cdp.enviar('Page.enable');
   await cdp.enviar('Runtime.enable');
   await cdp.enviar('Network.enable');
+  await simularTeselasOSM(cdp);
   const evaluar = async expression => {
     const resultado = await cdp.enviar('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
     if (resultado.exceptionDetails) throw new Error(JSON.stringify(resultado.exceptionDetails));
@@ -160,14 +162,20 @@ try {
   await evaluar(`(() => { const selector = document.querySelector('#ruta-mapa-selector'); selector.value = '7'; selector.dispatchEvent(new Event('change')); })()`);
   await esperar(`document.querySelectorAll('button.maplibregl-marker').length === 3`, 'No se renderizaron origen, parada y destino');
   await esperar(lineaValida, 'La línea GeoJSON no sigue el orden esperado');
+  await comprobarBaseOSM(cdp);
   await evaluar(`Array.from(document.querySelectorAll('.punto-opcion')).find(boton => boton.dataset.punto === 'parada:102').click()`);
   await esperar(`document.querySelector('.maplibregl-popup-content')?.textContent.includes('Ambato')`, 'No funcionó la selección de una parada');
   await evaluar(`Array.from(document.querySelectorAll('button.maplibregl-marker')).find(boton => boton.getAttribute('aria-label').startsWith('Origen')).click()`);
   await esperar(`document.querySelector('.maplibregl-popup-content')?.textContent.includes('Funciones de este lugar')`, 'No aparecen las funciones compartidas');
   await evaluar(`Array.from(document.querySelectorAll('.maplibregl-popup-content button')).find(boton => boton.textContent.includes('orden 0')).click()`);
   await esperar(`Array.from(document.querySelectorAll('.punto-opcion')).find(boton => boton.dataset.punto === 'parada:101').getAttribute('aria-pressed') === 'true'`, 'La selección no distingue la identidad de parada');
-  await evaluar(`void ${mapaReal}.setStyle('https://demotiles.maplibre.org/style.json', { diff: false })`);
+  await evaluar(`(() => {
+    const mapa = ${mapaReal}, estilo = mapa.getStyle();
+    mapa.setStyle({ version: 8, sources: { openstreetmap: estilo.sources.openstreetmap },
+      layers: estilo.layers.filter(capa => capa.id === 'openstreetmap-base') }, { diff: false });
+  })()`);
   await esperar(lineaValida, 'No se restauró la línea tras recargar el estilo');
+  if (await evaluar(`ng.getComponent(document.querySelector('app-rutas-mapa')).errorMapa() !== null`)) throw new Error('Falló la restauración del trazado.');
   if (!await evaluar(`document.querySelectorAll('button.maplibregl-marker').length === 3`)) throw new Error('Se duplicaron los marcadores al recargar el estilo.');
   await evaluar(`document.querySelector('.maplibregl-popup-close-button')?.click()`);
   await evaluar(`Array.from(document.querySelectorAll('button')).find(boton => boton.textContent.includes('Mostrar recorrido completo')).click()`);
@@ -188,7 +196,7 @@ try {
   await evaluar(`globalThis.mapaPrueba = ${mapaReal}; document.querySelector('#prueba-desmontar').click()`);
   await esperar(`document.querySelectorAll('.maplibregl-marker, .maplibregl-popup, .maplibregl-canvas').length === 0 && globalThis.mapaPrueba._removed === true`, 'No se liberó el mapa al desmontar');
   const reporte = {
-    resultado: 'aprobado', webglRealPorSoftware: true, datosSimulados: true,
+    resultado: 'aprobado', webglRealPorSoftware: true, datosSimulados: true, teselasSimuladas: true, baseOSMYAtribucion: true,
     marcadoresSinDuplicados: 3, geoJSONOrdenado: true, funcionesCompartidas: true,
     seleccionBidireccional: true, restauracionEstilo: true, limpiezaAlDesmontar: true,
     sinDesbordamiento: [1440, 390], erroresNavegador: cdp.errores,

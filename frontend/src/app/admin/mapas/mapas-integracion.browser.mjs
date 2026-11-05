@@ -6,6 +6,7 @@ import { access, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { comprobarBaseOSM, simularTeselasOSM } from './teselas-prueba.browser.mjs';
 
 const frontend = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const salida = resolve(frontend, 'dist/mapas-integracion-browser');
@@ -116,6 +117,7 @@ try {
   await cdp.enviar('Page.enable');
   await cdp.enviar('Runtime.enable');
   await cdp.enviar('Network.enable');
+  const teselasSimuladas = await simularTeselasOSM(cdp);
   const evaluar = async expression => {
     const resultado = await cdp.enviar('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
     if (resultado.exceptionDetails) throw new Error(JSON.stringify(resultado.exceptionDetails));
@@ -144,6 +146,7 @@ try {
   const mapaCargado = async () => {
     await esperar(`document.querySelectorAll('.maplibregl-canvas').length === 1 && ${mapaReal}?.loaded() && !${mapaReal}.isMoving()`, 'No terminó de cargar el mapa');
     if (!await evaluar(`!!${mapaReal}.painter.context.gl`)) throw new Error('No se creó un contexto WebGL real.');
+    await comprobarBaseOSM(cdp);
   };
   const sinDesbordamiento = async () => {
     if (!await evaluar('document.documentElement.scrollWidth <= innerWidth + 1')) throw new Error('Desbordamiento horizontal del layout.');
@@ -176,6 +179,13 @@ try {
   await pulsar('aside a[href="/admin/mapas/lugares"]');
   await mapaCargado();
   await esperar(`document.querySelectorAll('button.maplibregl-marker').length === 3`, 'No aparecen los lugares geográficos');
+  const zoomInicial = await evaluar(`${mapaReal}.getZoom()`);
+  await pulsar('.maplibregl-ctrl-zoom-in');
+  await esperar(`${mapaReal}.getZoom() > ${zoomInicial} && !${mapaReal}.isMoving()`, 'No funciona el control de acercar');
+  await pulsar('.maplibregl-ctrl-zoom-out');
+  await esperar(`Math.abs(${mapaReal}.getZoom() - ${zoomInicial}) < 0.01 && !${mapaReal}.isMoving()`, 'No funciona el control de alejar');
+  await pulsar('button.maplibregl-marker[aria-label="Seleccionar Quito"]');
+  await esperar(`document.querySelector('.maplibregl-popup-content')?.textContent.includes('Quito')`, 'No abrió la ventana del marcador de lugar');
   await pulsar('aside a[href="/admin/lugares"]');
   await esperar(`document.querySelector('a[aria-label="Ver en mapa Quito"]')`, 'No cargó gestión de lugares');
   await pulsar('a[aria-label="Ver en mapa Quito"]');
@@ -208,6 +218,8 @@ try {
     return capa && JSON.stringify(mapa.getSource(capa.source).serialize().data.geometry.coordinates) === JSON.stringify([[-78.46,-0.18],[-78.62,-1.24],[-79,-2.9]]);
   })()`;
   await esperar(lineaValida, 'El trazado no sigue el orden de los lugares');
+  await pulsar('button.maplibregl-marker[aria-label="Parada · orden 5: Ambato"]');
+  await esperar(`document.querySelector('.maplibregl-popup-content')?.textContent.includes('Ambato')`, 'No abrió la ventana del marcador de parada');
   await menuMovil();
   await capturaMapa('rutas-movil.png');
   await cdp.enviar('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
@@ -231,6 +243,8 @@ try {
   await esperar(`!document.querySelector('app-mapa') && window.mapaAnterior._removed === true`, 'No se liberó el mapa de rutas');
   const reporte = {
     resultado: 'aprobado', datosHTTPySesionSimulados: true, routerGuardsLayoutReales: true,
+    teselasSimuladas, baseOSMYAtribucion: true, contenidoCartograficoRealVerificado: false,
+    controlesZoom: true, ventanasDesdeMarcadores: true,
     webglRealPorSoftware: true, navegacionDesdeMenuYLugaresRutasParadas: true,
     seleccionPorParametrosSinRecrearMapa: true, geoJSONOrdenado: true, limpiezaAlNavegar: true,
     menuMovilYTamanoCanvas: true, sinDesbordamiento: [1440, 390], erroresNavegador: cdp.errores,

@@ -15,7 +15,7 @@ const lugaresPrueba: LugarDto[] = [
 
 const aviso = document.createElement('p');
 aviso.className = 'alert alert-info m-3';
-aviso.textContent = 'Prueba de navegador: lugares simulados; MapLibre y cartografía reales.';
+aviso.textContent = 'Prueba de navegador: lugares y teselas simulados; MapLibre real.';
 const contenedor = document.createElement('main');
 contenedor.className = 'p-3';
 contenedor.append(document.createElement('app-lugares-mapa'));
